@@ -11,7 +11,8 @@ library(tidyverse)
 #library(googledrive)
 library(readxl)
 
-# Set WD and Load Data ----------------------------------------------------
+
+# Load from Google Drive (in progress) ------------------------------------
 
 # ## Code to import one file
 # library(readxl)
@@ -46,8 +47,8 @@ library(readxl)
 
 
 
-#_________________________________________________________________
-## From directory
+
+# Load Data from Directory ------------------------------------------------
 aci_files_nm <- list.files(path = "~/WVU/Ph.D/Tapajos_DAT_Analysis",
                            pattern = "walkup_aci_clean")
 print(aci_files_nm)
@@ -136,8 +137,12 @@ all_aci.df <- bind_rows(`data_2022-08-06-1020_walkup_aci_clean.xlsx`,
                         `data_2022-08-13-1007_walkup_aci_clean.xlsx`,
                         `data_2022-08-14-0906_walkup_aci_clean.xlsx`)
 
-## Clean the data by filtering out excluded points
-all_aci_cln <- filter(all_aci.df, Data_QC == "OK")
+
+
+## Clean the data by filtering out excluded points and After DAT points
+all_aci_cln <- all_aci.df %>% 
+  filter(Data_QC == "OK") %>% 
+  filter(Data_point != "After_DAT")
 View(all_aci_cln)
 
 
@@ -151,8 +156,40 @@ all_aci_cln_num <- all_aci_cln %>%
   mutate(Tleaf = parse_number(Tleaf))
 
 
+
+
+# Adding in Species -------------------------------------------------------
+
+### adding a column for a four-letter species code and a column for species name
+complete_sp <- all_aci_cln_num %>% 
+  mutate(fourlettercode = Tree_Identifier, SciName = Tree_Identifier)
+
+complete_sp$fourlettercode <- recode(complete_sp$fourlettercode,
+                                          'Maca1' = 'MAEL',
+                                          'Tree3' = 'CHTU',
+                                          'tree8' = 'COSP',
+                                          'tree9' = 'APCO',
+                                          'Tree10' = 'VICA',
+                                          'tree11' = 'COST',
+                                          'tree12' = 'UNKN',
+                                          'tree22' = 'ABMA')
+complete_sp$SciName <- recode(complete_sp$SciName,
+                                   'Maca1' = 'Manilkara elata',
+                                   'Tree3' = 'Chimaris turbinata',
+                                   'tree8' = 'Coussarea sp',
+                                   'tree9' = 'Aparisthmium cordatum',
+                                   'Tree10' = 'Vismia cayennensis',
+                                   'tree11' = 'Couratari stellata',
+                                   'tree12' = 'Unknown sp',
+                                   'tree22' = 'Abarema mataybifolia')
+head(complete_sp)
+
+
+
+
+# Save Complete Data File -------------------------------------------------
 ## Save the assembled file as a .csv
-write.csv(x = all_aci_cln_num, file = "clean_aci_data_one_file.csv")
+write.csv(x = complete_sp, file = "clean_aci_data_one_file.csv")
 
 
 ## Lessons learned:
