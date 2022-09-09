@@ -24,7 +24,9 @@ complete_sp <- read.csv("~/Documents/PhD/DAT_Tapajos/Inputs/clean_aci_data_one_f
 # Identify Outliers -------------------------------------------------------
 
 which(complete_sp$Ci < -50) #4 Ci values are super negative: 394, 395, 396, 398
-which(complete_sp$A > 31) # 2 A values greater than 31: 395 and 396
+complete_sp[c(394,395,396,398),19] # What are those values? Should they be outliers?
+which(complete_sp$A > 31) # 2 A values greater than 31: 399 and 400
+complete_sp[c(397,398,399,400,401),17]
 cmplt.rm_out <- filter(complete_sp, Ci > -50 & A < 31)
 
 
@@ -43,13 +45,17 @@ ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = fourlettercode)) +
 
 
 
+##### CHANGE YO WORKING DIRECTORY
+
 ## Make and save plots for each individual species
 for (code in unique(cmplt.grp$fourlettercode)) {
   df1 <- cmplt.grp %>% filter(fourlettercode == code)
   gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, color = Data_point)) +
     geom_point() +
     theme_classic() +
-    scale_color_viridis_d()
+    scale_color_viridis_d() +
+    ggtitle(code)
+  plot(gg1)
   filename1 <- paste("plot_", code, ".png")
   ggsave(filename1, gg1)
 }
@@ -81,14 +87,25 @@ plot(DAT_fits[[1]])
   }
 }
 
-#for (code in unique(cmplt.grp$fourlettercode)) {
-  each <- cmplt.grp %>% filter(Data_point == "Before_DAT")
-  fitacis(each, group = "fourlettercode", varnames = list(ALEAF = "A", Tleaf = "Tleaf",
-                                                          Ci = "Ci",
-                                                          PPFD = "Qin"), id = code, fitTPU = TRUE,
-          Tcorrect = TRUE)
-}
+#Possible for loop to fit aci curves for each leaf individually
+for (code in unique(cmplt_DAT$fourlettercode)) {
+  for (lf in cmplt_DAT$Leaf_number[code]){
+    fit <- fitaci(data = cmplt_DAT[lf], varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
+                                      PPFD = "Qin"),
+           fitTPU = FALSE, Tcorrect = TRUE)
+    assign(paste0("fit_", code[i]), fit)
+  }
+  # plot with fit
+  }
 
+
+for (code in unique(cmplt_DAT$fourlettercode)) {
+  #group <- group_by(cmplt_DAT[code], Leaf_number)
+  fit <- fitaci(data = cmplt_DAT[[code]], varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
+                                              PPFD = "Qin"),
+                fitTPU = FALSE, Tcorrect = TRUE)
+ assign(paste0("fit_", code[i], fit)) 
+}
 
 
 #### Below is Charlie's code to run Acis on each leaf----------------------------
