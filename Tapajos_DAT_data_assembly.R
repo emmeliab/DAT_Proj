@@ -228,7 +228,8 @@ unique(complete_sp$fourlettercode)
 
 # Save Complete Data File -------------------------------------------------
 ## Save the assembled file as a .csv
-write.csv(x = complete_sp, file = "clean_aci_data_one_file.csv")
+write.csv(x = complete_sp, file = "clean_aci_data_one_file.csv", 
+          row.names = FALSE)
 
 
 
