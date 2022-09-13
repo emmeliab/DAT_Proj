@@ -16,9 +16,9 @@ library(plantecophys)
 
 # Load Data
 ## I'm gonna work on a way to make this universal
-complete_sp <- read.csv("~/Documents/PhD/DAT_Tapajos/Inputs/clean_aci_data_one_file.csv")
-
-
+complete_sp <- read.csv("Inputs/clean_aci_data_one_file.csv", 
+                        sep = ",", 
+                        fileEncoding="latin1")
 
 
 # Identify Outliers -------------------------------------------------------
@@ -88,12 +88,18 @@ plot(DAT_fits[[1]])
 }
 
 #Possible for loop to fit aci curves for each leaf individually
-for (code in unique(cmplt_DAT$fourlettercode)) {
-  for (lf in cmplt_DAT$Leaf_number[code]){
-    fit <- fitaci(data = cmplt_DAT[lf], varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
+for (code in length(unique(cmplt_DAT$fourlettercode))) {
+  # Change this to Ty's tree identifier
+  ind <- cmplt_DAT$fourlettercode == cmplt_DAT$fourlettercode[code]
+  dat <- cmplt_DAT[ind, ]
+  print(head(dat))
+  for (lf in length(unique(dat$Leaf_number))){
+    indlf <- dat$Leaf_number == dat$Leaf_number[lf]
+    datlf <- dat[indlf, ]
+    fit <- fitaci(data = datlf, varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                       PPFD = "Qin"),
            fitTPU = FALSE, Tcorrect = TRUE)
-    assign(paste0("fit_", code[i]), fit)
+    assign(paste0("fit_", cmplt_DAT$fourlettercode[code], dat$Leaf_number[lf]), fit)
   }
   # plot with fit
   }
