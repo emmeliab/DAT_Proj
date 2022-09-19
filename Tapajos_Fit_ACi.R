@@ -20,7 +20,7 @@ getwd()
 #setwd()
 complete_sp <- read.csv("Inputs/clean_aci_data_one_file.csv", 
                         sep = ",", 
-                        fileEncoding="latin1")
+                        fileEncoding ="latin1")
 
 
 # Identify Outliers -------------------------------------------------------
@@ -81,8 +81,6 @@ for (id in unique(cmplt.grp$k67.id)) {
 
 
 # Fitting ACi Curves ------------------------------------------------------
-install.packages("greekLetters") # have to reinstall if you clean the env to get 
-                                 # the vectors you need
 library(greekLetters)
 
 ## Separate by DAT and trad, and convert to dataframe
