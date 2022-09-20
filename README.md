@@ -7,6 +7,7 @@
 * ACi data were collected on 13 trees in the Tapajos National Forest in Brazil accessible from the walkup tower at K67
 * Data were collected using the LI-6800
 * DAT curves were ran right before Traditional Curves on the same leaves; two leaves per tree (typically)
+* Of note, MNG revisted MACA1 on 8/16 and measured new, different leaves than on the first day (8/6?). MNG recorded a Leaf_number of 2, which had already been recorded in the data. In a manual recoding of data, CDS gave a unique identifier to each leaf, with the second leaf 2 recorded as leaf 8.
 
 # Files
 ## Inputs
