@@ -18,3 +18,6 @@ This R file assembles all of the individual clean data files (in the Inputs Fold
 
 ## Tapajos_Fit_Aci
 Takes clean_aci_data_one_file.csv as inputs and outputs plots of aci curves from each species (Outputs folder) as well as fitting data for each leaf (in progress)
+
+## charlie_playing.R
+This is Charlie messing with our DAT data to get real numbers :)
