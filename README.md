@@ -20,4 +20,4 @@ This R file assembles all of the individual clean data files (in the Inputs Fold
 Takes clean_aci_data_one_file.csv as inputs and outputs plots of aci curves from each species (Outputs folder) as well as fitting data for each leaf (in progress)
 
 ## charlie_playing.R
-This is Charlie messing with our DAT data to get real numbers :)
+This is Charlie messing with our DAT data to get real numbers :) He played with stats and added a unique identifier to the data file because wow so great.
