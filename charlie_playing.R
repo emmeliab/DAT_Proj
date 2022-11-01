@@ -14,16 +14,18 @@ library(plantecophys)
 library(greekLetters)
 library(ggpubr)
 
-# Load Data
-## Make sure working directory is DAT_proj
+# Set working directory to DAT_proj
 #getwd()
 #setwd()
 
-complete_sp <- read.csv("/Users/charlessouthwick/Documents/GitHub/DAT_Proj/Inputs/clean_aci_with_uniquecode.csv",
-                        sep = ",", 
-                        fileEncoding="latin1")
+# Load Data
+complete_sp <- read.csv("Inputs/clean_aci_with_uniquecode.csv", sep = ",", 
+                        fileEncoding="latin1") #changed this to work on anyone's computer
 #Create an id data table. This includes the species code so we can merge it later
-unique_ids <- read.csv("/Users/charlessouthwick/Documents/GitHub/DAT_Proj/Inputs/unique_ids.csv")
+unique_ids <- read.csv("Inputs/unique_ids.csv") # same here
+
+
+
 
 # Identify Outliers and filtering ---------------------------------------------------
 
@@ -39,9 +41,13 @@ cmplt.rm_out <- filter(complete_sp, Ci > 0 & A < 31)  ## Ci > 0 (we had been doi
 which(complete_sp$A < 1)
 cmplt.rm_out <- filter(complete_sp, A > 1)
 
+
+
+
+
 # Plotting ACi Curves -----------------------------------------------------
 
-## Group by unique instead, Emmy did by leaf number.
+## Group by unique
 cmplt.grp <- group_by(cmplt.rm_out, fourlettercode) %>% 
   group_by(unique)
 
@@ -77,10 +83,10 @@ cmplt.grp <- group_by(cmplt.rm_out, fourlettercode) %>%
 #}
 
 
+
+
+
 # Fitting ACi Curves ------------------------------------------------------
-# install.packages("greekLetters") # have to reinstall if you clean the env to get 
-# the vectors you need
-library(greekLetters)
 
 ## Separate by DAT and trad, and convert to dataframe
 cmplt_DAT <- filter(cmplt.grp, Data_point == "Before_DAT") %>% 
@@ -93,16 +99,16 @@ cmplt_trad <- filter(cmplt.grp, Data_point == "Traditional") %>%
 cmplt_trad <- as.data.frame(cmplt_trad)
 head(cmplt_trad)
 
-# # Fit the ACi curves for each species for DAT and Traditional using fitacis
-DAT_fits <- fitacis(cmplt_DAT, group = "unique",
+# Fit the ACi curves for each species for DAT using fitacis
+DAT_fits <- fitacis(cmplt_DAT, group = "unique", id = "unique",
                     varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                     PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(DAT_fits[[7]]) # I was just exploring here
+plot(DAT_fits[[12]], main = coef(DAT_fits)$unique[12]) # I was just exploring here
 coef(DAT_fits)
 #strange curves: #7, 9, 10, 11, 12, 15, 17, 22, 23, 24?, 32? --> at least 11 are a weird fit!
 # I wonder, should we try Loren's old approach from her grad school days?
 
-## make a dataframe out of coefficients
+## Make a dataframe out of coefficients
 par_dat <- as.data.frame(coef(DAT_fits), row.names = NULL)
 par_dat <- par_dat[-1,]
 par_dat <- par_dat %>%
@@ -112,29 +118,36 @@ table(par_dat$method) ## number of initial DAT curves
 ### note that some of these estimates are way incorrect. I think it is a problem of ecophys
 ### which doesn't seem to  be able to figure out the initial 'back correction'
 
-## now let's run the traditional
-trad_fits <- fitacis(cmplt_trad, group = "unique",
+
+
+# Fit the ACi curves for Traditional using fitacis
+trad_fits <- fitacis(cmplt_trad, group = "unique", #id = "unique",
                      varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                      PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(trad_fits[[20]]) # 20 is pretty ugly
+plot(trad_fits[[10]], main = coef(trad_fits)$unique[10]) # 20 is pretty ugly
 coef(trad_fits)
 
+## Make a dataframe of coefficients
 par_trad <- as.data.frame(coef(trad_fits), row.names = NULL)
 par_trad <- par_trad[-1,]
 par_trad <- par_trad %>% 
   add_column(method = "trad")
 
-#merge trad and dat outputs into one
+# Merge DAT and Trad dfs
 par_join <- bind_rows(par_dat, par_trad)
+unique_ids <- rename(unique_ids, "unique" = "ï..unique") # I was having some weird problems reading it in
 par_species <- left_join(par_join, unique_ids, by = "unique")
-par_species
+head(par_species)
 
-#filter some outliers (at least until we can figure out our plantecophys issues) 
+
+# Filter some outliers (at least until we can figure out our plantecophys issues) 
 which(par_species$Vcmax > 100)
 which(par_species$Vcmax < 0)
 filt_par_species <- par_species %>% 
   filter(Vcmax < 100 & Vcmax > 0)
-filt_par_species
+head(filt_par_species)
+
+
 
 ## some exploration
 table(filt_par_species$method) ## number of each type of curve
@@ -143,14 +156,18 @@ group_by(filt_par_species, method) %>%
   summarise(
     count = n(),
     mean = mean(Vcmax, na.rm = TRUE),
-    sd = sd(Vcmax, na.rm = TRUE)
-  )
+    sd = sd(Vcmax, na.rm = TRUE))
 
-#qqplot for visual estimation of normality
+
+
+
+# Testing Normality -------------------------------------------------------
+
+# Q-Q plots
 ggqqplot(filt_par_species$Vcmax)
 ggqqplot(filt_par_species$Jmax)
 
-#shapiro-wilk test for normality
+# Shapiro-Wilk test
 shapiro.test(filt_par_species$Vcmax)
 shapiro.test(filt_par_species$Jmax)
 
@@ -171,6 +188,12 @@ hist_pars <- filt_par_species %>%
   geom_histogram(aes(x = Vcmax))
 hist_pars
 
+
+# This fun little function plots a curve on top of the graph, just for visualization
+library(rcompanion)
+plotNormalHistogram(filt_par_species$Vcmax, breaks = 30)
+plotNormalHistogram(filt_par_species$Jmax, breaks = 30)
+
 #t-test doesn't work as paired data because we don't have the same number of curves for each method
 # ttest_vcmax <- t.test(Vcmax ~ method, data = filt_par_species, paired = TRUE)
 #ttest_vcmax
@@ -178,17 +201,27 @@ hist_pars
 
 box_both_vcmax <- filt_par_species %>%
   ggplot() +
-  geom_boxplot(aes(x = method, y = Vcmax))
+  geom_boxplot(aes(x = method, y = Vcmax)) +
+  theme_light()
 box_both_vcmax
 
 box_both_jmax <- filt_par_species %>% 
   ggplot() +
-  geom_boxplot(aes(x = method, y = Jmax))
+  geom_boxplot(aes(x = method, y = Jmax)) +
+  theme_light()
 box_both_jmax
 
-scat_vcmax <- filt_par_species %>%
-  ggplot() +
-  geom_point(aes(x = method, y = Vcmax, color = unique))
+
+filt_par_dummy <- mutate(.data = filt_par_species,# makes a dummy variable to plot
+               dummy = if_else(filt_par_species$method == "dat", 0,1))
+
+scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = Vcmax,
+                                                          color = unique)) + 
+  geom_line() + 
+  geom_point() +
+  theme_light() +
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Trad")) +
+  xlab("Method")
 scat_vcmax
 
 box_both_vcmaxse <- par_species %>% 
@@ -206,77 +239,14 @@ box_both_jmaxse <- par_species %>%
   geom_boxplot(aes(x = method, y = Jmax_SE))
 box_both_jmaxse
 
+scat_jmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = Jmax,
+                                                          color = unique)) + 
+  geom_line() + 
+  geom_point() +
+  theme_light() +
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Trad")) +
+  xlab("Method")
+scat_jmax
 
-## Emmy's For Loop below
-## For loop to fit aci curves for each leaf individually using fitaci
-# 
-# # DAT
-# for (code in length(unique(cmplt_DAT$k67.id))) {
-#   ind <- cmplt_DAT$k67.id == cmplt_DAT$k67.id[code]
-#   dat <- cmplt_DAT[ind, ]
-#   #print(head(dat))
-#   for (lf in length(unique(dat$Leaf_number))){
-#     indlf <- dat$Leaf_number == dat$Leaf_number[lf]
-#     datlf <- dat[indlf, ]
-#     fit <- fitaci(data = datlf, varnames = list(ALEAF = "Adyn", Tleaf = "Tleaf", 
-#                                                 Ci = "Ci", PPFD = "Qin"),
-#                   fitTPU = FALSE, Tcorrect = TRUE)
-#     assign(paste0("DAT_fit_", cmplt_DAT$k67.id[code], dat$Leaf_number[lf]), fit)
-#   }
-#   plot(fit[[lf]])
-# }
 
-# # Traditional
-# remove(trad_pars) #remove the data frame if you've run it before
-# trad_pars <- data.frame()
-# for (code in 1:length(unique(cmplt_trad$k67.id))) {
-#   # First, separate for each tree
-#   ind <- cmplt_trad$k67.id == cmplt_trad$k67.id[code]
-#   trad <- cmplt_trad[ind, ]
-#   print(trad$k67.id)
-#   for (lf in 1:length(unique(trad$Leaf_number))) {
-#     # Next, separate for each leaf
-#     indlf <- trad$Leaf_number == trad$Leaf_number[lf]
-#     tradlf <- trad[indlf, ]
-#     print(tradlf$Leaf_number)
-#     fit <- fitaci(data = tradlf, varnames = list(ALEAF = "Asty", Tleaf = "Tleaf", 
-#                                                  Ci = "Ci", PPFD = "Qin"),
-#                   fitTPU = FALSE, Tcorrect = TRUE)
-#     print(fit)
-#     plot(fit, main = paste(cmplt_trad$k67.id[code], "Leaf", trad$Leaf_number[lf]))
-#     assign(paste0("trad_fit_", cmplt_trad$k67.id[code], "_lf", trad$Leaf_number[lf]), fit)
-#     summary(fit)
-#     #dev.print(png, file =  paste0("trad_fit_", cmplt_trad$k67.id[code], "_lf",
-#     #                       trad$Leaf_number[lf], ".png"))
-#   }
-#   # Third, pull the parameters for each and append to a single dataframe
-#   par <- fit$pars
-#   par.df <- as.data.frame(par, row.names = NULL)
-#   par.df2 <- mutate(par.df, Result = c("Vcmax", "Jmax", "Rd"))
-#   par.df3 <- mutate(par.df2, Curve = as.character(paste0(cmplt_trad$k67.id[code], "_lf", 
-#                                                          trad$Leaf_number[lf])))
-#   trad_pars <- bind_rows(trad_pars, par.df3)
-# }
-# # print(trad_pars)
-# # trad_fit_list <- ls(pattern = "trad_fit_K67")
-# # print(trad_fit_list)
-# 
-# 
-# # Examine Fit ACi Results -------------------------------------------------
-# library(ggpubr)
-# 
-# ## DAT
-# 
-# 
-# ## Traditional
-# trad_pars_grp <- group_by(trad_pars, Curve)
-# 
-# ggboxplot(data = trad_pars_grp, x = "Result", y = "Estimate", bxp.errorbar = TRUE,
-#           bxp.errorbar.width = "Std. Error", facet.by = "Curve")
-# 
-# 
-# overview(`trad_fit_K67-WT-08_lf1`$nlsfit)
-# overview(`trad_fit_K67-WT-09_lf2`$nlsfit)
-# 
-# 
 
