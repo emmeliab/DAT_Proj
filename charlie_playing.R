@@ -69,20 +69,18 @@ cmplt.grp <- group_by(cmplt.rm_out, fourlettercode) %>%
  # ggsave(filename1, gg1, path = paste0(getwd(), "/Outputs/"))
 #}
 
-## The same, but for each individual tree
-#for (id in unique(cmplt.grp$k67.id)) {
- # df1 <- cmplt.grp %>% filter(k67.id == id)
-  #gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, color = Data_point)) +
-   # geom_point() +
-    #theme_classic() +
-    #scale_color_viridis_d() +
-    #ggtitle(id)
-  #plot(gg1)
-  #filename1 <- paste("plot_", id, ".png")
-  #ggsave(filename1, gg1, path = paste0(getwd(), "/Outputs/"))
-#}
-
-
+# The same, but for each unique tree ## Charlie changed this on 11/1/22
+# for (id in unique(cmplt.grp$unique)) {
+# df1 <- cmplt.grp %>% filter(unique == id)
+# gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, color = Data_point)) +
+# geom_point() +
+# theme_classic() +
+# scale_color_viridis_d() +
+# ggtitle(id)
+# plot(gg1)
+# filename1 <- paste("plot_", id, ".png")
+# ggsave(filename1, gg1, path = paste0(getwd(), "/Outputs/"))
+# }
 
 
 
@@ -103,9 +101,14 @@ head(cmplt_trad)
 DAT_fits <- fitacis(cmplt_DAT, group = "unique", id = "unique",
                     varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                     PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(DAT_fits[[12]], main = coef(DAT_fits)$unique[12]) # I was just exploring here
+plot(DAT_fits[[15]], main = coef(DAT_fits)$unique[15])
 coef(DAT_fits)
-#strange curves: #7, 9, 10, 11, 12, 15, 17, 22, 23, 24?, 32? --> at least 11 are a weird fit!
+
+
+#jpeg("K6707L2-2.jpg")
+#plot(trad_fits[[10]], main = coef(trad_fits)$unique[10])
+#dev.off()
+#strange curves: #7, 9, 10, 11, 12, 15, 17, 22, 23, 24? --> at least 11 are a weird fit!
 # I wonder, should we try Loren's old approach from her grad school days?
 
 ## Make a dataframe out of coefficients
@@ -135,7 +138,7 @@ par_trad <- par_trad %>%
 
 # Merge DAT and Trad dfs
 par_join <- bind_rows(par_dat, par_trad)
-unique_ids <- rename(unique_ids, "unique" = "ï..unique") # I was having some weird problems reading it in
+unique_ids <- rename(unique_ids, "unique" = "?..unique") # I was having some weird problems reading it in
 par_species <- left_join(par_join, unique_ids, by = "unique")
 head(par_species)
 
