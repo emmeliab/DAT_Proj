@@ -101,7 +101,7 @@ head(cmplt_trad)
 DAT_fits <- fitacis(cmplt_DAT, group = "unique", id = "unique",
                     varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                     PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(DAT_fits[[15]], main = coef(DAT_fits)$unique[15])
+plot(DAT_fits[[16]], main = coef(DAT_fits)$unique[16])
 coef(DAT_fits)
 
 
