@@ -25,18 +25,17 @@ complete_sp <- read.csv("Inputs/clean_aci_with_uniquecode.csv", sep = ",",
 unique_ids <- read.csv("Inputs/unique_ids.csv") # same here
 
 
-
+complete_sp[c(397:402),]  ## I visually identified these outliers for K6709L2-2
+complete_sp <- slice(complete_sp, -(397:402))
 
 # Identify Outliers and filtering ---------------------------------------------------
 
 which(complete_sp$Ci < -50) #4 Ci values are super negative: 394, 395, 396, 398
-which(complete_sp$Ci < 0) # Add in 16 more values, all for MACA1
+which(complete_sp$Ci < -5) # Add in 16 more values, all for MACA1
 complete_sp[c(394,395,396,398),19] # What are those values? Should they be outliers?
-which(complete_sp$A > 40) # 2 A values greater than 31: 399 and 400
-which(complete_sp$A < 1)
-complete_sp[c(397,398,399,400,401),17]
-which(complete_sp$A < 0)
-cmplt.rm_out1 <- filter(complete_sp, Ci > -5)  ## Ci > 0 (we had been doing Ci > -50)
+which(complete_sp$A > 40)
+which(complete_sp$A < -1)
+cmplt.rm_out1 <- filter(complete_sp, Ci > -5)
 cmplt.rm_out2 <- filter(cmplt.rm_out1, A < 40) ## A < 40
 cmplt.rm_out <- filter(cmplt.rm_out2, A > -1)
 
@@ -94,8 +93,6 @@ cmplt_trad <- filter(cmplt.grp, Data_point == "Traditional") %>%
 cmplt_trad <- as.data.frame(cmplt_trad)
 head(cmplt_trad)
 
-cmplt_all <- select(cmplt.grp, -contains(greeks("Delta")))
-
 
 # Fit the ACi curves for each species for DAT using fitacis
 DAT_fits <- fitacis(cmplt_DAT, group = "unique", id = "unique",
@@ -104,9 +101,10 @@ DAT_fits <- fitacis(cmplt_DAT, group = "unique", id = "unique",
 plot(DAT_fits[[16]], main = coef(DAT_fits)$unique[[16]])
 coef(DAT_fits)
 # I made a for loop that saves all the plots
+# I slightly modified it to specify DAT ACi curves
 for (curve in 1:33){
   title <- coef(DAT_fits)$unique[[curve]]
-  png(filename = paste0(getwd(), "/Outputs/", title,"_aci_curve.png"))
+  png(filename = paste0(getwd(), "/Outputs/", title,"_dataci_curve.png"))
   plot(DAT_fits[[curve]], main = title)
   dev.off()
 }
