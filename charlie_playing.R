@@ -36,9 +36,9 @@ which(complete_sp$A > 40) # 2 A values greater than 31: 399 and 400
 which(complete_sp$A < 1)
 complete_sp[c(397,398,399,400,401),17]
 which(complete_sp$A < 0)
-cmplt.rm_out1 <- filter(complete_sp, Ci > 0)  ## Ci > 0 (we had been doing Ci > -50)
+cmplt.rm_out1 <- filter(complete_sp, Ci > -5)  ## Ci > 0 (we had been doing Ci > -50)
 cmplt.rm_out2 <- filter(cmplt.rm_out1, A < 40) ## A < 40
-cmplt.rm_out <- filter(cmplt.rm_out2, A > 0)
+cmplt.rm_out <- filter(cmplt.rm_out2, A > -1)
 
 
 
@@ -101,8 +101,15 @@ cmplt_all <- select(cmplt.grp, -contains(greeks("Delta")))
 DAT_fits <- fitacis(cmplt_DAT, group = "unique", id = "unique",
                     varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                     PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(DAT_fits[[15]], main = coef(DAT_fits)$unique[15])
+plot(DAT_fits[[16]], main = coef(DAT_fits)$unique[[16]])
 coef(DAT_fits)
+# I made a for loop that saves all the plots
+for (curve in 1:33){
+  title <- coef(DAT_fits)$unique[[curve]]
+  png(filename = paste0(getwd(), "/Outputs/", title,"_aci_curve.png"))
+  plot(DAT_fits[[curve]], main = title)
+  dev.off()
+}
 
 
 #strange curves: #7, 9, 10, 11, 12, 15, 17, 22, 23, 24? 
