@@ -1,6 +1,9 @@
 # Purpose -----------------------------------------------------------------
 ## This script is to graph, fit, and save the ACi data for our Tapajos 2022 campaign
 
+
+### GITHUB WHYYY
+
 ####A bit more processing and some exploring
 
 
