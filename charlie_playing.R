@@ -2,8 +2,6 @@
 ## This script is to graph, fit, and save the ACi data for our Tapajos 2022 campaign
 
 
-### GITHUB WHYYY
-
 ####A bit more processing and some exploring
 
 
@@ -27,11 +25,28 @@ complete_sp <- read.csv("Inputs/clean_aci_with_uniquecode.csv", sep = ",",
 #Create an id data table. This includes the species code so we can merge it later
 unique_ids <- read.csv("Inputs/unique_ids.csv") # same here
 
-
-complete_sp[c(397:402),]  ## I visually identified these outliers for K6709L2-2
-complete_sp <- slice(complete_sp, -(397:402))
-
 # Identify Outliers and filtering ---------------------------------------------------
+
+#Made this separate dataframe and plot to make it easy to inspect any given leaf
+k6706l1 <- complete_sp %>% subset(unique == 'K6706L1')
+ggplot() +
+   geom_point(data = k6706l1, aes(x = Ci, y = A, color = Data_point))
+
+complete_sp[c(397:402),]  ## K6709L2-2 outliers (back-correction); coef_DAT id: [[16]]
+complete_sp[c(799:8025),] ## K6706L1 outliers (back-correction); coef_DAT id: [[7]]
+complete_sp[c(1564:1595),] ## K6709L6 outliers (back-correction); coef_DAT id: [[18]]
+complete_sp[c(7196:7216),] ## K6707L2 outliers (back correction); coef_DAT id: [[11]]
+complete_sp[c(7589:7606),] ## K6707L2-2 outliers (back correction); coef_DAT id: [[12]]
+
+#important to slice in descending order!!
+#complete_sp <- slice(complete_sp, -(7992:8025)) # This one didn't work
+complete_sp <- slice(complete_sp, -(7589:7606)) # This one (somewhat) worked
+#complete_sp <- slice(complete_sp, -(7196:7216)) # This one didn't work
+complete_sp <- slice(complete_sp, -(1564:1595)) # This one worked
+complete_sp <- slice(complete_sp, -(397:402)) # This one worked
+
+##What I'm finding is that removing the back-correction sometimes helps
+##Other times it breaks the plantecophys code and doesn't run
 
 which(complete_sp$Ci < -50) #4 Ci values are super negative: 394, 395, 396, 398
 which(complete_sp$Ci < -5) # Add in 16 more values, all for MACA1
@@ -41,8 +56,6 @@ which(complete_sp$A < -1)
 cmplt.rm_out1 <- filter(complete_sp, Ci > -5)
 cmplt.rm_out2 <- filter(cmplt.rm_out1, A < 40) ## A < 40
 cmplt.rm_out <- filter(cmplt.rm_out2, A > -1)
-
-
 
 # Plotting ACi Curves -----------------------------------------------------
 
@@ -101,7 +114,7 @@ head(cmplt_trad)
 DAT_fits <- fitacis(cmplt_DAT, group = "unique", id = "unique",
                     varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                     PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(DAT_fits[[16]], main = coef(DAT_fits)$unique[[16]])
+plot(DAT_fits[[18]], main = coef(DAT_fits)$unique[[18]]) ##keep an eye on #7 as the example
 coef(DAT_fits)
 # I made a for loop that saves all the plots
 # I slightly modified it to specify DAT ACi curves
@@ -131,7 +144,7 @@ plot(DAT_fits[[15]], main = par_dat$unique[14])
 trad_fits <- fitacis(cmplt_trad, group = "unique", #id = "unique",
                      varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                      PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(trad_fits[[10]], main = coef(trad_fits)$unique[10]) # 20 is pretty ugly
+plot(trad_fits[[14]], main = coef(trad_fits)$unique[14]) # 20 is pretty ugly
 coef(trad_fits)
 
 ## Make a dataframe of coefficients
