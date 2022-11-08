@@ -51,13 +51,13 @@ setwd("C:/Users/emmel/Desktop/DAT_proj")
 
 
 # Load Data from Directory ------------------------------------------------
-aci_files_nm <- list.files(path = "C:/Users/emmel/Desktop/DAT_proj",
+aci_files_nm <- list.files(path = "C:/Users/emmel/Desktop/DAT_proj/Inputs",
                            pattern = "walkup_aci_clean")
 print(aci_files_nm)
 
 for (i in 1:length(aci_files_nm)) {
-  files1 <- read_xlsx(path = paste0("C:/Users/emmel/Desktop/DAT_proj/", aci_files_nm[i]),
-                      sheet = "Measurements", skip = 14)
+  files1 <- read_xlsx(path = paste0("C:/Users/emmel/Desktop/DAT_proj/Inputs/", 
+                                    aci_files_nm[i]), sheet = "Measurements", skip = 14)
   sliced <- slice(files1, -(1))
   assign(paste0("data_", aci_files_nm[i]), sliced)                     
 }
@@ -125,7 +125,7 @@ rmv_stbl <- function(file_name) {
 `data_2022-08-09-0911_walkup_aci_clean.xlsx` <- rmv_stbl(`data_2022-08-09-0911_walkup_aci_clean.xlsx`)
 `data_2022-08-10-0854_walkup_aci_clean.xlsx` <- rmv_stbl(`data_2022-08-10-0854_walkup_aci_clean.xlsx`)
 `data_2022-08-16-walkup_aci_clean.xlsx` <- rmv_stbl(`data_2022-08-16-walkup_aci_clean.xlsx`)
-
+## or? lapply(aci_files_nm, rmv_stbl)
 
 
 ## Fix data columns into the same kind of data
@@ -188,7 +188,8 @@ all_aci_cln_num <- all_aci_cln %>%
 
 ### adding a column for a four-letter species code and a column for species name
 complete_sp <- all_aci_cln_num %>% 
-  mutate(fourlettercode = Tree_Identifier, SciName = Tree_Identifier)
+  mutate(fourlettercode = Tree_Identifier, SciName = Tree_Identifier,
+         k67.id = Tree_Identifier)
 
 complete_sp$fourlettercode <- recode(complete_sp$fourlettercode,
                                      'Maca1' = 'MAEL',
@@ -222,19 +223,34 @@ complete_sp$SciName <- recode(complete_sp$SciName,
                               'Tree6' = 'Protium apiculatum',
                               'Mela7' = 'Unknown sp.',
                               'maca1' = 'Manilkara elata')
+complete_sp$k67.id <- recode(complete_sp$k67.id,
+                             'Maca1' = 'K67-WT-09',
+                             'maca1' = 'K67-WT-09',
+                             '1' = 'K67-WT-07',
+                             'Tree3' = 'K67-WT-08',
+                             '4' = 'K67-WT-06', 
+                             'Tree5' = 'K67-WT-04',
+                             'Tree6' = 'K67-WT-05',
+                             'Mela7' = 'K67-WT-16',
+                             'tree8' = 'K67-WT-15',
+                             'Tree8' = 'K67-WT-15',
+                             'tree9' = 'K67-WT-17',
+                             'Tree10' = 'K67-WT-13',
+                             'tree11' = 'K67-WT-02',
+                             'tree12' = 'K67-WT-14',
+                             'tree22' = 'K67-WT-18')
 unique(complete_sp$fourlettercode)
-
+unique(complete_sp$k67.id)
 
 
 # Save Complete Data File -------------------------------------------------
 ## Save the assembled file as a .csv
-write.csv(x = complete_sp, file = "clean_aci_data_one_file.csv", 
+write.csv(x = complete_sp, file = paste0(getwd(), "/Inputs/clean_aci_data_one_file.csv"), 
           row.names = FALSE)
 
 
 
 
-###which(duplicated(names(`data_2022-08-16-walkup_aci_clean.xlsx`)))
 
 
 
