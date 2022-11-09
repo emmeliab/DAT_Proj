@@ -78,16 +78,16 @@ exclude_backwardsCi <- function(data, givedf){
   return(data_new)
 }
 
-test <- group_map(.data = cmplt_DAT_grp, .f = exclude_backwardsCi, .keep = TRUE)
+# # Can delete: Apply function and output a list (difficult to work with)
+# test <- group_map(.data = cmplt_DAT_grp, .f = exclude_backwardsCi, .keep = TRUE)
+# test2 <- purrr::map(test, tibble::as_tibble)
+# list2env(test2, envir = .GlobalEnv)
 
-
-# test <- cmplt_DAT_grp %>%
-#   group_by(unique) %>%
-#   group_modify(~{exclude_backwardsCi %>% as.data.frame}, .keep = TRUE)
-
+# Apply function to tibble. if .keep = TRUE this throws an error
+# Additional info: https://stackoverflow.com/questions/63412850/managing-dplyr-group-by-function-to-keep-the-grouping-variable-when-used-in-comb
 test <- cmplt_DAT_grp %>%
   group_by(unique) %>%
-  group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = TRUE)
+  group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
 
 # For loop solution attempt
 for (lf in unique(cmplt_DAT$unique)) {
