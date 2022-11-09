@@ -15,6 +15,7 @@ library(plantecophys)
 library(greekLetters)
 library(ggpubr)
 
+
 # Set working directory to DAT_proj
 #getwd()
 #setwd()
@@ -37,6 +38,62 @@ ggplot() +
 #complete_sp[c(1564:1595),] ## K6709L6 outliers (back-correction); coef_DAT id: [[18]]
 #complete_sp[c(7196:7216),] ## K6707L2 outliers (back correction); coef_DAT id: [[11]]
 #complete_sp[c(7589:7606),] ## K6707L2-2 outliers (back correction); coef_DAT id: [[12]]
+
+# Compare sequential Cis
+first_obs <- k6706l1$obs[which(k6706l1$obs==min(k6706l1$obs))]
+k6706l1_new <- k6706l1
+for(i in 1:201){
+  if(k6706l1$obs[i] >= first_obs+1){
+    print(k6706l1$Ci[i])
+    print(k6706l1$Ci[i] - k6706l1$Ci[i+1])
+    if(k6706l1$Ci[i] - k6706l1$Ci[i+1] > 0){
+      k6706l1_new$Data_QC[i] <- "exclude"
+    } 
+  }
+}
+k6706l1_new <- slice(k6706l1_new, -which(k6706l1_new$Data_QC=="exclude"))
+
+ggplot() +
+  geom_point(data = k6706l1_new, aes(x = Ci, y = A, color = Data_point))
+
+# Find min Ci and exclude points with Anet below the Anet for that min Ci
+min_Ci_ind <- which(k6706l1$Ci == min(k6706l1$Ci))
+k6706l1_new <- slice(k6706l1, -which(k6706l1$A < k6706l1$A[min_Ci_ind]))
+
+ggplot() +
+  geom_point(data = k6706l1_new, aes(x = Ci, y = A, color = Data_point))
+
+# Quick test
+test<-fitacis(k6706l1_new, varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci", PPFD = "Qin", Rd =
+                    "Rd"), Tcorrect = TRUE, fitTPU = FALSE, group = "Data_point")
+plot(test[[1]])
+
+# Make function to find min Ci and exclude points with Anet below the Anet for that min Ci
+exclude_backwardsCi <- function(data, givedf){
+  min_Ci_ind <- which(data$Ci == min(data$Ci))
+  data_new <- slice(data, -which(data$A < data$A[min_Ci_ind]))
+  if(givedf =="TRUE"){
+    data_new <- as.data.frame(data_new)
+  }
+  return(data_new)
+}
+
+# # Can delete: Apply function and output a list (difficult to work with)
+# test <- group_map(.data = cmplt_DAT_grp, .f = exclude_backwardsCi, .keep = TRUE)
+# test2 <- purrr::map(test, tibble::as_tibble)
+# list2env(test2, envir = .GlobalEnv)
+
+# Apply function to tibble. if .keep = TRUE this throws an error
+# Additional info: https://stackoverflow.com/questions/63412850/managing-dplyr-group-by-function-to-keep-the-grouping-variable-when-used-in-comb
+test <- cmplt_DAT_grp %>%
+  group_by(unique) %>%
+  group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
+
+# For loop solution attempt
+for (lf in unique(cmplt_DAT$unique)) {
+  exclude_backwardsCi[lf]
+}
+
 
 #important to slice in descending order!!
 #complete_sp <- slice(complete_sp, -(7992:8025)) # This one didn't work
@@ -104,6 +161,8 @@ cmplt_DAT <- filter(cmplt.grp, Data_point == "Before_DAT") %>%
   select(-contains(greeks("Delta"))) #removes the columns with deltas
 cmplt_DAT <- as.data.frame(cmplt_DAT)
 head(cmplt_DAT)
+
+cmplt_DAT_grp <- group_by(cmplt_DAT, unique)
 
 cmplt_trad <- filter(cmplt.grp, Data_point == "Traditional") %>% 
   select(-contains(greeks("Delta")))
