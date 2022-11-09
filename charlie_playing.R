@@ -32,18 +32,19 @@ k6706l1 <- complete_sp %>% subset(unique == 'K6706L1')
 ggplot() +
    geom_point(data = k6706l1, aes(x = Ci, y = A, color = Data_point))
 
-complete_sp[c(397:402),]  ## K6709L2-2 outliers (back-correction); coef_DAT id: [[16]]
-complete_sp[c(799:8025),] ## K6706L1 outliers (back-correction); coef_DAT id: [[7]]
-complete_sp[c(1564:1595),] ## K6709L6 outliers (back-correction); coef_DAT id: [[18]]
-complete_sp[c(7196:7216),] ## K6707L2 outliers (back correction); coef_DAT id: [[11]]
-complete_sp[c(7589:7606),] ## K6707L2-2 outliers (back correction); coef_DAT id: [[12]]
+#complete_sp[c(397:402),]  ## K6709L2-2 outliers (back-correction); coef_DAT id: [[16]]
+#complete_sp[c(799:825),] ## K6706L1 outliers (back-correction); coef_DAT id: [[7]]
+#complete_sp[c(1564:1595),] ## K6709L6 outliers (back-correction); coef_DAT id: [[18]]
+#complete_sp[c(7196:7216),] ## K6707L2 outliers (back correction); coef_DAT id: [[11]]
+#complete_sp[c(7589:7606),] ## K6707L2-2 outliers (back correction); coef_DAT id: [[12]]
 
 #important to slice in descending order!!
 #complete_sp <- slice(complete_sp, -(7992:8025)) # This one didn't work
-complete_sp <- slice(complete_sp, -(7589:7606)) # This one (somewhat) worked
+#complete_sp <- slice(complete_sp, -(7589:7606)) # This one (somewhat) worked
 #complete_sp <- slice(complete_sp, -(7196:7216)) # This one didn't work
-complete_sp <- slice(complete_sp, -(1564:1595)) # This one worked
-complete_sp <- slice(complete_sp, -(397:402)) # This one worked
+#complete_sp <- slice(complete_sp, -(1564:1595)) # This one worked
+#complete_sp <- slice(complete_sp, -(799:825)) # Check the points on this one... may not have worked.
+#complete_sp <- slice(complete_sp, -(397:402)) # This one worked
 
 ##What I'm finding is that removing the back-correction sometimes helps
 ##Other times it breaks the plantecophys code and doesn't run
