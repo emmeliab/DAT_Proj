@@ -26,47 +26,46 @@ complete_sp <- read.csv("Inputs/clean_aci_with_uniquecode.csv", sep = ",",
 #Create an id data table. This includes the species code so we can merge it later
 unique_ids <- read.csv("Inputs/unique_ids.csv") # same here
 
+
+
+
 # Identify Outliers and filtering ---------------------------------------------------
 
-#Made this separate dataframe and plot to make it easy to inspect any given leaf
-k6706l1 <- complete_sp %>% subset(unique == 'K6706L1')
-ggplot() +
-   geom_point(data = k6706l1, aes(x = Ci, y = A, color = Data_point))
+which(complete_sp$Ci < -50) #4 Ci values are super negative: 394, 395, 396, 398
+which(complete_sp$Ci < -5) # Add in 16 more values, all for MACA1
+complete_sp[c(394,395,396,398),19] # What are those values? Should they be outliers?
+which(complete_sp$A > 40)
+which(complete_sp$A < -1)
+cmplt.rm_out1 <- filter(complete_sp, Ci > -5)
+cmplt.rm_out2 <- filter(cmplt.rm_out1, A < 40) ## A < 40
+cmplt.rm_out <- filter(cmplt.rm_out2, A > -1)
 
-#complete_sp[c(397:402),]  ## K6709L2-2 outliers (back-correction); coef_DAT id: [[16]]
-#complete_sp[c(799:825),] ## K6706L1 outliers (back-correction); coef_DAT id: [[7]]
-#complete_sp[c(1564:1595),] ## K6709L6 outliers (back-correction); coef_DAT id: [[18]]
-#complete_sp[c(7196:7216),] ## K6707L2 outliers (back correction); coef_DAT id: [[11]]
-#complete_sp[c(7589:7606),] ## K6707L2-2 outliers (back correction); coef_DAT id: [[12]]
+## Group by unique
+cmplt.grp <- group_by(cmplt.rm_out, fourlettercode) %>% 
+  group_by(unique)
 
-# Compare sequential Cis
-first_obs <- k6706l1$obs[which(k6706l1$obs==min(k6706l1$obs))]
-k6706l1_new <- k6706l1
-for(i in 1:201){
-  if(k6706l1$obs[i] >= first_obs+1){
-    print(k6706l1$Ci[i])
-    print(k6706l1$Ci[i] - k6706l1$Ci[i+1])
-    if(k6706l1$Ci[i] - k6706l1$Ci[i+1] > 0){
-      k6706l1_new$Data_QC[i] <- "exclude"
-    } 
-  }
-}
-k6706l1_new <- slice(k6706l1_new, -which(k6706l1_new$Data_QC=="exclude"))
+## Separate by DAT and trad, and convert to dataframe
+cmplt_DAT <- filter(cmplt.grp, Data_point == "Before_DAT") %>% 
+  select(-contains(greeks("Delta"))) #removes the columns with deltas
+head(cmplt_DAT)
+## Remove K6709L2-2 cause it is giving us trouble; will fit separately
+DAT_filt <- filter(cmplt_DAT, unique != "K6709L2-2" & unique != "K6714L2" & unique != "K6718L2") %>% 
+  as.data.frame()
+write.csv(x = DAT_filt, file = paste0(getwd(), "/Inputs/filtered_DAT_data.csv"), 
+          row.names = FALSE)
+DAT09l22 <- filter(cmplt_DAT, unique == "K6709L2-2") %>% 
+  as.data.frame()
+DAT14L2 <- filter(cmplt_DAT, unique == "K6714L2") %>% 
+  as.data.frame()
+DAT18L2 <- filter(cmplt_DAT, unique == "K6718L2") %>% 
+  as.data.frame()
 
-ggplot() +
-  geom_point(data = k6706l1_new, aes(x = Ci, y = A, color = Data_point))
 
-# Find min Ci and exclude points with Anet below the Anet for that min Ci
-min_Ci_ind <- which(k6706l1$Ci == min(k6706l1$Ci))
-k6706l1_new <- slice(k6706l1, -which(k6706l1$A < k6706l1$A[min_Ci_ind]))
+cmplt_trad <- filter(cmplt.grp, Data_point == "Traditional") %>% 
+  select(-contains(greeks("Delta")))
+cmplt_trad <- as.data.frame(cmplt_trad)
+head(cmplt_trad)
 
-ggplot() +
-  geom_point(data = k6706l1_new, aes(x = Ci, y = A, color = Data_point))
-
-# Quick test
-test<-fitacis(k6706l1_new, varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci", PPFD = "Qin", Rd =
-                    "Rd"), Tcorrect = TRUE, fitTPU = FALSE, group = "Data_point")
-plot(test[[1]])
 
 # Make function to find min Ci and exclude points with Anet below the Anet for that min Ci
 exclude_backwardsCi <- function(data, givedf){
@@ -85,14 +84,10 @@ exclude_backwardsCi <- function(data, givedf){
 
 # Apply function to tibble. if .keep = TRUE this throws an error
 # Additional info: https://stackoverflow.com/questions/63412850/managing-dplyr-group-by-function-to-keep-the-grouping-variable-when-used-in-comb
-test <- cmplt_DAT_grp %>%
+DAT_filt_ex <- DAT_filt %>%
   group_by(unique) %>%
   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
-
-# For loop solution attempt
-for (lf in unique(cmplt_DAT$unique)) {
-  exclude_backwardsCi[lf]
-}
+DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 
 
 #important to slice in descending order!!
@@ -106,20 +101,9 @@ for (lf in unique(cmplt_DAT$unique)) {
 ##What I'm finding is that removing the back-correction sometimes helps
 ##Other times it breaks the plantecophys code and doesn't run
 
-which(complete_sp$Ci < -50) #4 Ci values are super negative: 394, 395, 396, 398
-which(complete_sp$Ci < -5) # Add in 16 more values, all for MACA1
-complete_sp[c(394,395,396,398),19] # What are those values? Should they be outliers?
-which(complete_sp$A > 40)
-which(complete_sp$A < -1)
-cmplt.rm_out1 <- filter(complete_sp, Ci > -5)
-cmplt.rm_out2 <- filter(cmplt.rm_out1, A < 40) ## A < 40
-cmplt.rm_out <- filter(cmplt.rm_out2, A > -1)
+
 
 # Plotting ACi Curves -----------------------------------------------------
-
-## Group by unique
-cmplt.grp <- group_by(cmplt.rm_out, fourlettercode) %>% 
-  group_by(unique)
 
 ## Plot all ACi curves on one graph by Species
 #ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = fourlettercode)) +
@@ -156,29 +140,14 @@ cmplt.grp <- group_by(cmplt.rm_out, fourlettercode) %>%
 
 # Fitting ACi Curves ------------------------------------------------------
 
-## Separate by DAT and trad, and convert to dataframe
-cmplt_DAT <- filter(cmplt.grp, Data_point == "Before_DAT") %>% 
-  select(-contains(greeks("Delta"))) #removes the columns with deltas
-cmplt_DAT <- as.data.frame(cmplt_DAT)
-head(cmplt_DAT)
-
-cmplt_DAT_grp <- group_by(cmplt_DAT, unique)
-
-cmplt_trad <- filter(cmplt.grp, Data_point == "Traditional") %>% 
-  select(-contains(greeks("Delta")))
-cmplt_trad <- as.data.frame(cmplt_trad)
-head(cmplt_trad)
-
-
 # Fit the ACi curves for each species for DAT using fitacis
-DAT_fits <- fitacis(cmplt_DAT, group = "unique", id = "unique",
+DAT_fits <- fitacis(DAT_filt_ex, group = "unique", id = "unique",
                     varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                     PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(DAT_fits[[18]], main = coef(DAT_fits)$unique[[18]]) ##keep an eye on #7 as the example
+plot(DAT_fits[[23]], main = coef(DAT_fits)$unique[[23]]) ##keep an eye on #7 as the example
 coef(DAT_fits)
-# I made a for loop that saves all the plots
-# I slightly modified it to specify DAT ACi curves
-for (curve in 1:33){
+#For loop to save all the plots
+for (curve in 1:30){
   title <- coef(DAT_fits)$unique[[curve]]
   png(filename = paste0(getwd(), "/Outputs/", title,"_dataci_curve.png"))
   plot(DAT_fits[[curve]], main = title)
@@ -330,3 +299,52 @@ scat_jmax
 
 
 
+
+
+
+
+
+
+
+# Testing -----------------------------------------------------------------
+
+#Made this separate dataframe and plot to make it easy to inspect any given leaf
+# k6706l1 <- complete_sp %>% subset(unique == 'K6706L1')
+# ggplot() +
+#    geom_point(data = k6706l1, aes(x = Ci, y = A, color = Data_point))
+
+#complete_sp[c(397:402),]  ## K6709L2-2 outliers (back-correction); coef_DAT id: [[16]]
+#complete_sp[c(799:825),] ## K6706L1 outliers (back-correction); coef_DAT id: [[7]]
+#complete_sp[c(1564:1595),] ## K6709L6 outliers (back-correction); coef_DAT id: [[18]]
+#complete_sp[c(7196:7216),] ## K6707L2 outliers (back correction); coef_DAT id: [[11]]
+#complete_sp[c(7589:7606),] ## K6707L2-2 outliers (back correction); coef_DAT id: [[12]]
+
+
+# # Compare sequential Cis
+# first_obs <- k6706l1$obs[which(k6706l1$obs==min(k6706l1$obs))]
+# k6706l1_new <- k6706l1
+# for(i in 1:201){
+#   if(k6706l1$obs[i] >= first_obs+1){
+#     print(k6706l1$Ci[i])
+#     print(k6706l1$Ci[i] - k6706l1$Ci[i+1])
+#     if(k6706l1$Ci[i] - k6706l1$Ci[i+1] > 0){
+#       k6706l1_new$Data_QC[i] <- "exclude"
+#     } 
+#   }
+# }
+# k6706l1_new <- slice(k6706l1_new, -which(k6706l1_new$Data_QC=="exclude"))
+# 
+# ggplot() +
+#   geom_point(data = k6706l1_new, aes(x = Ci, y = A, color = Data_point))
+# 
+# # Find min Ci and exclude points with Anet below the Anet for that min Ci
+# min_Ci_ind <- which(k6706l1$Ci == min(k6706l1$Ci))
+# k6706l1_new <- slice(k6706l1, -which(k6706l1$A < k6706l1$A[min_Ci_ind]))
+# 
+# ggplot() +
+#   geom_point(data = k6706l1_new, aes(x = Ci, y = A, color = Data_point))
+
+# Quick test
+# test<-fitacis(k6706l1_new, varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci", PPFD = "Qin", Rd =
+#                                              "Rd"), Tcorrect = TRUE, fitTPU = FALSE, group = "Data_point")
+# plot(test[[1]])
