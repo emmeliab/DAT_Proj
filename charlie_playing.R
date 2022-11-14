@@ -2,12 +2,6 @@
 ## This script is to graph, fit, and save the ACi data for our Tapajos 2022 campaign
 
 
-####A bit more processing and some exploring
-
-
-##### Loren, please take a look at the fitacis function, and the traditional fitaci functions
-
-
 # Load Packages/Data ------------------------------------------------------
 ## Load Packages
 library(tidyverse)
@@ -40,7 +34,7 @@ cmplt.rm_out1 <- filter(complete_sp, Ci > -5)
 cmplt.rm_out2 <- filter(cmplt.rm_out1, A < 40) ## A < 40
 cmplt.rm_out <- filter(cmplt.rm_out2, A > -1)
 # Data frame without outliers
-write.csv(x = cmplt.rm_out, file = paste0(getwd(), "/Inputs/DAT_no_out.csv"), 
+write.csv(x = cmplt.rm_out, file = paste0(getwd(), "/Inputs/Aci_no_out.csv"), 
           row.names = FALSE)
 
 

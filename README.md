@@ -17,7 +17,7 @@ Contains:
 * A table of unique identifiers: unique_ids
 * Fully Assembled data file + unique identifiers: clean_aci_with_uniquecode.csv
 * DAT data that filters out the backwards points and three curves that did not fit with fitacis: filtered_DAT_data.csv
-* All aci data with outliers removed: DAT_no_out.csv
+* All aci data with outliers removed: Aci_no_out.csv
 
 ## Outputs
 Contains graphs and tables of ACi data and results of statistical analyses
