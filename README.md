@@ -11,7 +11,11 @@
 
 # Files
 ## Inputs
-Contains Clean data files from the LI-6800 as well as the fully assembled data file titled: clean_aci_data_one_file.csv. Also contains a table of unique identifiers
+Contains: Clean data files from the LI-6800
+Fully assembled data file titled: clean_aci_data_one_file.csv. 
+A table of unique identifiers: unique_ids
+Fully Assembled data file + unique identifiers: clean_aci_with_uniquecode.csv
+DAT data that filters out the backwards points and three curves that did not fit with fitacis: filtered_DAT_data.csv
 
 ## Outputs
 Contains graphs and tables of ACi data and results of statistical analyses
