@@ -39,6 +39,10 @@ which(complete_sp$A < -1)
 cmplt.rm_out1 <- filter(complete_sp, Ci > -5)
 cmplt.rm_out2 <- filter(cmplt.rm_out1, A < 40) ## A < 40
 cmplt.rm_out <- filter(cmplt.rm_out2, A > -1)
+# Data frame without outliers
+write.csv(x = cmplt.rm_out, file = paste0(getwd(), "/Inputs/DAT_no_out.csv"), 
+          row.names = FALSE)
+
 
 ## Group by unique
 cmplt.grp <- group_by(cmplt.rm_out, fourlettercode) %>% 
@@ -175,6 +179,13 @@ trad_fits <- fitacis(cmplt_trad, group = "unique", #id = "unique",
                                      PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
 plot(trad_fits[[14]], main = coef(trad_fits)$unique[14]) # 20 is pretty ugly
 coef(trad_fits)
+# For loop to plot all the curves
+for (curve in 1:28){
+  title <- coef(trad_fits)$unique[[curve]]
+  png(filename = paste0(getwd(), "/Outputs/", title,"_tradaci_curve.png"))
+  plot(trad_fits[[curve]], main = title)
+  dev.off()
+}
 
 ## Make a dataframe of coefficients
 par_trad <- as.data.frame(coef(trad_fits), row.names = NULL)
@@ -184,8 +195,8 @@ par_trad <- par_trad %>%
 
 # Merge DAT and Trad dfs
 par_join <- bind_rows(par_dat, par_trad)
-unique_ids <- rename(unique_ids, "unique" = "?..unique") # I was having some weird problems reading it in
-par_species <- left_join(par_join, unique_ids, by = "unique")
+#unique_ids <- rename(unique_ids, "unique" = "?..unique") # I was having some weird problems reading it in
+#par_species <- left_join(par_join, unique_ids, by = "unique")
 head(par_species)
 
 
@@ -250,14 +261,12 @@ plotNormalHistogram(filt_par_species$Jmax, breaks = 30)
 
 box_both_vcmax <- filt_par_species %>%
   ggplot() +
-  geom_boxplot(aes(x = method, y = Vcmax)) +
-  theme_light()
+  geom_boxplot(aes(x = method, y = Vcmax))
 box_both_vcmax
 
 box_both_jmax <- filt_par_species %>% 
   ggplot() +
-  geom_boxplot(aes(x = method, y = Jmax)) +
-  theme_light()
+  geom_boxplot(aes(x = method, y = Jmax))
 box_both_jmax
 
 
