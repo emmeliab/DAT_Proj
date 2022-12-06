@@ -12,16 +12,28 @@ library(DEoptim)
 library(weathermetrics)
 library(minpack.lm)
 library(readxl)
+library(dplyr)
 
+wd <- "C:/Users/emmel/Desktop/DAT_proj"
 
 #------------------------------------------ 
 #Change the directory where you want to save your data
-setwd("/Users/maquellegarcia/Documents/GitHub/DAT_Proj/Results")
+setwd(paste0(wd, "/Results"))
+
+
+# Check if results file already exist
+file.exists(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.pdf"))
+file.exists(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.csv"))
+
+# Delete files if they already exist
+unlink(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.pdf"))
+unlink(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.csv"))
+
 
 # Give a name to the files (table and pdf) that will receive the results
 arquivo <-"A_ci_fit_DAT_Tapajos"
 # creates the pdf file that will receive the graphs
-  pdf(file=paste(arquivo, ".pdf", sep=""),height=10,width=20)
+  pdf(file=paste(arquivo, ".pdf", sep=""), height=10, width=20)
   
 # Create a list with all the files (Licor's original text format files) that are at the folder you want to analyse
 # This script is designed to analyse files that have only one A-ci curve (no multiple curves, or other types of curves (light, for example)) 
@@ -65,7 +77,7 @@ arquivo <-"A_ci_fit_DAT_Tapajos"
                                 "Km2"),nrow=1)
 
   colnames (output.names)	<- output.names
-  write.table (output.names, paste(arquivo, ".txt", sep=""), append=TRUE, sep="\t",
+  write.csv(output.names, paste0(arquivo, ".csv"), append=TRUE, sep=",",
              row.names=FALSE, col.names=FALSE)
   
   ###Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
@@ -241,25 +253,56 @@ modeled_points3 <- function (par1,par2,par3,par4){
     return(cbind(avb,ajb,atpub,aminb))
 }  
 
+
+
+
 #-----------------------------------------------
-setwd("/Users/maquellegarcia/Documents/GitHub/DAT_Proj/Inputs")
+setwd(paste0(wd, "/Inputs"))
 dir()
-curvas<-read_excel("Aci_no_out.xlsx")
-
-  
-curvas1<-subset(curvas, Data_QC=="OK")
-
-names(curvas)
-  
-  sp<-as.data.frame(unique(curvas1[,"unique_id"]))
-  colnames(sp)<-"sp"
-  sp
+curvas <- read.csv("Aci_no_out.csv", sep = ",", header = TRUE)
+curvas$unique_id <- paste0(curvas$unique, ",", curvas$Data_point)
+colnames(curvas)
   
 
+exclude_backwardsCi <- function(data, givedf){
+  min_Ci_ind <- which(data$Ci == min(data$Ci))
+  data_new <- slice(data, -which(data$A < data$A[min_Ci_ind]))
+  if(givedf =="TRUE"){
+    data_new <- as.data.frame(data_new)
+  }
+  return(data_new)
+}
+
+
+curvas_filt <- curvas %>%
+  group_by(unique_id) %>%
+  group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
+curvas_filt <- as.data.frame(curvas_filt)
+
+
+
+curvas_DAT <- subset(curvas, Data_point == "Before_DAT")
+curvas_trad <- subset(curvas, Data_point == "Traditional")
+
+names(curvas_filt)
+  
+sp <- as.data.frame(unique(curvas_filt[,"unique_id"]))
+colnames(sp) <- "sp"
+sp
+
+  sp_dat <- as.data.frame(unique(curvas_DAT[,"unique_id"]))
+  colnames(sp_dat) <- "sp_dat"
+  sp_dat
+  
+  sp_trad <- as.data.frame(unique(curvas_trad[,"unique_id"]))
+  colnames(sp_trad)<-"sp_trad"
+  sp_trad
+  
+  
   #curve_names<-NULL
   
   for (i in 1:length(sp[,1])) {
-  Curve<- subset(curvas1, unique_id==sp[i,1])
+  Curve <- subset(curvas_filt, unique_id == sp[i,1])
   #Curve<-subset(Curve,excluir<1)
   
 
