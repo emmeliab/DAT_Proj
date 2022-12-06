@@ -16,10 +16,10 @@ library(readxl)
 
 #------------------------------------------ 
 #Change the directory where you want to save your data
-setwd("/Users/maquellegarcia/Documents/GitHub/DAT_Proj/Results")
+#setwd("/Users/maquellegarcia/Documents/GitHub/DAT_Proj/Results")
 
 # Give a name to the files (table and pdf) that will receive the results
-arquivo <-"A_ci_fit_DAT_Tapajos"
+arquivo <-"A_ci_fit_DAT_Tapajos2"
 # creates the pdf file that will receive the graphs
   pdf(file=paste(arquivo, ".pdf", sep=""),height=10,width=20)
   
@@ -65,7 +65,7 @@ arquivo <-"A_ci_fit_DAT_Tapajos"
                                 "Km2"),nrow=1)
 
   colnames (output.names)	<- output.names
-  write.table (output.names, paste(arquivo, ".txt", sep=""), append=TRUE, sep="\t",
+  write.table (output.names, paste(arquivo, ".csv", sep=""), append=TRUE, sep=",",
              row.names=FALSE, col.names=FALSE)
   
   ###Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
@@ -246,8 +246,8 @@ setwd("/Users/maquellegarcia/Documents/GitHub/DAT_Proj/Inputs")
 dir()
 curvas<-read_excel("Aci_no_out.xlsx")
 
-  
-curvas1<-subset(curvas, Data_QC=="OK")
+curvas2<-subset(curvas, Data_QC=="OK")#to exclude weird points 
+curvas1<-subset(curvas, Ci>0)#to avoid negative values 
 
 names(curvas)
   
@@ -366,6 +366,7 @@ names(curvas)
  lower.bound2 <- c(-15, -15, -15,-15, 0.80)     
  upper.bound2 <- c(500, 500, 200, 15, 0.90) 
  
+
    
 # Fitting the A-ci model  using the "optimx" minimization algorithms
   first    <-  subset(optimx(start.values1, A_Ci_Fit1,control=list(all.methods=TRUE)), convcode < 1)
@@ -647,7 +648,7 @@ names(curvas)
 
 
   
-  write.table (output, paste(arquivo, ".txt", sep=""), append=TRUE, sep="\t", row.names=FALSE, col.names=F)
+  write.table (output, paste(arquivo, ".csv", sep=""), append=TRUE, sep=",", row.names=FALSE, col.names=F)
   #start_time <- Sys.time() 
   #end_time <- Sys.time()  
   #Tempo<- difftime(end_time, start_time, units='mins')*(length(curvas1)-which(curvas1 %in% i))
