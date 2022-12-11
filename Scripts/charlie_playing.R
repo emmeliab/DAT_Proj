@@ -11,16 +11,19 @@ library(ggpubr)
 
 
 # Set working directory to DAT_proj
-#getwd()
-#setwd()
+wd <- "C://Users/emmel/Desktop/DAT_proj/"
+setwd(wd)
 
 # Load Data
-complete_sp <- read.csv("Inputs/clean_aci_with_uniquecode.csv", sep = ",", 
-                        fileEncoding="latin1") #changed this to work on anyone's computer
+complete_sp <- read.csv("Inputs/clean_aci_with_uniquecode.csv", sep = ",", header = TRUE,
+                        fileEncoding="latin1")
+complete_sp <- filter(complete_sp, Data_QC == "OK")
 #Create an id data table. This includes the species code so we can merge it later
 unique_ids <- read.csv("Inputs/unique_ids.csv") # same here
 
-
+#complete_sp <- mutate(complete_sp, unique = paste0("K67", substring(complete_sp$k67.id, 8, 9), 
+#                                                   "L", round(complete_sp$Leaf_number, 1)))
+#test <- read.csv("Inputs/clean_aci_with_uniquecode.csv", sep = ",", fileEncoding = "latin1")
 
 
 # Identify Outliers and filtering ---------------------------------------------------
@@ -118,21 +121,21 @@ DAT_filt_ex <- as.data.frame(DAT_filt_ex)
   #  ggtitle(code)
  # plot(gg1)
  # filename1 <- paste("plot_", code, ".png")
- # ggsave(filename1, gg1, path = paste0(getwd(), "/Outputs/"))
+ # ggsave(filename1, gg1, path = paste0(getwd(), "/Figures/"))
 #}
 
-# The same, but for each unique tree ## Charlie changed this on 11/1/22
-# for (id in unique(cmplt.grp$unique)) {
-# df1 <- cmplt.grp %>% filter(unique == id)
-# gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, color = Data_point)) +
-# geom_point() +
-# theme_classic() +
-# scale_color_viridis_d() +
-# ggtitle(id)
-# plot(gg1)
-# filename1 <- paste("plot_", id, ".png")
-# ggsave(filename1, gg1, path = paste0(getwd(), "/Outputs/"))
-# }
+#The same, but for each unique tree ## Charlie changed this on 11/1/22
+for (id in unique(cmplt.grp$unique)) {
+  df1 <- cmplt.grp %>% filter(unique == id)
+  gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, color = Data_point)) +
+    geom_point() +
+    theme_classic() +
+    scale_color_viridis_d() +
+    ggtitle(id)
+  plot(gg1)
+  filename1 <- paste0("plot_", id, ".png")
+  ggsave(filename1, gg1, path = paste0(getwd(), "/Figures/"))
+}
 
 
 

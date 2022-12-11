@@ -21,13 +21,19 @@ wd <- "C:/Users/emmel/Desktop/DAT_proj"
 setwd(paste0(wd, "/Results"))
 
 
-# Check if results file already exist
-file.exists(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.pdf"))
-file.exists(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.csv"))
+# Check if results file already exist and delete if so
+## What is wrong with my for loop?
+files <- c(".pdf", ".csv", "_noback.pdf", "_noback.csv")
+for (i in 1:length(files)){
+  if (file.exists(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos2", i)) == "TRUE"){
+    print(paste0("A_ci_fit_DAT_Tapajos2", i), "exists")
+    unlink(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos2", i))
+  }
+  else{
+    print("File does not exist")
+  }
+}
 
-# Delete files if they already exist
-unlink(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.pdf"))
-unlink(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.csv"))
 
 
 # Give a name to the files (table and pdf) that will receive the results
@@ -77,8 +83,10 @@ arquivo <-"A_ci_fit_DAT_Tapajos2_noback"
                                 "Km2"),nrow=1)
 
   colnames (output.names)	<- output.names
-  write.table (output.names, paste(arquivo, ".csv", sep=""), append=TRUE, sep=",",
-             row.names=FALSE, col.names=FALSE)
+  write.table(output.names, file = paste0(arquivo, ".csv"), append = TRUE, sep=",",
+             row.names = FALSE, col.names = FALSE)
+  
+  results.csv <- data.frame(output.names)
   
   ###Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
   R             <- 0.008314    # Gas constant
@@ -257,7 +265,7 @@ modeled_points3 <- function (par1,par2,par3,par4){
 setwd(paste0(wd, "/Inputs"))
 dir()
 curvas <- read.csv("Aci_no_out.csv", sep = ",", header = TRUE)
-curvas$unique_id <- paste0(curvas$unique, ",", curvas$Data_point)
+curvas$unique_id <- paste0(curvas$unique, "_", curvas$Data_point)
 colnames(curvas)
 
 curvas2<-subset(curvas, Data_QC=="OK")#to exclude weird points 
@@ -678,7 +686,13 @@ curvas_filt <- as.data.frame(curvas_filt)
 
 
   
-  write.table (output, paste(arquivo, ".csv", sep=""), append=TRUE, sep=",", row.names=FALSE, col.names=F)
+  write.table(output, file = paste0(arquivo, ".csv"), append = TRUE, sep = ",", row.names = FALSE, 
+              col.names = FALSE)
+  
+  
+  results.csv[nrow(results.csv) + 1,] <- as.data.frame(output)
+  
+  
   #start_time <- Sys.time() 
   #end_time <- Sys.time()  
   #Tempo<- difftime(end_time, start_time, units='mins')*(length(curvas1)-which(curvas1 %in% i))
@@ -688,3 +702,8 @@ curvas_filt <- as.data.frame(curvas_filt)
 
 dev.off() 
 
+
+
+results.csv2 <- slice(results.csv, -(1))
+results.csv2 <- as.data.frame(results.csv2)
+write.table(x = results.csv2, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
