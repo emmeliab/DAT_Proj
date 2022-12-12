@@ -14,7 +14,7 @@ library(minpack.lm)
 library(readxl)
 library(dplyr)
 
-wd <- "C:/Users/emmel/Desktop/DAT_proj"
+wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj"
 
 #------------------------------------------ 
 #Change the directory where you want to save your data
@@ -37,7 +37,7 @@ for (i in 1:length(files)){
 
 
 # Give a name to the files (table and pdf) that will receive the results
-arquivo <-"A_ci_fit_DAT_Tapajos2_noback"
+arquivo <-"A_ci_fit_DAT_Tapajos2"
 # creates the pdf file that will receive the graphs
   pdf(file=paste(arquivo, ".pdf", sep=""),height=10,width=20)
   
@@ -264,7 +264,8 @@ modeled_points3 <- function (par1,par2,par3,par4){
 #-----------------------------------------------
 setwd(paste0(wd, "/Inputs"))
 dir()
-curvas <- read.csv("Aci_no_out.csv", sep = ",", header = TRUE)
+curvas <- read.csv("Aci_no_out.csv", sep = ",", header = TRUE, fileEncoding="latin1")
+## Charlie added the fileEncoding in order to read the csv into his computer.
 curvas$unique_id <- paste0(curvas$unique, "_", curvas$Data_point)
 colnames(curvas)
 
@@ -288,8 +289,8 @@ curvas_filt <- curvas1 %>%
   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
 curvas_filt <- as.data.frame(curvas_filt)
 
-
-  sp<-as.data.frame(unique(curvas_filt[,"unique_id"]))
+#Change this line for each iteration!!
+  sp<-as.data.frame(unique(curvas1[,"unique_id"]))
   colnames(sp)<-"sp"
   sp
   
@@ -297,7 +298,7 @@ curvas_filt <- as.data.frame(curvas_filt)
   #curve_names<-NULL
   
   for (i in 1:length(sp[,1])) {
-  Curve<- subset(curvas_filt, unique_id==sp[i,1])
+  Curve<- subset(curvas1, unique_id==sp[i,1])
   #Curve<-subset(Curve,excluir<1)
   
 
@@ -702,8 +703,21 @@ curvas_filt <- as.data.frame(curvas_filt)
 
 dev.off() 
 
+#For curvas_filt (back-correction filtered)
+#results.csv2 <- slice(results.csv, -(1))
+#results.csv2 <- as.data.frame(results.csv2)
+#write.table(x = results.csv2, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
+results_back_correct <- results.csv2 %>% mutate(back_filt = "back_filtered")
 
 
-results.csv2 <- slice(results.csv, -(1))
-results.csv2 <- as.data.frame(results.csv2)
-write.table(x = results.csv2, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
+#for curvas1 (non-filtered)
+results.csv3 <- slice(results.csv, -(1))
+results.csv3 <- as.data.frame(results.csv3)
+#write.table(x = results.csv3, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
+results_no_correct <- results.csv3 %>% mutate(back_filt = "no_back")
+
+results_complete <- rbind(results_back_correct, results_no_correct)
+
+complete_curve <- apply(results_complete, 2, as.character) #This coerces the dataframe into character first
+write.csv(complete_curve, file = "~/Documents/GitHub/DAT_Proj/Results/curve_fitting_out.csv", #Had trouble with the wd situation
+          row.names = FALSE)
