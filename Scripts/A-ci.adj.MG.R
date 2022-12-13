@@ -714,7 +714,7 @@ results_back_correct <- results.csv2 %>% mutate(back_filt = "back_filtered")
 results.csv3 <- slice(results.csv, -(1))
 results.csv3 <- as.data.frame(results.csv3)
 #write.table(x = results.csv3, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
-results_no_correct <- results.csv3 %>% mutate(back_filt = "no_back")
+results_no_correct <- results.csv3 %>% mutate(back_filt = "no_back") #Change this to "original"
 
 results_complete <- rbind(results_back_correct, results_no_correct)
 
