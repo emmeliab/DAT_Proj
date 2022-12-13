@@ -29,11 +29,39 @@ curves_final <- curves_df_fixed
 
 #This is the data without the back-correction filter
 curves_no_back <- subset(curves_final, back_filt == "no_back")
-curv_nobk <- group_by(curves_no_back, DAT) %>%
-  summarise(
-    count = n(),
-    mean = mean(vcmax_Best_Model, na.rm = TRUE),
-    sd = sd(vcmax_Best_Model, na.rm = TRUE))
+
+#group means for DAT and Trad results
+leaf2 <- mutate(curves_no_back, leaf_unique = substring(curves_no_back$leaf_id, 1, 7))
+
+grp_leaf <- leaf2 %>% group_by(DAT, leaf_unique) %>%
+  summarise(mean_vcmax=mean(vcmax_Best_Model),
+            mean_jmax= mean(Jmax_Best),
+            mean_tpumax= mean(TPU_Best)) %>%
+  as.data.frame()
+
+grp_tree <- curves_no_back %>% group_by(DAT,tree_id) %>% 
+  summarise(mean_vcmax=mean(vcmax_Best_Model),
+            sd_vcmax = sd(vcmax_Best_Model),
+            mean_jmax= mean(Jmax_Best),
+            sd_jmax= sd(Jmax_Best),
+            mean_tpumax= mean(TPU_Best),
+            sd_tpumax= sd(TPU_Best),
+            .groups = 'drop') %>%
+  as.data.frame()
+
+#DAT vs Trad t-tests
+dat_mean_df <- subset(grp_tree, DAT=="Before_DAT")
+trad_mean_df <- subset(grp_tree, DAT=="Traditional")
+
+res2<-t.test(dat_mean_df$mean_vcmax, trad_mean_df$mean_vcmax, paired=TRUE)
+res2
+
+res3<-t.test(dat_mean_df$mean_jmax, trad_mean_df$mean_jmax, paired=TRUE)
+res3
+
+res4<-t.test(dat_mean_df$mean_tpumax, trad_mean_df$mean_tpumax, paired=TRUE)
+res4
+
 
 #Testing whether the back-corrected are different from the non-back-filtered
 dat_all <- subset(curves_final, DAT=="Before_DAT")
@@ -46,6 +74,14 @@ b2 <- ggplot(dat_all, aes(x=back_filt, y=vcmax_Best_Model)) +
   theme(legend.position="none")
 b2
 
+b3 <- ggplot(dat_all, aes(x=back_filt, y=Jmax_Best)) +
+  geom_boxplot()+
+  labs(x="Dataset", y = "Jmax")+
+  scale_fill_manual(values=c("#E69F00","#7bccc4"))+
+  theme_classic()+
+  theme(legend.position="none")
+b3
+
 #T-tests
 #back filtered vs non-back-filtered
 dat_noback <- subset(dat_all, back_filt=="no_back")
@@ -53,22 +89,8 @@ dat_filt <- subset(dat_all, back_filt=="back_filtered")
 res<-t.test(dat_noback$vcmax_Best_Model, dat_filt$vcmax_Best_Model, paired=TRUE) #Need same number
 res #These are not significantly different!
 
-
-#DAT vs Trad -- How to do this with different numbers of curves for DAT vs Trad???
-dat_df <- subset(curves_no_back, DAT=="Before_DAT")
-trad_df <- subset(curves_no_back, DAT=="Traditional")
-
-# res2<-t.test(dat_grp$vcmax_Best_Model, trad_grp$vcmax_Best_Model, paired=TRUE) #Need same number
-# res2
-# 
-# res3<-t.test(dat_df$Jmax_Best, trad_df$Jmax_Best, paired=TRUE) #Need same number
-# res3
-# 
-# res4<-t.test(dat_df$TPU_Best, trad_df$TPU_Best, paired=TRUE) #Need same number
-# res4
-# 
-# res5<-t.test(dat_df$Rd_Best, trad_df$Rd_Best, paired=TRUE) #Need same number
-# res5
+res8<-t.test(dat_noback$Jmax_Best, dat_filt$Jmax_Best, paired=TRUE) #Need same number
+res8 #These are not significantly different!
 
 #Some plotting
 b1 <- ggplot(curves_no_back, aes(x=curves_no_back$DAT, y=vcmax_Best_Model)) +
@@ -97,11 +119,14 @@ g1 <- ggplot(data = curves_no_back, aes(x = tree_id, y = vcmax_Best_Model)) +
 g1
 
 # Creates the linked point scatter
-filt_par_dummy <- mutate(.data = curves_no_back,# makes a dummy variable to plot
-                         dummy = if_else(curves_no_back$DAT == "Before_DAT", 0,1))
 
-scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = vcmax_Best_Model,
-                                                          color = leaf_id)) +
+
+#GROUP THESE BY TREE!!
+filt_par_dummy <- mutate(.data = grp_leaf,# makes a dummy variable to plot
+                         dummy = if_else(grp_leaf$DAT == "Before_DAT", 0,1))
+
+scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_vcmax,
+                                                          color = leaf_unique)) +
   geom_line() + 
   geom_point() +
   theme_classic() +
@@ -116,6 +141,23 @@ scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = vcmax_B
         legend.title=element_text(size=11, family = "serif"))+
   guides(color = guide_legend(title = "Leaf Identifier"))
 scat_vcmax
+
+scat_tpu <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_tpumax,
+                                                          color = substring(filt_par_dummy$leaf_unique, 1, 5))) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() +
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional")) +
+  labs(x="Method", y="TPU")+
+  theme(axis.title.x=element_text(size=11, family = "serif"),
+        axis.title.y=element_text(size=11, family = "serif"),
+        axis.text.x=element_text(size=11, family = "serif"),
+        axis.text.y=element_text(size=11, family = "serif"),
+        legend.text=element_text(size=9, family = "serif"),
+        legend.title=element_text(size=11, family = "serif"))+
+  guides(color = guide_legend(title = "Leaf Identifier"))
+scat_tpu
+
 
 #Testing for normality
 mydata1 <- curves_no_back %>%
