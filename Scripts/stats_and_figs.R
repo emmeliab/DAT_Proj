@@ -15,7 +15,7 @@ setwd(paste0(wd, "/Figures"))
 
 curves_df <- read.csv("~/Documents/GitHub/DAT_Proj/Results/curve_fitting_out.csv")
 
-#All this is to separate the concatenated tree_name column
+#All this is to separate the concatenated tree_name column ------------------------
 curve_split <- unlist(str_split(curves_df$Tree_id, "_", n=2))
 curve_sub <- subset(curve_split, curve_split != "Before_DAT" & curve_split != "Traditional")
 curves_df$leaf_id <- curve_sub
@@ -30,8 +30,126 @@ curves_final <- curves_df_fixed
 #This is the data without the back-correction filter
 curves_no_back <- subset(curves_final, back_filt == "no_back")
 
-#group means for DAT and Trad results
+#group means for DAT and Trad results -------------------------------
 leaf2 <- mutate(curves_no_back, leaf_unique = substring(curves_no_back$leaf_id, 1, 7))
+
+dat_all <- subset(curves_final, DAT=="Before_DAT")
+
+b1 <- ggplot(dat_all, aes(x=back_filt, y=vcmax_Best_Model)) +
+  geom_boxplot()+
+  labs(x="Dataset", y = "Vcmax")+
+  scale_fill_manual(values=c("#E69F00","#7bccc4"))+
+  theme_classic()+
+  theme(legend.position="none")
+b1
+
+b2 <- ggplot(dat_all, aes(x=back_filt, y=Jmax_Best)) +
+  geom_boxplot()+
+  labs(x="Dataset", y = "Jmax")+
+  scale_fill_manual(values=c("#E69F00","#7bccc4"))+
+  theme_classic()+
+  theme(legend.position="none")
+b2
+
+b3 <- ggplot(dat_all, aes(x=back_filt, y=TPU_Best)) +
+  geom_boxplot()+
+  labs(x="Dataset", y = "TPU")+
+  scale_fill_manual(values=c("#E69F00","#7bccc4"))+
+  theme_classic()+
+  theme(legend.position="none")
+b3
+
+#Plotting DAT vs Trad on the original, "no_back" data -----------------------------
+b4 <- ggplot(leaf2, aes(x=DAT, y=vcmax_Best_Model)) +
+  geom_boxplot()+
+  labs(x="Method", y = "Vcmax")+
+  theme_classic()+
+  theme(legend.position="none")
+b4
+
+b5 <- ggplot(leaf2, aes(x=DAT, y=Jmax_Best)) +
+  geom_boxplot()+
+  labs(x="Method", y = "Jmax")+
+  theme_classic()+
+  theme(legend.position="none")
+b5
+
+b6 <- ggplot(leaf2, aes(x=DAT, y=TPU_Best)) +
+  geom_boxplot()+
+  labs(x="Method", y = "TPU")+
+  theme_classic()+
+  theme(legend.position="none")
+b6
+
+#Just a scatter to understand the spread a bit
+g1 <- ggplot(leaf2, aes(x = tree_id, y = vcmax_Best_Model)) +
+  geom_point() +
+  xlab("Tree")+
+  ylab("Vcmax") +
+  theme_classic() +
+  theme(axis.title.x=element_text(size=11, family = "serif"),
+        axis.title.y=element_text(size=11, family = "serif"),
+        axis.text.x=element_text(size=11, family = "serif"),
+        axis.text.y=element_text(size=11, family = "serif"))
+g1
+
+# Linked point scatter, by leaf_unique ----------------------------------------
+filt_par_dummy <- mutate(.data = grp_leaf,# makes a dummy variable to plot
+                         dummy = if_else(grp_leaf$DAT == "Before_DAT", 0,1))
+
+scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_vcmax,
+                                                          color = leaf_unique)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() +
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional")) +
+  labs(x="Method", y="Vcmax")+
+  theme(axis.title.x=element_text(size=11, family = "serif"),
+        axis.title.y=element_text(size=11, family = "serif"),
+        axis.text.x=element_text(size=11, family = "serif"),
+        axis.text.y=element_text(size=11, family = "serif"),
+        legend.text=element_text(size=9, family = "serif"),
+        legend.title=element_text(size=11, family = "serif"),
+        legend.position="none")+
+  guides(color = guide_legend(title = "Leaf Identifier"))
+scat_vcmax
+
+scat_jmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_jmax,
+                                                         color = leaf_unique)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() +
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional")) +
+  labs(x="Method", y="Jmax")+
+  theme(axis.title.x=element_text(size=11, family = "serif"),
+        axis.title.y=element_text(size=11, family = "serif"),
+        axis.text.x=element_text(size=11, family = "serif"),
+        axis.text.y=element_text(size=11, family = "serif"),
+        legend.text=element_text(size=9, family = "serif"),
+        legend.title=element_text(size=11, family = "serif"),
+        legend.position="none")+
+  guides(color = guide_legend(title = "Leaf Identifier"))
+scat_jmax
+
+scat_tpu <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_tpumax,
+                                                          color = leaf_unique)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() +
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional")) +
+  labs(x="Method", y="TPU")+
+  theme(axis.title.x=element_text(size=11, family = "serif"),
+        axis.title.y=element_text(size=11, family = "serif"),
+        axis.text.x=element_text(size=11, family = "serif"),
+        axis.text.y=element_text(size=11, family = "serif"),
+        legend.text=element_text(size=9, family = "serif"),
+        legend.title=element_text(size=11, family = "serif"))+
+  guides(color = guide_legend(title = "Leaf Identifier"))
+scat_tpu
+
+# The "Maquelle Special", aka 1-to-1
+
+## Maquelle will send code
 
 #Testing for normality, first by the leaf ID ------------------------------------
 #Vcmax
@@ -116,7 +234,6 @@ ks.test(leafnorm_tpu$logdif_tpu, 'pnorm')
 hist(leafnorm_tpu$logdif_tpu)
 qqnorm(leafnorm_tpu$logdif_tpu)
 qqline(leafnorm_tpu$logdif_tpu)
-
 
 #Testing for normality, now by tree ID ------------------------------------
 #Vcmax
@@ -247,7 +364,6 @@ res5
 res6<-t.test(dat_leaf_df$mean_tpumax, trad_leaf_df$mean_tpumax, paired=TRUE)
 res6
 
-
 #Testing whether the back-corrected are different from the non-back-corrected -----------------
 #T-tests
 dat_noback <- subset(dat_all, back_filt=="no_back")
@@ -260,119 +376,6 @@ res8 #These are not significantly different!
 
 res9<-t.test(dat_noback$TPU_Best, dat_filt$TPU_Best, paired=TRUE) #Need same number
 res9
-dat_all <- subset(curves_final, DAT=="Before_DAT")
-
-b1 <- ggplot(dat_all, aes(x=back_filt, y=vcmax_Best_Model)) +
-  geom_boxplot()+
-  labs(x="Dataset", y = "Vcmax")+
-  scale_fill_manual(values=c("#E69F00","#7bccc4"))+
-  theme_classic()+
-  theme(legend.position="none")
-b1
-
-b2 <- ggplot(dat_all, aes(x=back_filt, y=Jmax_Best)) +
-  geom_boxplot()+
-  labs(x="Dataset", y = "Jmax")+
-  scale_fill_manual(values=c("#E69F00","#7bccc4"))+
-  theme_classic()+
-  theme(legend.position="none")
-b2
-
-b3 <- ggplot(dat_all, aes(x=back_filt, y=TPU_Best)) +
-  geom_boxplot()+
-  labs(x="Dataset", y = "TPU")+
-  scale_fill_manual(values=c("#E69F00","#7bccc4"))+
-  theme_classic()+
-  theme(legend.position="none")
-b3
-
-#Plotting DAT vs Trad on the original, "no_back" data -----------------------------
-b4 <- ggplot(leaf2, aes(x=DAT, y=vcmax_Best_Model)) +
-  geom_boxplot()+
-  labs(x="Method", y = "Vcmax")+
-  theme_classic()+
-  theme(legend.position="none")
-b4
-
-b5 <- ggplot(leaf2, aes(x=DAT, y=Jmax_Best)) +
-  geom_boxplot()+
-  labs(x="Method", y = "Jmax")+
-  theme_classic()+
-  theme(legend.position="none")
-b5
-
-b6 <- ggplot(leaf2, aes(x=DAT, y=TPU_Best)) +
-  geom_boxplot()+
-  labs(x="Method", y = "TPU")+
-  theme_classic()+
-  theme(legend.position="none")
-b6
-
-#Just a scatter to understand the spread a bit
-g1 <- ggplot(leaf2, aes(x = tree_id, y = vcmax_Best_Model)) +
-  geom_point() +
-  xlab("Tree")+
-  ylab("Vcmax") +
-  theme_classic() +
-  theme(axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"))
-g1
-
-# Linked point scatter, by leaf_unique ----------------------------------------
-filt_par_dummy <- mutate(.data = grp_leaf,# makes a dummy variable to plot
-                         dummy = if_else(grp_leaf$DAT == "Before_DAT", 0,1))
-
-scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_vcmax,
-                                                          color = leaf_unique)) +
-  geom_line() + 
-  geom_point() +
-  theme_classic() +
-  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional")) +
-  labs(x="Method", y="Vcmax")+
-  theme(axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"),
-        legend.text=element_text(size=9, family = "serif"),
-        legend.title=element_text(size=11, family = "serif"),
-        legend.position="none")+
-  guides(color = guide_legend(title = "Leaf Identifier"))
-scat_vcmax
-
-scat_jmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_jmax,
-                                                         color = leaf_unique)) +
-  geom_line() + 
-  geom_point() +
-  theme_classic() +
-  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional")) +
-  labs(x="Method", y="Jmax")+
-  theme(axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"),
-        legend.text=element_text(size=9, family = "serif"),
-        legend.title=element_text(size=11, family = "serif"),
-        legend.position="none")+
-  guides(color = guide_legend(title = "Leaf Identifier"))
-scat_jmax
-
-scat_tpu <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_tpumax,
-                                                          color = leaf_unique)) +
-  geom_line() + 
-  geom_point() +
-  theme_classic() +
-  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional")) +
-  labs(x="Method", y="TPU")+
-  theme(axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"),
-        legend.text=element_text(size=9, family = "serif"),
-        legend.title=element_text(size=11, family = "serif"))+
-  guides(color = guide_legend(title = "Leaf Identifier"))
-scat_tpu
 
 ## Leaf/Leaflet position? ------------------------------------------------
 
