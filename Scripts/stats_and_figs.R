@@ -2,6 +2,7 @@
 
 library(tidyverse)
 library(ggpubr)
+library(ggrepel)
 
 wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj"
 
@@ -60,25 +61,29 @@ b3 <- ggplot(dat_all, aes(x=back_filt, y=TPU_Best)) +
 b3
 
 #Plotting DAT vs Trad on the original, "no_back" data -----------------------------
+label_backfilt <- c('Back Filtered', 'Original')
 b4 <- ggplot(leaf2, aes(x=DAT, y=vcmax_Best_Model)) +
   geom_boxplot()+
   labs(x="Method", y = "Vcmax")+
   theme_classic()+
-  theme(legend.position="none")
+  theme(legend.position="none")+
+  scale_x_discrete(labels=label_backfilt)
 b4
 
 b5 <- ggplot(leaf2, aes(x=DAT, y=Jmax_Best)) +
   geom_boxplot()+
   labs(x="Method", y = "Jmax")+
   theme_classic()+
-  theme(legend.position="none")
+  theme(legend.position="none")+
+  scale_x_discrete(labels=label_backfilt)
 b5
 
 b6 <- ggplot(leaf2, aes(x=DAT, y=TPU_Best)) +
   geom_boxplot()+
   labs(x="Method", y = "TPU")+
   theme_classic()+
-  theme(legend.position="none")
+  theme(legend.position="none")+
+  scale_x_discrete(labels=label_backfilt)
 b6
 
 #Just a scatter to understand the spread a bit
@@ -93,18 +98,43 @@ g1 <- ggplot(leaf2, aes(x = tree_id, y = vcmax_Best_Model)) +
         axis.text.y=element_text(size=11, family = "serif"))
 g1
 
+# Group data for further analysis
+grp_leaf <- leaf2 %>% group_by(DAT, leaf_unique) %>%
+  summarise(mean_vcmax=mean(vcmax_Best_Model),
+            mean_jmax= mean(Jmax_Best),
+            mean_tpumax= mean(TPU_Best)) %>%
+  as.data.frame()
+
+grp_tree <- leaf2 %>% group_by(DAT,tree_id) %>% 
+  summarise(mean_vcmax=mean(vcmax_Best_Model),
+            sd_vcmax = sd(vcmax_Best_Model),
+            mean_jmax= mean(Jmax_Best),
+            sd_jmax= sd(Jmax_Best),
+            mean_tpumax= mean(TPU_Best),
+            sd_tpumax= sd(TPU_Best),
+            .groups = 'drop') %>%
+  as.data.frame()
+
 # Linked point scatter, by leaf_unique ----------------------------------------
 filt_par_dummy <- mutate(.data = grp_leaf,# makes a dummy variable to plot
                          dummy = if_else(grp_leaf$DAT == "Before_DAT", 0,1))
 
 scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_vcmax,
-                                                          color = leaf_unique)) +
+                                                          color = leaf_unique,
+                                                          label = leaf_unique)) +
   geom_line() + 
   geom_point() +
   theme_classic() +
+  geom_text_repel(data          = subset(filt_par_dummy, DAT == "Before_DAT" & mean_vcmax > 100),
+                  size          = 2.8,
+                  box.padding   = 0.25,
+                  point.padding = 0.25,
+                  segment.size  = 0.2,
+                  direction     = "y")+ ## Playing around with this to help visualize
   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional")) +
   labs(x="Method", y="Vcmax")+
-  theme(axis.title.x=element_text(size=11, family = "serif"),
+  theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
+        axis.title.x=element_text(size=11, family = "serif"),
         axis.title.y=element_text(size=11, family = "serif"),
         axis.text.x=element_text(size=11, family = "serif"),
         axis.text.y=element_text(size=11, family = "serif"),
@@ -320,23 +350,6 @@ qqline(treenorm_tpu$logdif_tpu)
 
 
 #T-testing ----------------------------------------------------------------
-
-# Group data for t-tests
-grp_leaf <- leaf2 %>% group_by(DAT, leaf_unique) %>%
-  summarise(mean_vcmax=mean(vcmax_Best_Model),
-            mean_jmax= mean(Jmax_Best),
-            mean_tpumax= mean(TPU_Best)) %>%
-  as.data.frame()
-
-grp_tree <- leaf2 %>% group_by(DAT,tree_id) %>% 
-  summarise(mean_vcmax=mean(vcmax_Best_Model),
-            sd_vcmax = sd(vcmax_Best_Model),
-            mean_jmax= mean(Jmax_Best),
-            sd_jmax= sd(Jmax_Best),
-            mean_tpumax= mean(TPU_Best),
-            sd_tpumax= sd(TPU_Best),
-            .groups = 'drop') %>%
-  as.data.frame()
 
 #DAT vs Trad t-tests -- tree level -- Will need to re-run with normal transformations!
 dat_tree_df <- subset(grp_tree, DAT=="Before_DAT")
