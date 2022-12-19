@@ -298,8 +298,9 @@ curvas_filt <- as.data.frame(curvas_filt)
   #curve_names<-NULL
   
   for (i in 1:length(sp[,1])) {
-  Curve<- subset(curvas1, unique_id==sp[i,1])
+  Curve <- subset(curvas1, unique_id==sp[i,1])
   #Curve<-subset(Curve,excluir<1)
+  type <- Curve
   
 
   names(Curve)
@@ -694,6 +695,23 @@ curvas_filt <- as.data.frame(curvas_filt)
   results.csv[nrow(results.csv) + 1,] <- as.data.frame(output)
   
   
+  if (identical(type, subset(curvas1, unique_id==sp[i,1])) == TRUE) {
+    #for curvas1 (non-filtered)
+    results.csv3 <- slice(results.csv, -(1))
+    results.csv3 <- as.data.frame(results.csv3)
+    #write.table(x = results.csv3, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
+    results_no_correct <<- results.csv3 %>% 
+      mutate(back_filt = "original")
+  } else if (identical(type, subset(curvas_filt, unique_id==sp[i,1])) == TRUE) {
+    #For curvas_filt (back-correction filtered)
+    results.csv2 <- slice(results.csv, -(1))
+    results.csv2 <- as.data.frame(results.csv2)
+    #write.table(x = results.csv2, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
+    results_back_correct <<- results.csv2 %>% 
+      mutate(back_filt = "back_filtered")
+  }
+  
+  
   #start_time <- Sys.time() 
   #end_time <- Sys.time()  
   #Tempo<- difftime(end_time, start_time, units='mins')*(length(curvas1)-which(curvas1 %in% i))
@@ -703,21 +721,12 @@ curvas_filt <- as.data.frame(curvas_filt)
 
 dev.off() 
 
-#For curvas_filt (back-correction filtered)
-#results.csv2 <- slice(results.csv, -(1))
-#results.csv2 <- as.data.frame(results.csv2)
-#write.table(x = results.csv2, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
-results_back_correct <- results.csv2 %>% mutate(back_filt = "back_filtered")
-
-
-#for curvas1 (non-filtered)
-results.csv3 <- slice(results.csv, -(1))
-results.csv3 <- as.data.frame(results.csv3)
-#write.table(x = results.csv3, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
-results_no_correct <- results.csv3 %>% mutate(back_filt = "no_back") #Change this to "original"
 
 results_complete <- rbind(results_back_correct, results_no_correct)
 
 complete_curve <- apply(results_complete, 2, as.character) #This coerces the dataframe into character first
-write.csv(complete_curve, file = "~/Documents/GitHub/DAT_Proj/Results/curve_fitting_out.csv", #Had trouble with the wd situation
+#write.csv(complete_curve, file = "~/Documents/GitHub/DAT_Proj/Results/curve_fitting_out.csv", #Had trouble with the wd situation
+#          row.names = FALSE)
+
+write.csv(complete_curve, file = paste0(wd, "/Stomata Test/curve_fits_sr.csv"),
           row.names = FALSE)
