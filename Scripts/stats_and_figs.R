@@ -47,7 +47,11 @@ b1 <- ggplot(dat_all, aes(x=back_filt, y=vcmax_Best_Model)) +
   labs(x="Dataset", y = "Vcmax")+
   scale_fill_manual(values=c("#E69F00","#7bccc4"))+
   theme_classic()+
-  theme(legend.position="none")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.position="none")+
   scale_x_discrete(labels=label_backfilt)
 b1
 
@@ -56,7 +60,11 @@ b2 <- ggplot(dat_all, aes(x=back_filt, y=Jmax_Best)) +
   labs(x="Dataset", y = "Jmax")+
   scale_fill_manual(values=c("#E69F00","#7bccc4"))+
   theme_classic()+
-  theme(legend.position="none")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.position="none")+
   scale_x_discrete(labels=label_backfilt)
 b2
 
@@ -65,7 +73,11 @@ b3 <- ggplot(dat_all, aes(x=back_filt, y=TPU_Best)) +
   labs(x="Dataset", y = "TPU")+
   scale_fill_manual(values=c("#E69F00","#7bccc4"))+
   theme_classic()+
-  theme(legend.position="none")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.position="none")+
   scale_x_discrete(labels=label_backfilt)
 b3
 
@@ -80,7 +92,11 @@ b4 <- ggplot(leaf2, aes(x=DAT, y=vcmax_Best_Model)) +
   geom_boxplot()+
   labs(x="Method", y = "Vcmax")+
   theme_classic()+
-  theme(legend.position="none")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.position="none")+
   scale_x_discrete(labels=lab_DATTrad)
 b4
 
@@ -88,7 +104,11 @@ b5 <- ggplot(leaf2, aes(x=DAT, y=Jmax_Best)) +
   geom_boxplot()+
   labs(x="Method", y = "Jmax")+
   theme_classic()+
-  theme(legend.position="none")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.position="none")+
   scale_x_discrete(labels=lab_DATTrad)
 b5
 
@@ -96,7 +116,11 @@ b6 <- ggplot(leaf2, aes(x=DAT, y=TPU_Best)) +
   geom_boxplot()+
   labs(x="Method", y = "TPU")+
   theme_classic()+
-  theme(legend.position="none")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.position="none")+
   scale_x_discrete(labels=lab_DATTrad)
 b6
 
@@ -152,10 +176,10 @@ scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_vc
                      expand = expansion(mult=0.3)) +
   labs(x="Method", y="Vcmax")+
   theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
-        axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"),
+        axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=9, family = "serif"),
         legend.title=element_text(size=11, family = "serif"),
         legend.position="none")
@@ -177,10 +201,11 @@ scat_jmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_jma
   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
                      expand = expansion(mult=0.3)) +
   labs(x="Method", y="Jmax")+
-  theme(axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"),
+  theme(aspect.ratio = 1.5,
+        axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=9, family = "serif"),
         legend.title=element_text(size=11, family = "serif"),
         legend.position="none")+
@@ -203,10 +228,11 @@ scat_tpu <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_tpum
   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
                      expand = expansion(mult=0.3)) +
   labs(x="Method", y="TPU")+
-  theme(axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"),
+  theme(aspect.ratio = 1.5,
+        axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=9, family = "serif"),
         legend.title=element_text(size=11, family = "serif"),
         legend.position ="none")+
@@ -234,14 +260,146 @@ scat_vcmax2 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_
                      expand = expansion(mult=0.3)) +
   labs(x="Method", y="Vcmax")+
   theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
-        axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"),
+        axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=9, family = "serif"),
         legend.title=element_text(size=11, family = "serif"),
         legend.position="none")
 scat_vcmax2
+
+scat_jmax2 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_jmax,
+                                                            color = tree_id,
+                                                            label = code4let)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() +
+  geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
+                  size          = 2.8,
+                  box.padding   = 0.25,
+                  point.padding = 0.25,
+                  segment.size  = 0.2,
+                  direction     = "y",
+                  nudge_x = -0.2)+
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
+                     expand = expansion(mult=0.3)) +
+  labs(x="Method", y="Jmax")+
+  theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
+        axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=9, family = "serif"),
+        legend.title=element_text(size=11, family = "serif"),
+        legend.position="none")
+scat_jmax2
+
+scat_tpu2 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_tpumax,
+                                                           color = tree_id,
+                                                           label = code4let)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() +
+  geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
+                  size          = 2.8,
+                  box.padding   = 0.25,
+                  point.padding = 0.25,
+                  segment.size  = 0.2,
+                  direction     = "y",
+                  nudge_x = -0.2)+
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
+                     expand = expansion(mult=0.3)) +
+  labs(x="Method", y="TPU")+
+  theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
+        axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=9, family = "serif"),
+        legend.title=element_text(size=11, family = "serif"),
+        legend.position="none")
+scat_tpu2
+
+#grouped scatters labelled with relative canopy heights
+scat_vcmax3 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_vcmax,
+                                                            color = tree_id,
+                                                            label = rel_can_pos)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() +
+  geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
+                  size          = 2.8,
+                  box.padding   = 0.25,
+                  point.padding = 0.25,
+                  segment.size  = 0.2,
+                  direction     = "y",
+                  nudge_x = -0.2)+
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
+                     expand = expansion(mult=0.3)) +
+  labs(x="Method", y="Vcmax")+
+  theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
+        axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=9, family = "serif"),
+        legend.title=element_text(size=11, family = "serif"),
+        legend.position="none")
+scat_vcmax3
+
+scat_jmax3 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_jmax,
+                                                           color = tree_id,
+                                                           label = rel_can_pos)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() +
+  geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
+                  size          = 2.8,
+                  box.padding   = 0.25,
+                  point.padding = 0.25,
+                  segment.size  = 0.2,
+                  direction     = "y",
+                  nudge_x = -0.2)+
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
+                     expand = expansion(mult=0.3)) +
+  labs(x="Method", y="Jmax")+
+  theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
+        axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=9, family = "serif"),
+        legend.title=element_text(size=11, family = "serif"),
+        legend.position="none")
+scat_jmax3
+
+scat_tpu3 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_tpumax,
+                                                          color = tree_id,
+                                                          label = rel_can_pos)) +
+  geom_line() + 
+  geom_point() +
+  theme_classic() +
+  geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
+                  size          = 2.8,
+                  box.padding   = 0.25,
+                  point.padding = 0.25,
+                  segment.size  = 0.2,
+                  direction     = "y",
+                  nudge_x = -0.2)+
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
+                     expand = expansion(mult=0.3)) +
+  labs(x="Method", y="TPU")+
+  theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
+        axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=9, family = "serif"),
+        legend.title=element_text(size=11, family = "serif"),
+        legend.position="none")
+scat_tpu3
+
 
 # The "Maquelle Special", aka 1-to-1 ------------------------
 #Maquelle scatter by leaf
@@ -257,10 +415,10 @@ mng_leaf_vcmax <- ggplot(data = leaf_wide_vcmax, mapping = aes(x = vcmax_Trad,
   geom_abline(intercept = 0, slope = 1)+
   theme_classic()+
   labs(x="Traditional Vcmax", y="DAT Vcmax", col = "Species Code")+
-  theme(axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"),
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif"))
 mng_leaf_vcmax
@@ -277,10 +435,10 @@ mng_leaf_jmax <- ggplot(data = leaf_wide_jmax, mapping = aes(x = jmax_Trad,
   geom_abline(intercept = 0, slope = 1)+
   theme_classic()+
   labs(x="Traditional Jmax", y="DAT Jmax", col = "Species Code")+
-  theme(axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"),
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif"))
 mng_leaf_jmax
@@ -297,10 +455,10 @@ mng_leaf_tpu <- ggplot(data = leaf_wide_tpu, mapping = aes(x = tpu_Trad,
   geom_abline(intercept = 0, slope = 1)+
   theme_classic()+
   labs(x="Traditional TPU", y="DAT TPU", col = "Species Code")+
-  theme(axis.title.x=element_text(size=11, family = "serif"),
-        axis.title.y=element_text(size=11, family = "serif"),
-        axis.text.x=element_text(size=11, family = "serif"),
-        axis.text.y=element_text(size=11, family = "serif"),
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif"))
 mng_leaf_tpu
