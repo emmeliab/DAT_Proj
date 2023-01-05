@@ -14,7 +14,7 @@ library(minpack.lm)
 library(readxl)
 library(dplyr)
 
-wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj"
+wd <- "/Users/emmel/Desktop/DAT_proj"
 
 #------------------------------------------ 
 #Change the directory where you want to save your data

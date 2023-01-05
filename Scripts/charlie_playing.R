@@ -99,8 +99,6 @@ DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 #complete_sp <- slice(complete_sp, -(799:825)) # Check the points on this one... may not have worked.
 #complete_sp <- slice(complete_sp, -(397:402)) # This one worked
 
-##What I'm finding is that removing the back-correction sometimes helps
-##Other times it breaks the plantecophys code and doesn't run
 
 
 
@@ -139,9 +137,11 @@ for (id in unique(cmplt.grp$unique)) {
 
 
 
-# Fitting ACi Curves ------------------------------------------------------
+# Fitting ACi Curves with Plantecophys ------------------------------------------------------
 
-# Fit the ACi curves for each species for DAT using fitacis
+
+
+## Fit the ACi curves for each species for DAT using fitacis
 DAT_fits <- fitacis(DAT_filt_ex, group = "unique", id = "unique",
                     varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                     PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
@@ -165,8 +165,7 @@ par_dat <- par_dat %>%
 table(par_dat$method) ## number of initial DAT curves
 
 plot(DAT_fits[[15]], main = par_dat$unique[14])
-### note that some of these estimates are way incorrect. I think it is a problem of ecophys
-### which doesn't seem to  be able to figure out the initial 'back correction'
+
 
 
 
@@ -215,6 +214,98 @@ group_by(filt_par_species, method) %>%
     mean = mean(Vcmax, na.rm = TRUE),
     sd = sd(Vcmax, na.rm = TRUE))
 
+
+
+# Fitting A/Ci curves with photosynthesis ----------------------------------
+
+library(photosynthesis)
+
+cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
+DAT_filt <- filter(cmplt.rm_out, Data_point == "Before_DAT")
+cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
+
+
+
+
+# Convert leaf temperature to Kelvin
+DAT_filt$Tleaf <- DAT_filt$Tleaf + 273
+cmplt_trad$Tleaf <- cmplt_trad$Tleaf + 273
+
+
+
+
+# Fitting one curve at a time
+k6708l1_dat_fit_photo <- fit_aci_response(data = DAT_filt[DAT_filt$unique == "K6708L1", ],
+                                   varnames = list(A_net = "A", T_leaf = "Tleaf", 
+                                                                    C_i = "Ci", PPFD = "Qin"), 
+                                   fitTPU = TRUE)
+k6708l1_dat_fit_photo[[1]]
+k6708l1_dat_fit_photo[[2]]
+
+
+
+k6708l1_trad_fit_photo <- fit_aci_response(data = cmplt_trad[cmplt_trad$unique == "K6708L1", ],
+                                       varnames = list(A_net = "A", T_leaf = "Tleaf", 
+                                                       C_i = "Ci", PPFD = "Qin"), 
+                                       fitTPU = TRUE)
+
+k6708l1_trad_fit_photo[[1]]
+k6708l1_trad_fit_photo[[2]]
+
+
+
+
+# fitting many curves at a time
+trad_fits_photo <- fit_many(data = cmplt_trad, 
+                            varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
+                            funct = fit_aci_response,
+                            group = "unique")
+trad_fits_photo_graphs <- compile_data(trad_fits_photo,
+                            list_element = 2)
+trad_fits_photo_pars <- compile_data(trad_fits_photo,
+                          output_type = "dataframe",
+                          list_element = 1)
+
+
+pdf(file = paste0(wd,"Figures/trad_fits_photo_figs.pdf"), height=10, width=20)
+plot.new()
+for (curve in 1:28){
+  title <- trad_fits_photo_pars$ID[[curve]]
+  plot(trad_fits_photo_graphs[[curve]], main = title)
+  text(30, 5, labels = as.character(title))
+}
+dev.off()
+
+write.csv(x = trad_fits_photo_pars, file = paste0(wd, "Results/trad_fits_photo_pars.csv"),
+          row.names = FALSE)
+
+
+
+
+
+
+dat_fits_photo <- fit_many(data = DAT_filt, 
+                            varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
+                            funct = fit_aci_response,
+                            group = "unique")
+dat_fits_photo_graphs <- compile_data(dat_fits_photo,
+                                       list_element = 2)
+dat_fits_photo_pars <- compile_data(dat_fits_photo,
+                                     output_type = "dataframe",
+                                     list_element = 1)
+
+
+pdf(file = paste0(wd,"Figures/dat_fits_photo_figs.pdf"), height=10, width=20)
+plot.new()
+for (curve in 1:28){
+  title <- dat_fits_photo_pars$ID[[curve]]
+  plot(dat_fits_photo_graphs[[curve]], main = title)
+  text(30, 5, labels = as.character(title))
+}
+dev.off()
+
+write.csv(x = dat_fits_photo_pars, file = paste0(wd, "Results/dat_fits_photo_pars.csv"),
+          row.names = FALSE)
 
 
 
