@@ -1,10 +1,12 @@
-### For statistics and analysis
+# Statistical Analysis of A/Ci curve data
 
 library(tidyverse)
 library(ggpubr)
 library(ggrepel)
 
 wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj"
+
+setwd(wd)
 
 #------------------------------------------ 
 #Change all "no_back" to "original" for clarity
@@ -14,7 +16,7 @@ wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj"
 setwd(paste0(wd, "/Figures"))
 
 
-curves_df <- read.csv("~/Documents/GitHub/DAT_Proj/Results/curve_fitting_out.csv")
+curves_df <- read.csv("~/Documents/GitHub/DAT_Proj/Results/curve_fitting_MG_out.csv")
 
 #All this is to separate the concatenated tree_name column ------------------------
 curve_split <- unlist(str_split(curves_df$Tree_id, "_", n=2))

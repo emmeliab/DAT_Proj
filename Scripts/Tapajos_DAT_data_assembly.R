@@ -1,62 +1,23 @@
-# Purpose -----------------------------------------------------------------
-
 ## This script is for cleaning and assembling the ACi curve data collected at the
 ## Tapajos National Forest in Aug 2022 into one file for further analysis
 
-
-
-# Load Packages -----------------------------------------------------------
 
 library(tidyverse)
 library(googledrive)
 library(readxl)
 
+wd <- "C://Users/emmel/Desktop/DAT_proj"
 
-####### Set Working Directory
-setwd("C:/Users/emmel/Desktop/DAT_proj")
-
-# Load from Google Drive (in progress) ------------------------------------
-# 
-# ## Code to import one file
-# file_name <- read_excel("2022-08-14-0906_walkup_aci_clean.xlsx", sheet = "Measurements", skip = 14)
-# View(file_name)
-# 
-# #_____________________________________________________________________________
-# ## First, authorize R to access Google Drive
-# drive_auth(email = "eb0067@mix.wvu.edu")
-# drive_user()
-# 
-# #Check the files in your drive
-# drive_find(n_max = 30)
-# 
-# # Make a list of all the Files you want to upload
-# aci_files_cln <- drive_ls(path =
-#                                # "Albert_lab_ecohydromics/Gas_exchange_Aug_2022/Clean/LI-6800",
-#                             as_id("https://drive.google.com/drive/u/2/folders/1nSKLtjd69BJWFlSwEl-r6d8mqK3mF-9c"),
-#                             pattern = "walkup_aci_clean")
-# print(aci_files_cln)
-# 
-# #Make a FOR loop to download all the files
-# for (i in 1:length(aci_files_cln$name)) {
-#   links <- drive_link(aci_files_cln$name)
-#   files <- drive_download(links[i], overwrite = TRUE)
-#   data <- read_excel(files[[i]], sheet = "Measurements", skip = 14)
-#   #names <- filenames[[i]]
-#   assign(paste0("data_", aci_files_cln$name[i]), data)
-# }
-
-
-
-
+setwd(wd)
 
 
 # Load Data from Directory ------------------------------------------------
-aci_files_nm <- list.files(path = "C:/Users/emmel/Desktop/DAT_proj/Inputs",
+aci_files_nm <- list.files(path = "C:/Users/emmel/Desktop/DAT_proj/Raw_data",
                            pattern = "walkup_aci_clean")
 print(aci_files_nm)
 
 for (i in 1:length(aci_files_nm)) {
-  files1 <- read_xlsx(path = paste0("C:/Users/emmel/Desktop/DAT_proj/Inputs/", 
+  files1 <- read_xlsx(path = paste0("C:/Users/emmel/Desktop/DAT_proj/Raw_data/", 
                                     aci_files_nm[i]), sheet = "Measurements", skip = 14)
   sliced <- slice(files1, -(1))
   assign(paste0("data_", aci_files_nm[i]), sliced)                     
@@ -89,6 +50,7 @@ Reduce(setdiff, list(colnames(`data_2022-08-06-1020_walkup_aci_clean.xlsx`),
 rmv_stbl <- function(file_name) {
   file_name <- file_name[,!grepl(":", colnames(file_name))]
 }
+
 
 ## Rename the different columns and remove stability columns
 `data_2022-08-06-1020_walkup_aci_clean.xlsx` <- `data_2022-08-06-1020_walkup_aci_clean.xlsx` %>% 
@@ -125,7 +87,7 @@ rmv_stbl <- function(file_name) {
 `data_2022-08-09-0911_walkup_aci_clean.xlsx` <- rmv_stbl(`data_2022-08-09-0911_walkup_aci_clean.xlsx`)
 `data_2022-08-10-0854_walkup_aci_clean.xlsx` <- rmv_stbl(`data_2022-08-10-0854_walkup_aci_clean.xlsx`)
 `data_2022-08-16-walkup_aci_clean.xlsx` <- rmv_stbl(`data_2022-08-16-walkup_aci_clean.xlsx`)
-## or? lapply(aci_files_nm, rmv_stbl)
+
 
 
 ## Fix data columns into the same kind of data
@@ -241,6 +203,7 @@ complete_sp$k67.id <- recode(complete_sp$k67.id,
                              'tree22' = 'K67-WT-18')
 unique(complete_sp$fourlettercode)
 unique(complete_sp$k67.id)
+
 
 
 # Save Complete Data File -------------------------------------------------
