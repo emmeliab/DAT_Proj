@@ -7,7 +7,7 @@ library(ggpubr)
 
 
 # Set working directory to DAT_proj
-wd <- "C://Users/emmel/Desktop/DAT_proj/"
+wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
 
@@ -15,8 +15,8 @@ setwd(wd)
 # Identify and Filter Outliers ---------------------------------------------------
 ## Load Data
 complete_sp <- read.csv("Inputs/clean_aci_with_uniquecode.csv", sep = ",", header = TRUE,
-                        fileEncoding="latin1") %>% 
-  filter(complete_sp, Data_QC == "OK") # All A/Ci curve data
+                        fileEncoding="latin1") 
+complete_sp <- filter(complete_sp, Data_QC == "OK") # All A/Ci curve data
 unique_ids <- read.csv("Inputs/unique_ids.csv") # ID data table
 
 
@@ -229,14 +229,17 @@ library(photosynthesis)
 cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
 DAT_filt <- filter(cmplt.rm_out, Data_point == "Before_DAT")
 cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
-
+DAT_filt_ex <- DAT_filt %>%
+  group_by(unique) %>%
+  group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
+DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 
 
 
 # Convert leaf temperature to Kelvin
 DAT_filt$Tleaf <- DAT_filt$Tleaf + 273
 cmplt_trad$Tleaf <- cmplt_trad$Tleaf + 273
-
+DAT_filt_ex$Tleaf <- DAT_filt_ex$Tleaf + 273
 
 
 
@@ -290,7 +293,7 @@ write.csv(x = trad_fits_photo_pars, file = paste0(wd, "Results/trad_fits_photo_p
 
 
 
-dat_fits_photo <- fit_many(data = DAT_filt, 
+dat_fits_photo <- fit_many(data = DAT_filt_ex, ## uses the back-filtered data
                            varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                            funct = fit_aci_response,
                            group = "unique")
