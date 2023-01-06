@@ -728,5 +728,5 @@ complete_curve <- apply(results_complete, 2, as.character) #This coerces the dat
 #write.csv(complete_curve, file = "~/Documents/GitHub/DAT_Proj/Results/curve_fitting_out.csv", #Had trouble with the wd situation
 #          row.names = FALSE)
 
-write.csv(complete_curve, file = paste0(wd, "/Stomata Test/curve_fits_sr.csv"),
+write.csv(complete_curve, file = paste0(wd, "/Results/curve_fitting_MG_out.csv"),
           row.names = FALSE)
