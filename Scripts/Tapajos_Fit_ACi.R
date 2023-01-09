@@ -238,16 +238,18 @@ library(photosynthesis)
 cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
 DAT_filt <- filter(cmplt.rm_out, Data_point == "Before_DAT")
 cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
-DAT_filt_ex <- DAT_filt %>%
-  group_by(unique) %>%
-  group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
-DAT_filt_ex <- as.data.frame(DAT_filt_ex)
+
 
 
 # Try filtering out K6709L2-2, K6712L2, and K6718L2
 DAT_filt <- filter(DAT_filt, unique != "K6709L2-2" & unique != "K6714L2" & unique != "K6718L2") %>% 
   as.data.frame()
 
+
+DAT_filt_ex <- DAT_filt %>%
+  group_by(unique) %>%
+  group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
+DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 
 
 # Convert leaf temperature to Kelvin
