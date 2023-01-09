@@ -115,7 +115,16 @@ for (id in unique(cmplt.grp$unique)) {
 
 
 # Fitting ACi Curves with Plantecophys ------------------------------------------------------
+
+
 library(plantecophys)
+
+
+cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
+cmply_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT")
+cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
+
+
 
 ## Remove K6709L2-2 cause it is giving us trouble; will fit separately
 DAT_filt <- filter(cmplt_DAT, unique != "K6709L2-2" & unique != "K6714L2" & unique != "K6718L2") %>% 
@@ -230,6 +239,11 @@ cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TR
 DAT_filt <- filter(cmplt.rm_out, Data_point == "Before_DAT")
 cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
 
+
+
+# Try filtering out K6709L2-2, K6712L2, and K6718L2
+DAT_filt <- filter(DAT_filt, unique != "K6709L2-2" & unique != "K6714L2" & unique != "K6718L2") %>% 
+  as.data.frame()
 
 
 
