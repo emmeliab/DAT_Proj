@@ -20,7 +20,7 @@ complete_sp <- filter(complete_sp, Data_QC == "OK") # All A/Ci curve data
 unique_ids <- read.csv("Inputs/unique_ids.csv") # ID data table
 
 
-## Identify Outliers and Write new data frame
+## Identify Outliers and Write new data frame -------
 which(complete_sp$Ci < -50) #4 Ci values are super negative: 394, 395, 396, 398
 which(complete_sp$Ci < -5) # Add in 16 more values, all for MACA1
 complete_sp[c(394,395,396,398),19] # What are those values? Should they be outliers?
@@ -36,12 +36,12 @@ write.csv(x = cmplt.rm_out, file = paste0(getwd(), "/Inputs/Aci_no_out.csv"),
 
 
 
-# Load Filtered Data and Split into DAT and Trad --------------------------
+# Load Filtered Data and Split into DAT and Trad  --------------------------
 ## Load Filtered data
 cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
 
 
-## Separate into df of DAT and Trad
+## Separate into df of DAT and Trad ---------
 cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT") %>% 
   select(-contains(greeks("Delta"))) # removes the columns with deltas
 head(cmplt_DAT)
@@ -239,12 +239,13 @@ cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TR
 DAT_filt <- filter(cmplt.rm_out, Data_point == "Before_DAT")
 cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
 
-
-
 # Try filtering out K6709L2-2, K6712L2, and K6718L2
 DAT_filt <- filter(DAT_filt, unique != "K6709L2-2" & unique != "K6714L2" & unique != "K6718L2") %>% 
   as.data.frame()
 
+DAT_filt_bad1 <- filter(cmplt.rm_out, Data_point == "Before_DAT")
+DAT_filt_bad <- filter(DAT_filt_bad1, unique == "K6709L2-2" | unique == "K6714L2" | unique == "K6718L2") %>% 
+  as.data.frame()
 
 DAT_filt_ex <- DAT_filt %>%
   group_by(unique) %>%
@@ -259,7 +260,7 @@ DAT_filt_ex$Tleaf <- DAT_filt_ex$Tleaf + 273
 
 
 
-# Fitting one curve at a time
+# Fitting one curve at a time --------
 k6708l1_dat_fit_photo <- fit_aci_response(data = DAT_filt[DAT_filt$unique == "K6708L1", ],
                                           varnames = list(A_net = "A", T_leaf = "Tleaf", 
                                                           C_i = "Ci", PPFD = "Qin"), 
@@ -280,7 +281,7 @@ k6708l1_trad_fit_photo[[2]]
 
 
 
-# fitting many curves at a time
+# fitting many curves at a time ---------
 trad_fits_photo <- fit_many(data = cmplt_trad, 
                             varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                             funct = fit_aci_response,
@@ -305,10 +306,6 @@ write.csv(x = trad_fits_photo_pars, file = paste0(wd, "Results/trad_fits_photo_p
           row.names = FALSE)
 
 
-
-
-
-
 dat_fits_photo <- fit_many(data = DAT_filt_ex, ## uses the back-filtered data
                            varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                            funct = fit_aci_response,
@@ -320,16 +317,16 @@ dat_fits_photo_pars <- compile_data(dat_fits_photo,
                                     list_element = 1)
 
 
-pdf(file = paste0(wd,"Figures/dat_fit_photo_figs.pdf"), height=10, width=20)
+pdf(file = paste0(wd,"Figures/dat_fit_photo_figs_filt.pdf"), height=10, width=20)
 plot.new()
-for (curve in 1:33){
+for (curve in 1:30){ ### Change this depending on the number of curves!
   title <- dat_fits_photo_pars$ID[[curve]]
   plot(dat_fits_photo_graphs[[curve]], main = title)
   text(30, 5, labels = as.character(title))
 }
 dev.off()
 
-write.csv(x = dat_fits_photo_pars, file = paste0(wd, "Results/dat_fits_photo_pars.csv"),
+write.csv(x = dat_fits_photo_pars, file = paste0(wd, "Results/dat_fits_photo_pars_filt.csv"),
           row.names = FALSE)
 
 
