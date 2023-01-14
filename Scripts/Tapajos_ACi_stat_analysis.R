@@ -4,9 +4,193 @@ library(tidyverse)
 library(ggpubr)
 library(ggrepel)
 
-wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj"
+wd <- "C://Users/emmel/Desktop/DAT_proj/"
 
 setwd(wd)
+
+
+# Comparing fits from photosynthesis, plantecophys, and MG code -----------
+## Note: for comparisons of plantecophys and MG results, I used Vcmax and Jmax corrected to 25 degrees
+
+## Load in the datasets
+params_ecophys <- read.csv(file = paste0(wd, "Results/params_ecophys.csv"), sep = ",", 
+                           header = TRUE) %>% 
+  filter(method == "dat")
+params_ecophys <- add_row(.data = params_ecophys, unique = "K6702L1", Vcmax = NA, Jmax = NA, Rd = NA,
+                          TPU = NA, Vcmax_SE = NA, Jmax_SE = NA, Rd_SE = NA, TPU_SE = NA, 
+                          unique.1 = "K6702L1", method = "dat") %>% 
+  arrange(unique)
+params_photo <- read.csv(file = paste0(wd, "Results/dat_fit_ex_photo_pars.csv"), sep = ",", 
+                         header = TRUE)
+params_mg <- read.csv(file = paste0(wd, "Results/curve_fitting_MG_out.csv"), sep = ",",
+                      header = TRUE) %>% 
+  filter(DAT == "Before_DAT", back_filt == "back_filtered")
+
+
+
+
+
+# Vcmax
+ecovphoto_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_photo$V_cmax, 
+                                        color = params_photo$ID)) +
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys Vcmax", y="Photosynthesis Vcmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 150)) + 
+  scale_y_continuous(limits = c(1, 150))
+ecovphoto_vcmax
+
+
+ecovMG_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_mg$Best_Vcmax_25C, 
+                                     color = params_mg$Tree_id))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys Vcmax", y="MG Vcmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 170)) + 
+  scale_y_continuous(limits = c(1, 170))
+ecovMG_vcmax
+
+
+photovMG_vcmax <- ggplot(mapping = aes(x = params_photo$V_cmax, y = params_mg$vcmax_Best_Model,
+                                       color = params_photo$ID))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x = "Photosynthesis Vcmax", y = "MG Vcmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 170)) + 
+  scale_y_continuous(limits = c(1, 170))
+photovMG_vcmax
+
+
+#Jmax
+ecovMG_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_mg$Best.Jmax_25C,
+                                    color = params_mg$Tree_id))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys Jmax", y="MG Jmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 200)) + 
+  scale_y_continuous(limits = c(1, 200))
+ecovMG_jmax
+# Note: K6706L1 jmax for plantecophys is 800000, and is not included in the graph
+
+
+ecovphoto_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_photo$J_max, 
+                                       color = params_photo$ID))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys Jmax", y="Photosynthesis Jmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 170)) + 
+  scale_y_continuous(limits = c(1, 170))
+ecovphoto_jmax
+# Note: K6706L1 jmax for plantecophys is 800000, and is not included in the graph
+
+
+photovMG_jmax <- ggplot(mapping = aes(x = params_photo$J_max, y = params_mg$Jmax_Best,
+                                      color = params_photo$ID))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Photosynthesis Jmax", y="MG Jmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 200)) + 
+  scale_y_continuous(limits = c(1, 200))
+photovMG_jmax
+
+
+#TPU
+ecovMG_tpu <- ggplot(mapping = aes(x = params_ecophys$TPU, y = params_mg$TPU_Best,
+                                   color = params_mg$Tree_id))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys TPU", y="MG TPU", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 11)) + 
+  scale_y_continuous(limits = c(1, 11))
+ecovMG_tpu
+
+
+
+ecovphoto_tpu <- ggplot(mapping = aes(x = params_ecophys$TPU, y = params_photo$V_TPU,
+                                      color = params_photo$ID))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys TPU", y="Photosynthesis TPU", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 10)) + 
+  scale_y_continuous(limits = c(1, 10))
+ecovphoto_tpu
+# Note: TPU for several of the curves via the photosynthesis package are at 1000 (likely meaning it
+# wasn't fit). These are not included in the chart
+
+
+photovMG_tpu <- ggplot(mapping = aes(x = params_photo$V_TPU, y = params_mg$TPU_Best, 
+                                     color = params_photo$ID))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Photosynthesis TPU", y="MG TPU", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 11)) + 
+  scale_y_continuous(limits = c(1, 11))
+photovMG_tpu
+
+
 
 
 
