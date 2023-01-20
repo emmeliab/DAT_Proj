@@ -3,9 +3,9 @@
 library(tidyverse)
 library(ggpubr)
 library(ggrepel)
+library(hydroGOF)
 
 wd <- "C://Users/emmel/Desktop/DAT_proj/"
-
 setwd(wd)
 
 
@@ -16,12 +16,14 @@ setwd(wd)
 params_ecophys <- read.csv(file = paste0(wd, "Results/params_ecophys.csv"), sep = ",", 
                            header = TRUE) %>% 
   filter(method == "dat")
-params_ecophys <- add_row(.data = params_ecophys, unique = "K6702L1", Vcmax = NA, Jmax = NA, Rd = NA,
-                          TPU = NA, Vcmax_SE = NA, Jmax_SE = NA, Rd_SE = NA, TPU_SE = NA, 
+params_ecophys <- add_row(.data = params_ecophys, unique = "K6702L1", Vcmax = 15.361861, 
+                          Jmax = 27.750436, Rd = -1.010354,
+                          TPU = 1.78906, Vcmax_SE = NA, Jmax_SE = NA, Rd_SE = NA, TPU_SE = NA, 
                           unique.1 = "K6702L1", method = "dat") %>% 
   arrange(unique)
+params_ecophys[7,3] <- NA # since it says it is 800000
 params_photo <- read.csv(file = paste0(wd, "Results/dat_fit_ex_photo_pars.csv"), sep = ",", 
-                         header = TRUE)
+                         header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
 params_mg <- read.csv(file = paste0(wd, "Results/curve_fitting_MG_out.csv"), sep = ",",
                       header = TRUE) %>% 
   filter(DAT == "Before_DAT", back_filt == "back_filtered")
@@ -31,6 +33,7 @@ params_mg <- read.csv(file = paste0(wd, "Results/curve_fitting_MG_out.csv"), sep
 
 
 # Vcmax
+rmse(params_ecophys$Vcmax, params_photo$V_cmax)
 ecovphoto_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_photo$V_cmax, 
                                         color = params_photo$ID)) +
   geom_point()+
@@ -44,10 +47,12 @@ ecovphoto_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_pho
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
   scale_x_continuous(limits = c(1, 150)) + 
-  scale_y_continuous(limits = c(1, 150))
+  scale_y_continuous(limits = c(1, 150)) +
+  annotate(geom = "text", label = "RMSE = 33.32", x = 125, y = 50)
 ecovphoto_vcmax
 
 
+rmse(params_ecophys$Vcmax, params_mg$Best_Vcmax_25C)
 ecovMG_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_mg$Best_Vcmax_25C, 
                                      color = params_mg$Tree_id))+
   geom_point()+
@@ -61,10 +66,12 @@ ecovMG_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_mg$Bes
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
   scale_x_continuous(limits = c(1, 170)) + 
-  scale_y_continuous(limits = c(1, 170))
+  scale_y_continuous(limits = c(1, 170)) +
+  annotate(geom = "text", label = "RMSE = 16.63", x = 125, y = 50)
 ecovMG_vcmax
 
 
+rmse(params_photo$V_cmax, params_mg$vcmax_Best_Model)
 photovMG_vcmax <- ggplot(mapping = aes(x = params_photo$V_cmax, y = params_mg$vcmax_Best_Model,
                                        color = params_photo$ID))+
   geom_point()+
@@ -78,11 +85,13 @@ photovMG_vcmax <- ggplot(mapping = aes(x = params_photo$V_cmax, y = params_mg$vc
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
   scale_x_continuous(limits = c(1, 170)) + 
-  scale_y_continuous(limits = c(1, 170))
+  scale_y_continuous(limits = c(1, 170)) +
+  annotate(geom = "text", label = "RMSE = 22.06", x = 125, y = 50)
 photovMG_vcmax
 
 
 #Jmax
+rmse(params_ecophys$Jmax, params_mg$Best.Jmax_25C) ## see if we can fix the 800000 and try again
 ecovMG_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_mg$Best.Jmax_25C,
                                     color = params_mg$Tree_id))+
   geom_point()+
@@ -96,11 +105,13 @@ ecovMG_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_mg$Best.
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
   scale_x_continuous(limits = c(1, 200)) + 
-  scale_y_continuous(limits = c(1, 200))
+  scale_y_continuous(limits = c(1, 200)) +
+  annotate(geom = "text", label = "RMSE = 23.27", x = 125, y = 50)
 ecovMG_jmax
 # Note: K6706L1 jmax for plantecophys is 800000, and is not included in the graph
 
 
+rmse(params_ecophys$Jmax, params_photo$J_max)
 ecovphoto_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_photo$J_max, 
                                        color = params_photo$ID))+
   geom_point()+
@@ -114,11 +125,13 @@ ecovphoto_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_photo
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
   scale_x_continuous(limits = c(1, 170)) + 
-  scale_y_continuous(limits = c(1, 170))
+  scale_y_continuous(limits = c(1, 170)) +
+  annotate(geom = "text", label = "RMSE = 12.74", x = 125, y = 50)
 ecovphoto_jmax
 # Note: K6706L1 jmax for plantecophys is 800000, and is not included in the graph
 
 
+rmse(params_photo$J_max, params_mg$Jmax_Best)
 photovMG_jmax <- ggplot(mapping = aes(x = params_photo$J_max, y = params_mg$Jmax_Best,
                                       color = params_photo$ID))+
   geom_point()+
@@ -132,11 +145,13 @@ photovMG_jmax <- ggplot(mapping = aes(x = params_photo$J_max, y = params_mg$Jmax
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
   scale_x_continuous(limits = c(1, 200)) + 
-  scale_y_continuous(limits = c(1, 200))
+  scale_y_continuous(limits = c(1, 200)) +
+  annotate(geom = "text", label = "RMSE = 37.64", x = 125, y = 50)
 photovMG_jmax
 
 
 #TPU
+rmse(params_ecophys$TPU, params_mg$TPU_Best)
 ecovMG_tpu <- ggplot(mapping = aes(x = params_ecophys$TPU, y = params_mg$TPU_Best,
                                    color = params_mg$Tree_id))+
   geom_point()+
@@ -150,11 +165,12 @@ ecovMG_tpu <- ggplot(mapping = aes(x = params_ecophys$TPU, y = params_mg$TPU_Bes
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
   scale_x_continuous(limits = c(1, 11)) + 
-  scale_y_continuous(limits = c(1, 11))
+  scale_y_continuous(limits = c(1, 11)) +
+  annotate(geom = "text", label = "RMSE = 1.03", x = 7, y = 3)
 ecovMG_tpu
 
 
-
+rmse(params_ecophys$TPU, params_photo$V_TPU)
 ecovphoto_tpu <- ggplot(mapping = aes(x = params_ecophys$TPU, y = params_photo$V_TPU,
                                       color = params_photo$ID))+
   geom_point()+
@@ -168,12 +184,14 @@ ecovphoto_tpu <- ggplot(mapping = aes(x = params_ecophys$TPU, y = params_photo$V
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
   scale_x_continuous(limits = c(1, 10)) + 
-  scale_y_continuous(limits = c(1, 10))
+  scale_y_continuous(limits = c(1, 10)) +
+  annotate(geom = "text", label = "RMSE = 0.32", x = 7, y = 3)
 ecovphoto_tpu
 # Note: TPU for several of the curves via the photosynthesis package are at 1000 (likely meaning it
 # wasn't fit). These are not included in the chart
 
 
+rmse(params_photo$V_TPU, params_mg$TPU_Best)
 photovMG_tpu <- ggplot(mapping = aes(x = params_photo$V_TPU, y = params_mg$TPU_Best, 
                                      color = params_photo$ID))+
   geom_point()+
@@ -187,7 +205,8 @@ photovMG_tpu <- ggplot(mapping = aes(x = params_photo$V_TPU, y = params_mg$TPU_B
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
   scale_x_continuous(limits = c(1, 11)) + 
-  scale_y_continuous(limits = c(1, 11))
+  scale_y_continuous(limits = c(1, 11)) +
+  annotate(geom = "text", label = "RMSE = 1.47", x = 7, y = 3)
 photovMG_tpu
 
 

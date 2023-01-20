@@ -40,8 +40,7 @@ write.csv(x = cmplt.rm_out, file = paste0(getwd(), "/Inputs/Aci_no_out.csv"),
 ## Load Filtered data
 cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
 
-
-## Separate into df of DAT and Trad ---------
+## Separate into DF of DAT and Trad
 cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT") %>% 
   select(-contains(greeks("Delta"))) # removes the columns with deltas
 head(cmplt_DAT)
@@ -154,16 +153,15 @@ DAT_fits_ecophys <- fitacis(DAT_filt_ex, group = "unique", id = "unique",
 plot(DAT_fits_ecophys[[23]], main = coef(DAT_fits_ecophys)$unique[[23]]) ##keep an eye on #7 as the example
 coef(DAT_fits_ecophys)
 
-#For loop to save all the plots
-for (curve in 1:33){
-  title <- coef(DAT_fits_ecophys)$unique[[curve]]
-  png(filename = paste0(getwd(), "/Figures/", title,"_dataci_curve.png"))
-  plot(DAT_fits_ecophys[[curve]], main = title)
-  dev.off()
-}
+# #For loop to save all the plots
+# for (curve in 1:33){
+#   title <- coef(DAT_fits_ecophys)$unique[[curve]]
+#   png(filename = paste0(getwd(), "/Figures/", title,"_dataci_curve.png"))
+#   plot(DAT_fits_ecophys[[curve]], main = title)
+#   dev.off()
+# }
 
-
-
+# PDF file of all plots
 pdf(file = paste0(wd,"Figures/dataci_ecophys.pdf"), height=10, width=20)
 plot.new()
 for (curve in 1:33){
