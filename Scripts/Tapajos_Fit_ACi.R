@@ -124,21 +124,7 @@ cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT")
 cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
 
 
-
-## Remove K6709L2-2 cause it is giving us trouble; will fit separately
-DAT_filt <- filter(cmplt_DAT, unique != "K6709L2-2" & unique != "K6714L2" & unique != "K6718L2") %>% 
-  as.data.frame()
-write.csv(x = DAT_filt, file = paste0(getwd(), "/Inputs/filtered_DAT_data.csv"), 
-          row.names = FALSE)
-DAT09l22 <- filter(cmplt_DAT, unique == "K6709L2-2") %>% 
-  as.data.frame()
-DAT14L2 <- filter(cmplt_DAT, unique == "K6714L2") %>% 
-  as.data.frame()
-DAT18L2 <- filter(cmplt_DAT, unique == "K6718L2") %>% 
-  as.data.frame()
-
-
-DAT_filt_ex <- DAT_filt %>%
+DAT_filt_ex <- cmplt_DAT %>%
   group_by(unique) %>%
   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
 DAT_filt_ex <- as.data.frame(DAT_filt_ex)
@@ -147,11 +133,20 @@ DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 
 
 ## Fit the ACi curves for each species for DAT using fitacis
-DAT_fits_ecophys <- fitacis(DAT_filt_ex, group = "unique", id = "unique",
+DAT_fits_ecophys <- fitacis(DAT_filt_ex, group = "unique", 
                             varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
-                                            PPFD = "Qin"), fitTPU = TRUE, Tcorrect = TRUE)
-plot(DAT_fits_ecophys[[23]], main = coef(DAT_fits_ecophys)$unique[[23]]) ##keep an eye on #7 as the example
+                                            PPFD = "Qin"), fitTPU = TRUE, Tcorrect = TRUE, citransition = 300)
+plot(DAT_fits_ecophys[[23]], main = coef(DAT_fits_ecophys)$unique[[23]])
 coef(DAT_fits_ecophys)
+
+### Run K6706L1 separately, since it gives a weird curve
+k6706l1 <- filter(DAT_filt_ex, unique == "K6706L1")
+k6706l1_fit <- fitaci(k6706l1, varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
+                                               PPFD = "Qin"), fitTPU = TRUE, Tcorrect = TRUE, 
+                      citransition = 200) # The Ci transition is specified as 200, as per Sharkey's
+                                          # recommendations and to avoid an unreasonable Jmax value
+plot(k6706l1_fit)
+coef(k6706l1_fit)
 
 # #For loop to save all the plots
 # for (curve in 1:33){
@@ -168,12 +163,9 @@ for (curve in 1:33){
   title <- coef(DAT_fits_ecophys)$unique[[curve]]
   plot(DAT_fits_ecophys[[curve]], main = title)
 }
+plot(k6706l1_fit, main = "K6706L1 Fixed")
 dev.off()
 
-
-
-
-#strange curves: #7, 9, 10, 11, 12, 15, 17, 22, 23, 24? 
 
 ## Make a dataframe out of coefficients
 par_dat <- as.data.frame(coef(DAT_fits_ecophys), row.names = NULL)
@@ -197,17 +189,16 @@ trad_fits_ecophys <- fitacis(cmplt_trad, group = "unique", #id = "unique",
 plot(trad_fits_ecophys[[14]], main = coef(trad_fits_ecophys)$unique[14]) # 20 is pretty ugly
 coef(trad_fits_ecophys)
 
-# For loop to plot all the curves
-for (curve in 1:28){
-  title <- coef(trad_fits_ecophys)$unique[[curve]]
-  png(filename = paste0(getwd(), "/Figures/", title,"_tradaci_curve.png"))
-  plot(trad_fits_ecophys[[curve]], main = title)
-  dev.off()
-}
+# # For loop to plot all the curves
+# for (curve in 1:28){
+#   title <- coef(trad_fits_ecophys)$unique[[curve]]
+#   png(filename = paste0(getwd(), "/Figures/", title,"_tradaci_curve.png"))
+#   plot(trad_fits_ecophys[[curve]], main = title)
+#   dev.off()
+# }
 
 
-
-
+# Save all plots to a pdf
 pdf(file = paste0(wd,"Figures/tradaci_ecophys.pdf"), height=10, width=20)
 plot.new()
 for (curve in 1:28){
@@ -230,7 +221,9 @@ par_trad <- par_trad %>%
 
 
 
-# Merge DAT and Trad coeff dfs
+
+
+# Merge DAT and Trad coef dfs
 par_join <- bind_rows(par_dat, par_trad)
 #unique_ids <- rename(unique_ids, "unique" = "?..unique") # I was having some weird problems reading it in
 #par_species <- left_join(par_join, unique_ids, by = "unique")
@@ -238,7 +231,7 @@ head(par_species)
 
 
 write.csv(x = par_join, file = paste0(wd, "/Results/params_ecophys.csv"), row.names = FALSE)
-
+## Note, this does not contain the fixed K6706L1 DAT curve. This is fixed in Tapajos_stat_analysis.R
 
 
 

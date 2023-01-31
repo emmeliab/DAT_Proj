@@ -20,8 +20,11 @@ params_ecophys <- add_row(.data = params_ecophys, unique = "K6702L1", Vcmax = 15
                           Jmax = 27.750436, Rd = -1.010354,
                           TPU = 1.78906, Vcmax_SE = NA, Jmax_SE = NA, Rd_SE = NA, TPU_SE = NA, 
                           unique.1 = "K6702L1", method = "dat") %>% 
-  arrange(unique)
-params_ecophys[7,3] <- NA # since it says it is 800000
+  arrange(unique) # since this curve did not run with the rest of them
+params_ecophys[7] <- c("K6706L1", Vcmax = 23.684034, 
+Jmax = 27.750436, Rd = -1.010354,
+TPU = 1.78906, Vcmax_SE = NA, Jmax_SE = NA, Rd_SE = NA, TPU_SE = NA, 
+unique.1 = "K6702L1", method = "dat")
 params_photo <- read.csv(file = paste0(wd, "Results/dat_fit_ex_photo_pars.csv"), sep = ",", 
                          header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
 params_mg <- read.csv(file = paste0(wd, "Results/curve_fitting_MG_out.csv"), sep = ",",
