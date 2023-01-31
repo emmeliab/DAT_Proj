@@ -3,22 +3,315 @@
 library(tidyverse)
 library(ggpubr)
 library(ggrepel)
+library(hydroGOF)
 
-wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj"
-
+wd <- "C://Users/emmel/Desktop/DAT_proj/"
 setwd(wd)
 
-#------------------------------------------ 
-#Change all "no_back" to "original" for clarity
+## Read in the datasets
+params_ecophys <- read.csv(file = paste0(wd, "Results/params_ecophys.csv"), sep = ",", 
+                           header = TRUE) %>% 
+  filter(method == "dat")
+params_ecophys <- add_row(.data = params_ecophys, unique = "K6702L1", Vcmax = 15.361861, 
+                          Jmax = 27.750436, Rd = -1.010354,
+                          TPU = 1.78906, Vcmax_SE = NA, Jmax_SE = NA, Rd_SE = NA, TPU_SE = NA, 
+                          unique.1 = "K6702L1", method = "dat") %>% 
+  arrange(unique) # since this curve did not run with the rest of them
+#params_ecophys[7] <- c("K6706L1", Vcmax = 23.684034, 
+#Jmax = 27.750436, Rd = -1.010354,
+#TPU = 1.78906, Vcmax_SE = NA, Jmax_SE = NA, Rd_SE = NA, TPU_SE = NA, 
+#unique.1 = "K6702L1", method = "dat")
+params_photo <- read.csv(file = paste0(wd, "Results/dat_fit_ex_photo_pars.csv"), sep = ",", 
+                         header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
+params_mg <- read.csv(file = paste0(wd, "Results/curve_fitting_MG_out.csv"), sep = ",",
+                      header = TRUE) %>% 
+  filter(DAT == "Before_DAT", back_filt == "back_filtered")
 
 
-#Change the directory where you want to save your data
-setwd(paste0(wd, "/Figures"))
+# Comparing fits across photosynthesis, plantecophys, and MG code -----------
+## Note: for comparisons of plantecophys and MG results, I used Vcmax and Jmax corrected to 25 degrees
 
 
-curves_df <- read.csv("~/Documents/GitHub/DAT_Proj/Results/curve_fitting_MG_out.csv")
+# Vcmax
+rmse(params_ecophys$Vcmax, params_photo$V_cmax)
+ecovphoto_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_photo$V_cmax, 
+                                        color = params_photo$ID)) +
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys Vcmax", y="Photosynthesis Vcmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 150)) + 
+  scale_y_continuous(limits = c(1, 150)) +
+  annotate(geom = "text", label = "RMSE = 33.32", x = 125, y = 50)
+ecovphoto_vcmax
 
-#All this is to separate the concatenated tree_name column ------------------------
+
+rmse(params_ecophys$Vcmax, params_mg$Best_Vcmax_25C)
+ecovMG_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_mg$Best_Vcmax_25C, 
+                                     color = params_mg$Tree_id))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys Vcmax", y="MG Vcmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 170)) + 
+  scale_y_continuous(limits = c(1, 170)) +
+  annotate(geom = "text", label = "RMSE = 16.63", x = 125, y = 50)
+ecovMG_vcmax
+
+
+rmse(params_photo$V_cmax, params_mg$vcmax_Best_Model)
+photovMG_vcmax <- ggplot(mapping = aes(x = params_photo$V_cmax, y = params_mg$vcmax_Best_Model,
+                                       color = params_photo$ID))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x = "Photosynthesis Vcmax", y = "MG Vcmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 170)) + 
+  scale_y_continuous(limits = c(1, 170)) +
+  annotate(geom = "text", label = "RMSE = 22.06", x = 125, y = 50)
+photovMG_vcmax
+
+
+#Jmax
+rmse(params_ecophys$Jmax, params_mg$Best.Jmax_25C) ## see if we can fix the 800000 and try again
+ecovMG_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_mg$Best.Jmax_25C,
+                                    color = params_mg$Tree_id))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys Jmax", y="MG Jmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 200)) + 
+  scale_y_continuous(limits = c(1, 200)) +
+  annotate(geom = "text", label = "RMSE = 23.27", x = 125, y = 50)
+ecovMG_jmax
+# Note: K6706L1 jmax for plantecophys is 800000, and is not included in the graph
+
+
+rmse(params_ecophys$Jmax, params_photo$J_max)
+ecovphoto_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_photo$J_max, 
+                                       color = params_photo$ID))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys Jmax", y="Photosynthesis Jmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 170)) + 
+  scale_y_continuous(limits = c(1, 170)) +
+  annotate(geom = "text", label = "RMSE = 12.74", x = 125, y = 50)
+ecovphoto_jmax
+# Note: K6706L1 jmax for plantecophys is 800000, and is not included in the graph
+
+
+rmse(params_photo$J_max, params_mg$Jmax_Best)
+photovMG_jmax <- ggplot(mapping = aes(x = params_photo$J_max, y = params_mg$Jmax_Best,
+                                      color = params_photo$ID))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Photosynthesis Jmax", y="MG Jmax", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 200)) + 
+  scale_y_continuous(limits = c(1, 200)) +
+  annotate(geom = "text", label = "RMSE = 37.64", x = 125, y = 50)
+photovMG_jmax
+
+
+#TPU
+rmse(params_ecophys$TPU, params_mg$TPU_Best)
+ecovMG_tpu <- ggplot(mapping = aes(x = params_ecophys$TPU, y = params_mg$TPU_Best,
+                                   color = params_mg$Tree_id))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys TPU", y="MG TPU", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 11)) + 
+  scale_y_continuous(limits = c(1, 11)) +
+  annotate(geom = "text", label = "RMSE = 1.03", x = 7, y = 3)
+ecovMG_tpu
+
+
+rmse(params_ecophys$TPU, params_photo$V_TPU)
+ecovphoto_tpu <- ggplot(mapping = aes(x = params_ecophys$TPU, y = params_photo$V_TPU,
+                                      color = params_photo$ID))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Plantecophys TPU", y="Photosynthesis TPU", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 10)) + 
+  scale_y_continuous(limits = c(1, 10)) +
+  annotate(geom = "text", label = "RMSE = 0.32", x = 7, y = 3)
+ecovphoto_tpu
+# Note: TPU for several of the curves via the photosynthesis package are at 1000 (likely meaning it
+# wasn't fit). These are not included in the chart
+
+
+rmse(params_photo$V_TPU, params_mg$TPU_Best)
+photovMG_tpu <- ggplot(mapping = aes(x = params_photo$V_TPU, y = params_mg$TPU_Best, 
+                                     color = params_photo$ID))+
+  geom_point()+
+  geom_abline(intercept = 0, slope = 1)+
+  theme_classic()+
+  labs(x="Photosynthesis TPU", y="MG TPU", col = "Leaf")+
+  theme(axis.title.x=element_text(size=18, family = "serif"),
+        axis.title.y=element_text(size=18, family = "serif"),
+        axis.text.x=element_text(size=15, family = "serif"),
+        axis.text.y=element_text(size=15, family = "serif"),
+        legend.text=element_text(size=7, family = "serif"),
+        legend.title=element_text(size=11, family = "serif")) +
+  scale_x_continuous(limits = c(1, 11)) + 
+  scale_y_continuous(limits = c(1, 11)) +
+  annotate(geom = "text", label = "RMSE = 1.47", x = 7, y = 3)
+photovMG_tpu
+
+
+
+
+
+
+# Plantecophys result visualization (fix code to make sense with new variables)---------------------------------------
+## Boxplots
+
+### Vcmax
+box_both_vcmax <- filt_par_species %>%
+  ggplot() +
+  geom_boxplot(aes(x = method, y = Vcmax))
+box_both_vcmax
+
+
+### Jmax
+box_both_jmax <- filt_par_species %>% 
+  ggplot() +
+  geom_boxplot(aes(x = method, y = Jmax))
+box_both_jmax
+
+
+
+# Stacked Scatters
+filt_par_dummy <- mutate(.data = filt_par_species,# makes a dummy variable to plot
+                         dummy = if_else(filt_par_species$method == "dat", 0,1))
+
+
+
+## Vcmax
+scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = Vcmax,
+                                                          color = unique)) + 
+  geom_line() + 
+  geom_point() +
+  theme_light() +
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Trad")) +
+  xlab("Method")
+scat_vcmax
+
+
+## Jmax
+scat_jmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = Jmax,
+                                                         color = unique)) + 
+  geom_line() + 
+  geom_point() +
+  theme_light() +
+  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Trad")) +
+  xlab("Method")
+scat_jmax
+
+
+# Testing Assumptions of Plantecophys results -------------------------------------------------------
+
+
+#### Delete this after fixing code v
+# ## read in the data
+# par_species <- read.csv(file = paste0(wd, "/Results/params_ecophys.csv"), header = TRUE, sep = ",")
+# 
+# ## Filter some outliers
+# which(par_species$Vcmax > 100)
+# which(par_species$Vcmax < 0)
+# filt_par_species <- par_species %>% 
+#   filter(Vcmax < 100 & Vcmax > 0)
+# head(filt_par_species)
+###### ^
+
+## Summary Stats
+table(filt_par_species$method) ## number of each type of curve
+
+group_by(filt_par_species, method) %>%
+  summarise(
+    count = n(),
+    mean = mean(Vcmax, na.rm = TRUE),
+    sd = sd(Vcmax, na.rm = TRUE))
+
+
+# Q-Q plots
+ggqqplot(filt_par_species$Vcmax)
+ggqqplot(filt_par_species$Jmax)
+
+
+
+# Shapiro-Wilk test
+shapiro.test(filt_par_species$Vcmax)
+shapiro.test(filt_par_species$Jmax)
+
+
+
+#I think a wilcox signed-rank test uses non-parametric, paired data.
+wilcox.test(filt_par_species$Vcmax ~ filt_par_species$method, paired = TRUE)
+
+
+
+
+
+
+# Photosynthesis results visualization ------------------------------------
+
+
+
+# MG results visualization ------------------------------------------------
+
+## Separate the concatenated tree ID column
 curve_split <- unlist(str_split(curves_df$Tree_id, "_", n=2))
 curve_sub <- subset(curve_split, curve_split != "Before_DAT" & curve_split != "Traditional")
 curves_df$leaf_id <- curve_sub
@@ -38,9 +331,10 @@ codes_and_can <- left_join(codes, canopy_pos, by = "k67.id")
 names(codes_and_can)[3]="code4let"
 codes_and_can <- subset(codes_and_can, select = -code.y)
 
-curves_final <- left_join(curves_final2, codes_and_can, by = "leaf_id")
 
-#boxplots to demonstrate back-filtered vs original -------------------------------
+
+
+## Boxplots of filtered vs. nonfiltered data
 dat_all <- subset(curves_final, DAT=="Before_DAT")
 
 label_backfilt <- c('Back Filtered', 'Original')
@@ -83,9 +377,14 @@ b3 <- ggplot(dat_all, aes(x=back_filt, y=TPU_Best)) +
   scale_x_discrete(labels=label_backfilt)
 b3
 
-#Plotting DAT vs Trad on the original, "no_back" data -----------------------------
+
+
+
+#### Visualization of DAT vs Traditional
 
 #This is the data without the back-correction filter
+
+## Boxplots
 curves_no_back <- subset(curves_final, back_filt == "no_back")
 leaf2 <- mutate(curves_no_back, leaf_unique = substring(curves_no_back$leaf_id, 1, 7))
 
@@ -156,7 +455,8 @@ grp_tree <- leaf2 %>% group_by(DAT,tree_id) %>%
             .groups = 'drop') %>%
   as.data.frame()
 
-# Linked point scatter, by leaf_unique ----------------------------------------
+
+## Stacked Scatters by leaf
 filt_par_dummy <- mutate(.data = grp_leaf,# makes a dummy variable to plot
                          dummy = if_else(grp_leaf$DAT == "Before_DAT", 0,1))
 
@@ -241,7 +541,8 @@ scat_tpu <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_tpum
   guides(color = guide_legend(title = "Leaf Identifier"))
 scat_tpu
 
-#Linked point scatter, by tree_id ------------------------------------
+
+## Stacked scatter by tree
 filt_par_dummy2 <- mutate(.data = grp_tree,# makes a dummy variable to plot
                           dummy = if_else(grp_tree$DAT == "Before_DAT", 0,1))
 
@@ -272,8 +573,8 @@ scat_vcmax2 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_
 scat_vcmax2
 
 scat_jmax2 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_jmax,
-                                                            color = tree_id,
-                                                            label = code4let)) +
+                                                           color = tree_id,
+                                                           label = code4let)) +
   geom_line() + 
   geom_point() +
   theme_classic() +
@@ -298,8 +599,8 @@ scat_jmax2 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_j
 scat_jmax2
 
 scat_tpu2 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_tpumax,
-                                                           color = tree_id,
-                                                           label = code4let)) +
+                                                          color = tree_id,
+                                                          label = code4let)) +
   geom_line() + 
   geom_point() +
   theme_classic() +
@@ -403,8 +704,11 @@ scat_tpu3 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_tp
 scat_tpu3
 
 
-# The "Maquelle Special", aka 1-to-1 ------------------------
-#Maquelle scatter by leaf
+
+
+## 1:1 plots DAT vs Trad
+# By leaf
+
 #Vcmax
 leaf_sub_vcmax <- select(grp_leaf, mean_vcmax, DAT, leaf_unique, code4let)
 leaf_wide_vcmax <- reshape(leaf_sub_vcmax, idvar = "leaf_unique", timevar = "DAT", direction = "wide")
@@ -431,8 +735,8 @@ leaf_wide_jmax <- reshape(leaf_sub_jmax, idvar = "leaf_unique", timevar = "DAT",
 names(leaf_wide_jmax)[2:4]=c("jmax_DAT", "code4let", "jmax_Trad")
 leaf_wide_jmax <- subset(leaf_wide_jmax, select = -code4let.Traditional)
 mng_leaf_jmax <- ggplot(data = leaf_wide_jmax, mapping = aes(x = jmax_Trad,
-                                                               y = jmax_DAT,
-                                                               color = code4let))+
+                                                             y = jmax_DAT,
+                                                             color = code4let))+
   geom_point()+
   geom_abline(intercept = 0, slope = 1)+
   theme_classic()+
@@ -451,8 +755,8 @@ leaf_wide_tpu <- reshape(leaf_sub_tpu, idvar = "leaf_unique", timevar = "DAT", d
 names(leaf_wide_tpu)[2:4]=c("tpu_DAT", "code4let", "tpu_Trad")
 leaf_wide_tpu <- subset(leaf_wide_tpu, select = -code4let.Traditional)
 mng_leaf_tpu <- ggplot(data = leaf_wide_tpu, mapping = aes(x = tpu_Trad,
-                                                             y = tpu_DAT,
-                                                             color = code4let))+
+                                                           y = tpu_DAT,
+                                                           color = code4let))+
   geom_point()+
   geom_abline(intercept = 0, slope = 1)+
   theme_classic()+
@@ -465,7 +769,10 @@ mng_leaf_tpu <- ggplot(data = leaf_wide_tpu, mapping = aes(x = tpu_Trad,
         legend.title=element_text(size=11, family = "serif"))
 mng_leaf_tpu
 
-#Maquelle scatter by tree
+
+
+# by tree
+
 #Vcmax
 tree_sub_vcmax <- select(grp_tree, mean_vcmax, DAT, tree_id, code4let)
 tree_wide_vcmax <- reshape(tree_sub_vcmax, idvar = "tree_id", timevar = "DAT", direction = "wide")
@@ -492,8 +799,8 @@ tree_wide_jmax <- reshape(tree_sub_jmax, idvar = "tree_id", timevar = "DAT", dir
 names(tree_wide_jmax)[2:4]=c("jmax_DAT", "code4let", "jmax_Trad")
 tree_wide_jmax <- subset(tree_wide_jmax, select = -code4let.Traditional)
 mng_tree_jmax <- ggplot(data = tree_wide_jmax, mapping = aes(x = jmax_Trad,
-                                                               y = jmax_DAT,
-                                                               color = code4let))+
+                                                             y = jmax_DAT,
+                                                             color = code4let))+
   geom_point()+
   geom_abline(intercept = 0, slope = 1)+
   theme_classic()+
@@ -512,8 +819,8 @@ tree_wide_tpu <- reshape(tree_sub_tpu, idvar = "tree_id", timevar = "DAT", direc
 names(tree_wide_tpu)[2:4]=c("tpu_DAT", "code4let", "tpu_Trad")
 tree_wide_tpu <- subset(tree_wide_vcmax, select = -code4let.Traditional)
 mng_tree_tpu <- ggplot(data = tree_wide_tpu, mapping = aes(x = tpu_Trad,
-                                                               y = tpu_DAT,
-                                                               color = code4let))+
+                                                           y = tpu_DAT,
+                                                           color = code4let))+
   geom_point()+
   geom_abline(intercept = 0, slope = 1)+
   theme_classic()+
@@ -526,7 +833,25 @@ mng_tree_tpu <- ggplot(data = tree_wide_tpu, mapping = aes(x = tpu_Trad,
         legend.title=element_text(size=11, family = "serif"))
 mng_tree_tpu
 
-#Testing for normality, first by the leaf ID ------------------------------------
+
+
+# Stats for MG code --------------------------------
+
+#Testing whether the back-corrected are different from the non-back-corrected
+#T-tests
+dat_noback <- subset(dat_all, back_filt=="no_back")
+dat_filt <- subset(dat_all, back_filt=="back_filtered")
+res7<-t.test(dat_noback$vcmax_Best_Model, dat_filt$vcmax_Best_Model, paired=TRUE) #Need same number
+res7 #These are not significantly different!
+
+res8<-t.test(dat_noback$Jmax_Best, dat_filt$Jmax_Best, paired=TRUE) #Need same number
+res8 #These are not significantly different!
+
+res9<-t.test(dat_noback$TPU_Best, dat_filt$TPU_Best, paired=TRUE) #Need same number
+res9
+
+
+## Test for Normality by leaf
 #Vcmax
 leafnorm_vcmax <- leaf2 %>%
   select(leaf_id,vcmax_Best_Model,DAT)%>%
@@ -609,7 +934,8 @@ hist(leafnorm_tpu$logdif_tpu)
 qqnorm(leafnorm_tpu$logdif_tpu)
 qqline(leafnorm_tpu$logdif_tpu)
 
-#Testing for normality, now by tree ID ------------------------------------
+
+## test for normality by tree
 #Vcmax
 treenorm_vcmax <- leaf2 %>%
   select(tree_id,vcmax_Best_Model,DAT)%>%
@@ -693,8 +1019,8 @@ qqnorm(treenorm_tpu$logdif_tpu)
 qqline(treenorm_tpu$logdif_tpu)
 
 
-#T-testing ----------------------------------------------------------------
 
+## T-tests
 #DAT vs Trad t-tests -- tree level -- Will need to re-run with normal transformations!
 dat_tree_df <- subset(grp_tree, DAT=="Before_DAT")
 trad_tree_df <- subset(grp_tree, DAT=="Traditional")
@@ -721,20 +1047,26 @@ res5
 res6<-t.test(dat_leaf_df$mean_tpumax, trad_leaf_df$mean_tpumax, paired=TRUE)
 res6
 
-#Testing whether the back-corrected are different from the non-back-corrected -----------------
-#T-tests
-dat_noback <- subset(dat_all, back_filt=="no_back")
-dat_filt <- subset(dat_all, back_filt=="back_filtered")
-res7<-t.test(dat_noback$vcmax_Best_Model, dat_filt$vcmax_Best_Model, paired=TRUE) #Need same number
-res7 #These are not significantly different!
-
-res8<-t.test(dat_noback$Jmax_Best, dat_filt$Jmax_Best, paired=TRUE) #Need same number
-res8 #These are not significantly different!
-
-res9<-t.test(dat_noback$TPU_Best, dat_filt$TPU_Best, paired=TRUE) #Need same number
-res9
-
-## Leaf/Leaflet position? ------------------------------------------------
 
 
-## Relative canopy height? ------------------------------------------------
+
+
+
+# 
+# setwd(paste0(wd, "/Figures"))
+# 
+# curves_df <- read.csv("~/Documents/GitHub/DAT_Proj/Results/curve_fitting_MG_out.csv")
+# 
+# 
+# 
+# 
+# curves_final <- left_join(curves_final2, codes_and_can, by = "leaf_id")
+# 
+
+
+
+
+
+
+
+

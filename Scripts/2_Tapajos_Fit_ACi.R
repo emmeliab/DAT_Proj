@@ -267,7 +267,7 @@ DAT_filt_ex$Tleaf <- DAT_filt_ex$Tleaf + 273
 
 
 
-# Fitting one curve at a time --------
+# Fitting one curve at a time
 k6708l1_dat_fit_photo <- fit_aci_response(data = DAT_filt[DAT_filt$unique == "K6708L1", ],
                                           varnames = list(A_net = "A", T_leaf = "Tleaf", 
                                                           C_i = "Ci", PPFD = "Qin"), 
@@ -288,7 +288,7 @@ k6708l1_trad_fit_photo[[2]]
 
 
 
-# fitting many curves at a time ---------
+# fitting many curves at a time
 trad_fits_photo <- fit_many(data = cmplt_trad, 
                             varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                             funct = fit_aci_response,
