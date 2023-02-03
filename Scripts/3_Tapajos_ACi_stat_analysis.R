@@ -904,7 +904,7 @@ with(leaf_stat, shapiro.test(vcmax[method == "Traditional"]))
 
 grp_dat <- leaf_stat %>%
   filter(method == "DAT") %>% 
-  group_by(tree_id) %>% 
+  group_by(leaf_unique) %>% 
   summarise(n_vcmax = length(vcmax),
             mean_vcmax = mean(vcmax),
             sd_vcmax = sd(vcmax),
@@ -913,7 +913,7 @@ grp_dat <- leaf_stat %>%
   
 grp_trad <- leaf_stat %>%
   filter(method == "Traditional") %>% 
-  group_by(tree_id) %>% 
+  group_by(leaf_unique) %>% 
   summarise(n_vcmax = length(vcmax),
             mean_vcmax = mean(vcmax),
             sd_vcmax = sd(vcmax),
@@ -935,18 +935,20 @@ wilcox.test(mean_vcmax ~ method, data = grp_all, paired = TRUE)
 
 #Effect size for the independent sample t-test:
 cohen.ES(test = "t", size = "large") # To remind oneself
-cohen.d(mean_vcmax ~ method | Subject(tree_id), data=grp_all, paired = TRUE)
+cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_all, paired = TRUE)
 #small effect size
 
 #### Power Analysis
 
-d <- cohen.d(mean_vcmax ~ method | Subject(tree_id), data=grp_all, paired = TRUE)
+d <- cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_all, paired = TRUE)
 d[["estimate"]]
 
 #How many samples to achieve a certain power?
-pwr.t.test(n = , d = d[["estimate"]], power = 0.8, sig.level = 0.05, type = "paired", alternative = "two.sided")
+pwr1 <- pwr.t.test(n = , d = d[["estimate"]], power = 0.7, sig.level = 0.05, type = "paired", alternative = "two.sided")
+plot(pwr1)
 
 #What was the power of our study?
-pwr.t.test(n = 13, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
+pwr2 <- pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
+plot(pwr2)
 
 #Try log transform!!!!!
