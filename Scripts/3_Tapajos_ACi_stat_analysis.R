@@ -12,11 +12,13 @@ setwd(wd)
 params_ecophys <- read.csv(file = paste0(wd, "Results/params_ecophys.csv"), sep = ",", 
                            header = TRUE) %>% 
   filter(method == "dat")
-params_ecophys <- add_row(.data = params_ecophys, unique = "K6702L1", Vcmax = 15.361861, 
-                          Jmax = 27.750436, Rd = -1.010354,
-                          TPU = 1.78906, Vcmax_SE = NA, Jmax_SE = NA, Rd_SE = NA, TPU_SE = NA, 
-                          unique.1 = "K6702L1", method = "dat") %>% 
-  arrange(unique) # since this curve did not run with the rest of them
+# ## fixed this v
+# params_ecophys <- add_row(.data = params_ecophys, unique = "K6702L1", Vcmax = 15.361861, 
+#                           Jmax = 27.750436, Rd = -1.010354,
+#                           TPU = 1.78906, Vcmax_SE = NA, Jmax_SE = NA, Rd_SE = NA, TPU_SE = NA, 
+#                           unique.1 = "K6702L1", method = "dat") %>% 
+#   arrange(unique) # since this curve did not run with the rest of them
+# ## ^
 #params_ecophys[7] <- c("K6706L1", Vcmax = 23.684034, 
 #Jmax = 27.750436, Rd = -1.010354,
 #TPU = 1.78906, Vcmax_SE = NA, Jmax_SE = NA, Rd_SE = NA, TPU_SE = NA, 
