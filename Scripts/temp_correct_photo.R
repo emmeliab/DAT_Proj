@@ -23,20 +23,24 @@ pars_photo_trad$method <- "Traditional"
 curv_dat_temp <- left_join(by = "ID", pars_photo_dat, grp_dat)
 curv_trad_temp <- left_join(by = "ID", pars_photo_dat, grp_dat)
 
+f_fact_dat <- data.frame()
 for (i in 1:length(curv_dat_temp)){
-  tcleaf[i] <- curv_dat_temp$meanTleaf[i]
+  tcleaf <- curv_dat_temp$meanTleaf[i]
   tcref <- 25
-  f[i] <- ftemp_inst_vcmax(tcleaf[i],tcref) #this function is in the rpmodel package
+  f <- ftemp_inst_vcmax(tcleaf,tcref) #this function is in the rpmodel package
+  f_fact_dat <- rbind(f_fact_dat, f)
 }
-curv_dat_temp$fref <- f
+colnames(f_fact_dat) <- "f_fact"
 curv_dat_temp_adj <- curv_dat_temp %>% 
-  mutate(vcmax_25 = V_cmax * fref)
+  mutate(vcmax_25 = V_cmax * f_fact_dat$f_fact)
 
+f_fact_trad <- data.frame()
 for (i in 1:length(curv_trad_temp)){
-  tcleaf[i] <- curv_trad_temp$meanTleaf[i]
+  tcleaf <- curv_trad_temp$meanTleaf[i]
   tcref <- 25
-  f[i] <- ftemp_inst_vcmax(tcleaf[i],tcref) #this function is in the rpmodel package
+  f <- ftemp_inst_vcmax(tcleaf,tcref) #this function is in the rpmodel package
+  f_fact_trad <- rbind(f_fact_trad, f)
 }
-curv_trad_temp$fref <- f
+colnames(f_fact_trad) <- "f_fact"
 curv_trad_temp_adj <- curv_trad_temp %>% 
-  mutate(vcmax_25 = V_cmax * fref)
+  mutate(vcmax_25 = V_cmax * f_fact_trad$f_fact)
