@@ -11,39 +11,38 @@ library(plantecophys)
 library(DEoptim)
 library(weathermetrics)
 library(minpack.lm)
-library(readxl)
 library(tidyverse)
 
 
 #------------------------------------------ 
 #Change the directory where you want to save your data
 wd <- "C://Users/emmel/Desktop/DAT_proj/"
-setwd(wd)
+setwd(paste0(wd, "Results/"))
 
 # Give a name to the files (table and pdf) that will receive the results
-arquivo <-"A_ci_fit_DAT_Tapajos_20230210"
+arquivo <-"MG_aci_fits_230210"
 # creates the pdf file that will receive the graphs
-pdf(file=paste(arquivo, ".pdf", sep=""),height=10,width=20)
+pdf(file = paste0(arquivo, ".pdf"), height = 10, width = 20)
   
 # Creating a matrix that stores the column names of the text file that will receive the results of this script
-  output.names     <- matrix (c("Tree_id","DAT","person","Mean.Tleaf","Max.Tleaf",
-                                "Asat", "Amax","Amin", "Ci.at.Asat","E.at.Asat","Ca","A/Ci","Ci/Ca",
-                                "gs.at.Asat","gs.index","Mean.gs","mean.RH","Flow",
-                                "mean.Press","Max.VPD","Ciindex",
-                                
-                                
-                                "vcmax_Best_Model","Jmax_Best","Rd_Best",
-                                
-                                "Best_Vcmax_25C",
-                                "Best Jmax_25C",
-                                
-                                "GammaStar",
-                                "Kmi", 
-                                "TleafK.Asat"),nrow=1)
+output.names <- matrix(c("Tree_id","DAT","person","Mean.Tleaf","Max.Tleaf",
+                              "Asat", "Amax","Amin", "Ci.at.Asat","E.at.Asat","Ca","A/Ci","Ci/Ca",
+                              "gs.at.Asat","gs.index","Mean.gs","mean.RH","Flow",
+                              "mean.Press","Max.VPD","Ciindex",
+                              
+                              
+                              "vcmax_Best_Model","Jmax_Best","Rd_Best",
+                              
+                              "Best_Vcmax_25C",
+                              "Best Jmax_25C",
+                              
+                              "GammaStar",
+                              "Kmi", 
+                              "TleafK.Asat"), nrow = 1)
 
-  colnames (output.names)	<- output.names
-  write.table (output.names, paste(arquivo, ".csv", sep=""), append=TRUE, sep=",",
-             row.names=FALSE, col.names=FALSE)
+colnames(output.names) <- output.names
+write.table(output.names, paste0(arquivo, ".csv"), append = TRUE, sep = ",",
+             row.names = FALSE, col.names = FALSE)
   
 
 ## Function for fitting Farquhar's biochemical model based on A-Ci curves 
@@ -145,10 +144,10 @@ curvas <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, se
 curvas$unique_id <- paste0(curvas$unique, "_", curvas$Data_point)
 colnames(curvas)
 curvas2 <- subset(curvas, Data_QC == "OK")#to exclude weird points 
-curvas1 <- subset(curvas2, Ci>0)#to avoid negative values 
+curvas1 <- subset(curvas2, Ci > 0)#to avoid negative values 
 #curvas1<-subset(curvas3, Ci>100)#to avoid values below 100
 
-names(curvas)
+names(curvas1)
 
 
 exclude_backwardsCi <- function(data, givedf){

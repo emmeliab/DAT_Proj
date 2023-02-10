@@ -2,12 +2,11 @@
 
 ## Load Packages
 library(tidyverse)
-library(greekLetters)
 library(ggpubr)
 
 
 # Set working directory to DAT_proj
-wd <- "~/Documents/GitHub/DAT_Proj/"
+wd <- "C://Users/emmel/Desktop/DAT_proj/"
 setwd(wd)
 
 
@@ -20,15 +19,9 @@ complete_sp <- filter(complete_sp, Data_QC == "OK") # All A/Ci curve data
 unique_ids <- read.csv("Inputs/unique_ids.csv") # ID data table
 
 
-## Identify Outliers and Write new data frame -------
-which(complete_sp$Ci < -50) #4 Ci values are super negative: 394, 395, 396, 398
-which(complete_sp$Ci < -5) # Add in 16 more values, all for MACA1
-complete_sp[c(394,395,396,398),19] # What are those values? Should they be outliers?
-which(complete_sp$A > 40)
-which(complete_sp$A < -1)
-cmplt.rm_out1 <- filter(complete_sp, Ci > -5)
-cmplt.rm_out2 <- filter(cmplt.rm_out1, A < 40) ## A < 40
-cmplt.rm_out <- filter(cmplt.rm_out2, A > -1)
+## Identify Outliers and Write new data frame
+cmplt.rm_out <- filter(complete_sp, Ci > -5 & A < 40 & A > -1)
+
 
 # Data frame without outliers
 write.csv(x = cmplt.rm_out, file = paste0(getwd(), "/Inputs/Aci_no_out.csv"), 
@@ -37,9 +30,13 @@ write.csv(x = cmplt.rm_out, file = paste0(getwd(), "/Inputs/Aci_no_out.csv"),
 
 
 # Load Filtered Data and Split into DAT and Trad  --------------------------
+library(greekLetters)
+
 ## Load Filtered data
 cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
 
+
+### May not need
 ## Separate into DF of DAT and Trad
 cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT") %>% 
   select(-contains(greeks("Delta"))) # removes the columns with deltas
@@ -85,7 +82,7 @@ ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = unique)) +
   geom_point(mapping = aes(pch = Data_point)) +
   theme_classic()
 
-## Make and save plots for each individual species
+## Make and save plots for each tree
 for (code in unique(cmplt.grp$unique)) {
   df1 <- cmplt.grp %>% filter(unique == code)
   gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, color = Data_point)) +
@@ -140,9 +137,10 @@ plot(DAT_fits_ecophys[[23]], main = coef(DAT_fits_ecophys)$unique[[23]])
 coef(DAT_fits_ecophys)
 
 ### Run K6706L1 separately, since it gives a weird curve
-k6714l1 <- filter(DAT_filt_ex, unique == "K6713L2")
-k6714l1_fit <- fitaci(k6714l1, fitmethod = "bilinear", varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
-                                               PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE, 
+k6714l1 <- filter(DAT_filt_ex, unique == "K6714l1")
+k6714l1_fit <- fitaci(k6714l1, fitmethod = "bilinear", 
+                      varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
+                                      PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE, 
                       citransition = 200) # The Ci transition is specified as 200, as per Sharkey's
                                           # recommendations and to avoid an unreasonable Jmax value
 plot(k6714l1_fit)
@@ -180,9 +178,6 @@ par_dat$Vcmax_SE <- as.double(par_dat$Vcmax_SE)
 par_dat$Jmax_SE <- as.double(par_dat$Jmax_SE)
 par_dat$Rd_SE <- as.double(par_dat$Rd_SE)
 table(par_dat$method) ## number of initial DAT curves
-
-
-plot(DAT_fits_ecophys[[15]], main = par_dat$unique[14])
 
 
 
@@ -236,7 +231,7 @@ head(par_join)
 
 
 write.csv(x = par_join, file = paste0(wd, "/Results/params_ecophys_no_TPU.csv"), row.names = FALSE)
-## Note, this does not contain the fixed K6706L1 DAT curve. This is fixed in Tapajos_stat_analysis.R
+
 
 
 
@@ -244,23 +239,21 @@ write.csv(x = par_join, file = paste0(wd, "/Results/params_ecophys_no_TPU.csv"),
 # Fitting A/Ci curves with photosynthesis ----------------------------------
 
 library(photosynthesis)
-library(tidyverse)
 library(rpmodel)
 
 cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
-
-DAT_filt <- filter(cmplt.rm_out, Data_point == "Before_DAT")
+cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT")
 cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
 
 
-DAT_filt_ex <- DAT_filt %>%
+DAT_filt_ex <- cmplt_DAT %>%
   group_by(unique) %>%
   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
 DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 
 
 # Convert leaf temperature to Kelvin
-DAT_filt$Tleaf <- DAT_filt$Tleaf + 273
+cmplt_DAT$Tleaf <- cmplt_DAT$Tleaf + 273
 cmplt_trad$Tleaf <- cmplt_trad$Tleaf + 273
 DAT_filt_ex$Tleaf <- DAT_filt_ex$Tleaf + 273
 cmplt_trad <- as.data.frame(cmplt_trad)
@@ -269,7 +262,7 @@ cmplt_trad <- as.data.frame(cmplt_trad)
 
 
 # Fitting one curve at a time
-k6708l1_dat_fit_photo <- fit_aci_response(data = DAT_filt[DAT_filt$unique == "K6708L1", ],
+k6708l1_dat_fit_photo <- fit_aci_response(data = DAT_filt[cmplt_DAT$unique == "K6708L1", ],
                                           varnames = list(A_net = "A", T_leaf = "Tleaf", 
                                                           C_i = "Ci", PPFD = "Qin"), 
                                           fitTPU = TRUE)
@@ -300,6 +293,7 @@ trad_fits_photo_pars <- compile_data(trad_fits_photo,
                                      list_element = 1)
 
 
+
 dat_fits_photo <- fit_many(data = DAT_filt_ex, fitTPU = FALSE,## uses the back-filtered data
                            varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                            funct = fit_aci_response,
@@ -309,6 +303,9 @@ dat_fits_photo_graphs <- compile_data(dat_fits_photo,
 dat_fits_photo_pars <- compile_data(dat_fits_photo,
                                     output_type = "dataframe",
                                     list_element = 1)
+
+
+
 
 #Temperature correction. Important: watch celsius vs fahrenheit
 
@@ -337,6 +334,7 @@ colnames(f_fact_dat) <- "f_fact"
 curv_dat_temp_adj <- curv_dat_temp %>% 
   mutate(vcmax_25 = V_cmax * f_fact_dat$f_fact)
 
+
 f_fact_trad <- data.frame()
 for (i in 1:nrow(curv_trad_temp)){
   tcleaf <- curv_trad_temp$meanTleaf[i]
@@ -351,7 +349,7 @@ curv_trad_temp_adj <- curv_trad_temp %>%
 
 #Write PDF of outputs
 
-pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_no_TPU.pdf"), height=10, width=20)
+pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_no_TPU.pdf"), height = 10, width = 20)
 plot.new()
 for (curve in 1:28){
   title <- trad_fits_photo_pars$ID[[curve]]
