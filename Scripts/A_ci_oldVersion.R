@@ -14,18 +14,16 @@ library(minpack.lm)
 library(readxl)
 library(dplyr)
 
-<<<<<<< HEAD:Scripts/A-ci.adj.MG.R
+
 wd <- "C:/Users/emmel/Desktop/DAT_proj"
-=======
-wd <- "/Users/emmel/Desktop/DAT_proj"
->>>>>>> b67e019a731fc6b4722a3ff7b2875ccb271bb7f9:Scripts/A_ci_oldVersion.R
+
 
 #------------------------------------------ 
 #Change the directory where you want to save your data
 setwd(paste0(wd, "/Results"))
 
 
-<<<<<<< HEAD:Scripts/A-ci.adj.MG.R
+
 # Check if results file already exist
 file.exists(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.pdf"))
 file.exists(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.csv"))
@@ -33,7 +31,7 @@ file.exists(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.csv"))
 # Delete files if they already exist
 unlink(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.pdf"))
 unlink(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos.csv"))
-=======
+
 # Check if results file already exist and delete if so
 ## What is wrong with my for loop?
 files <- c(".pdf", ".csv", "_noback.pdf", "_noback.csv")
@@ -47,7 +45,7 @@ for (i in 1:length(files)){
   }
 }
 
->>>>>>> b67e019a731fc6b4722a3ff7b2875ccb271bb7f9:Scripts/A_ci_oldVersion.R
+
 
 
 # Give a name to the files (table and pdf) that will receive the results
@@ -88,15 +86,16 @@ arquivo <-"A_ci_fit_DAT_Tapajos_20230106"
                                 "Km2"),nrow=1)
 
   colnames (output.names)	<- output.names
-<<<<<<< HEAD:Scripts/A-ci.adj.MG.R
-  write.csv(output.names, paste0(arquivo, ".csv"), append=TRUE, sep=",",
-             row.names=FALSE, col.names=FALSE)
-=======
+
+ # Do we need write.csv or write.table? 
+ # write.csv(output.names, paste0(arquivo, ".csv"), append=TRUE, sep=",",
+ #            row.names=FALSE, col.names=FALSE)
+
   write.table(output.names, file = paste0(arquivo, ".csv"), append = TRUE, sep=",",
              row.names = FALSE, col.names = FALSE)
   
   results.csv <- data.frame(output.names)
->>>>>>> b67e019a731fc6b4722a3ff7b2875ccb271bb7f9:Scripts/A_ci_oldVersion.R
+
   
   ###Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
   R             <- 0.008314    # Gas constant
@@ -277,11 +276,7 @@ modeled_points3 <- function (par1,par2,par3,par4){
 #-----------------------------------------------
 setwd(paste0(wd, "/Inputs"))
 dir()
-<<<<<<< HEAD:Scripts/A-ci.adj.MG.R
-curvas <- read.csv("Aci_no_out.csv", sep = ",", header = TRUE)
-curvas$unique_id <- paste0(curvas$unique, ",", curvas$Data_point)
-colnames(curvas)
-=======
+
 curvas <- read.csv("Aci_no_out.csv", sep = ",", header = TRUE, fileEncoding="latin1")
 ## Charlie added the fileEncoding in order to read the csv into his computer.
 curvas$unique_id <- paste0(curvas$unique, "_", curvas$Data_point)
@@ -311,7 +306,7 @@ curvas_filt <- as.data.frame(curvas_filt)
   sp<-as.data.frame(unique(curvas1[,"unique_id"]))
   colnames(sp)<-"sp"
   sp
->>>>>>> b67e019a731fc6b4722a3ff7b2875ccb271bb7f9:Scripts/A_ci_oldVersion.R
+
   
 
 exclude_backwardsCi <- function(data, givedf){
@@ -340,23 +335,19 @@ sp <- as.data.frame(unique(curvas_filt[,"unique_id"]))
 colnames(sp) <- "sp"
 sp
 
-  sp_dat <- as.data.frame(unique(curvas_DAT[,"unique_id"]))
-  colnames(sp_dat) <- "sp_dat"
-  sp_dat
-  
-  sp_trad <- as.data.frame(unique(curvas_trad[,"unique_id"]))
-  colnames(sp_trad)<-"sp_trad"
-  sp_trad
+  # sp_dat <- as.data.frame(unique(curvas_DAT[,"unique_id"]))
+  # colnames(sp_dat) <- "sp_dat"
+  # sp_dat
+  # 
+  # sp_trad <- as.data.frame(unique(curvas_trad[,"unique_id"]))
+  # colnames(sp_trad)<-"sp_trad"
+  # sp_trad
   
   
   #curve_names<-NULL
   
-  for (i in 1:length(sp[,1])) {
-<<<<<<< HEAD:Scripts/A-ci.adj.MG.R
-  Curve <- subset(curvas_filt, unique_id == sp[i,1])
-=======
+ for (i in 1:length(sp[,1])) {
   Curve <- subset(curvas1, unique_id==sp[i,1])
->>>>>>> b67e019a731fc6b4722a3ff7b2875ccb271bb7f9:Scripts/A_ci_oldVersion.R
   #Curve<-subset(Curve,excluir<1)
   type <- Curve
   

@@ -140,7 +140,7 @@ plot(DAT_fits_ecophys[[23]], main = coef(DAT_fits_ecophys)$unique[[23]])
 coef(DAT_fits_ecophys)
 
 ### Run K6706L1 separately, since it gives a weird curve
-k6714l1 <- filter(DAT_filt_ex, unique == "K6714L1")
+k6714l1 <- filter(DAT_filt_ex, unique == "K6713L2")
 k6714l1_fit <- fitaci(k6714l1, fitmethod = "bilinear", varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                                PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE, 
                       citransition = 200) # The Ci transition is specified as 200, as per Sharkey's

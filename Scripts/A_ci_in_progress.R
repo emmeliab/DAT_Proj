@@ -12,14 +12,16 @@ library(DEoptim)
 library(weathermetrics)
 library(minpack.lm)
 library(readxl)
+library(tidyverse)
 
 
 #------------------------------------------ 
 #Change the directory where you want to save your data
-#setwd("/Users/maquellegarcia/Documents/GitHub/DAT_Proj/Results")
+wd <- "C://Users/emmel/Desktop/DAT_proj/"
+setwd(wd)
 
 # Give a name to the files (table and pdf) that will receive the results
-arquivo <-"A_ci_fit_DAT_Tapajos_20230207"
+arquivo <-"A_ci_fit_DAT_Tapajos_20230210"
 # creates the pdf file that will receive the graphs
 pdf(file=paste(arquivo, ".pdf", sep=""),height=10,width=20)
   
@@ -136,25 +138,48 @@ modeled_points <- function (p1,p2,p3){
   return(cbind(avb,ajb,aminb))
 }  
 #-----------------------------------------------
-setwd("/Users/maquellegarcia/Documents/GitHub/DAT_Proj/Inputs")
+setwd(paste0(wd, "/Inputs"))
 dir()
 
-curvas<-read_excel("Aci_no_out.xlsx")
-curvas2<-subset(curvas, Data_QC=="OK")#to exclude weird points 
-curvas1<-subset(curvas2, Ci>0)#to avoid negative values 
+curvas <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
+curvas$unique_id <- paste0(curvas$unique, "_", curvas$Data_point)
+colnames(curvas)
+curvas2 <- subset(curvas, Data_QC == "OK")#to exclude weird points 
+curvas1 <- subset(curvas2, Ci>0)#to avoid negative values 
 #curvas1<-subset(curvas3, Ci>100)#to avoid values below 100
 
 names(curvas)
+
+
+exclude_backwardsCi <- function(data, givedf){
+    min_Ci_ind <- which(data$Ci == min(data$Ci))
+    data_new <- slice(data, -which(data$A < data$A[min_Ci_ind]))
+    if(givedf =="TRUE"){
+        data_new <- as.data.frame(data_new)
+    }
+    return(data_new)
+}
+
+curvas_filt <- curvas1 %>%
+    group_by(unique_id) %>%
+    group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
+curvas_filt <- as.data.frame(curvas_filt)
+
+curvas_trad <- filter(.data = curvas1, Data_point == "Traditional")
+
+curvas_all <- bind_rows(curvas_filt, curvas_trad)
   
-  sp<-as.data.frame(unique(curvas1[,"unique_id"]))
-  colnames(sp)<-"sp"
+
+
+  sp <- as.data.frame(unique(curvas_all[,"unique_id"]))
+  colnames(sp) <- "sp"
   sp
   
 
   #curve_names<-NULL
   
-  for (i in 1:length(sp[,1])) {
-  Curve<- subset(curvas1, unique_id==sp[i,1])
+for (i in 1:length(sp[,1])) {
+  Curve<- subset(curvas_all, unique_id == sp[i,1])
   #Curve<-subset(Curve,excluir<1)
   
 
