@@ -12,11 +12,29 @@ library(DEoptim)
 library(weathermetrics)
 library(minpack.lm)
 library(readxl)
+library(dplyr)
 
+wd <- "/Users/emmel/Desktop/DAT_proj"
 
 #------------------------------------------ 
 #Change the directory where you want to save your data
-#setwd("/Users/maquellegarcia/Documents/GitHub/DAT_Proj/Results")
+setwd(paste0(wd, "/Results"))
+
+
+# Check if results file already exist and delete if so
+## What is wrong with my for loop?
+files <- c(".pdf", ".csv", "_noback.pdf", "_noback.csv")
+for (i in 1:length(files)){
+  if (file.exists(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos2", i)) == "TRUE"){
+    print(paste0("A_ci_fit_DAT_Tapajos2", i), "exists")
+    unlink(paste0(wd, "/Results/A_ci_fit_DAT_Tapajos2", i))
+  }
+  else{
+    print("File does not exist")
+  }
+}
+
+
 
 # Give a name to the files (table and pdf) that will receive the results
 arquivo <-"A_ci_fit_DAT_Tapajos_20230106"
@@ -56,8 +74,10 @@ arquivo <-"A_ci_fit_DAT_Tapajos_20230106"
                                 "Km2"),nrow=1)
 
   colnames (output.names)	<- output.names
-  write.table (output.names, paste(arquivo, ".csv", sep=""), append=TRUE, sep=",",
-             row.names=FALSE, col.names=FALSE)
+  write.table(output.names, file = paste0(arquivo, ".csv"), append = TRUE, sep=",",
+             row.names = FALSE, col.names = FALSE)
+  
+  results.csv <- data.frame(output.names)
   
   ###Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
   R             <- 0.008314    # Gas constant
@@ -233,15 +253,34 @@ modeled_points3 <- function (par1,par2,par3,par4){
 }  
 
 #-----------------------------------------------
-setwd("/Users/maquellegarcia/Documents/GitHub/DAT_Proj/Inputs")
+setwd(paste0(wd, "/Inputs"))
 dir()
-curvas<-read_excel("Aci_no_out.xlsx")
+curvas <- read.csv("Aci_no_out.csv", sep = ",", header = TRUE, fileEncoding="latin1")
+## Charlie added the fileEncoding in order to read the csv into his computer.
+curvas$unique_id <- paste0(curvas$unique, "_", curvas$Data_point)
+colnames(curvas)
 
 curvas2<-subset(curvas, Data_QC=="OK")#to exclude weird points 
 curvas1<-subset(curvas, Ci>0)#to avoid negative values 
 
-names(curvas)
-  
+names(curvas1)
+
+
+exclude_backwardsCi <- function(data, givedf){
+  min_Ci_ind <- which(data$Ci == min(data$Ci))
+  data_new <- slice(data, -which(data$A < data$A[min_Ci_ind]))
+  if(givedf =="TRUE"){
+    data_new <- as.data.frame(data_new)
+  }
+  return(data_new)
+}
+
+curvas_filt <- curvas1 %>%
+  group_by(unique_id) %>%
+  group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
+curvas_filt <- as.data.frame(curvas_filt)
+
+#Change this line for each iteration!!
   sp<-as.data.frame(unique(curvas1[,"unique_id"]))
   colnames(sp)<-"sp"
   sp
@@ -250,8 +289,9 @@ names(curvas)
   #curve_names<-NULL
   
   for (i in 1:length(sp[,1])) {
-  Curve<- subset(curvas1, unique_id==sp[i,1])
+  Curve <- subset(curvas1, unique_id==sp[i,1])
   #Curve<-subset(Curve,excluir<1)
+  type <- Curve
   
 
   names(Curve)
@@ -639,7 +679,30 @@ names(curvas)
 
 
   
-  write.table (output, paste(arquivo, ".csv", sep=""), append=TRUE, sep=",", row.names=FALSE, col.names=F)
+  write.table(output, file = paste0(arquivo, ".csv"), append = TRUE, sep = ",", row.names = FALSE, 
+              col.names = FALSE)
+  
+  
+  results.csv[nrow(results.csv) + 1,] <- as.data.frame(output)
+  
+  
+  if (identical(type, subset(curvas1, unique_id==sp[i,1])) == TRUE) {
+    #for curvas1 (non-filtered)
+    results.csv3 <- slice(results.csv, -(1))
+    results.csv3 <- as.data.frame(results.csv3)
+    #write.table(x = results.csv3, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
+    results_no_correct <<- results.csv3 %>% 
+      mutate(back_filt = "original")
+  } else if (identical(type, subset(curvas_filt, unique_id==sp[i,1])) == TRUE) {
+    #For curvas_filt (back-correction filtered)
+    results.csv2 <- slice(results.csv, -(1))
+    results.csv2 <- as.data.frame(results.csv2)
+    #write.table(x = results.csv2, file = paste0(arquivo, ".csv"), sep = ",", row.names = FALSE)
+    results_back_correct <<- results.csv2 %>% 
+      mutate(back_filt = "back_filtered")
+  }
+  
+  
   #start_time <- Sys.time() 
   #end_time <- Sys.time()  
   #Tempo<- difftime(end_time, start_time, units='mins')*(length(curvas1)-which(curvas1 %in% i))
@@ -649,3 +712,12 @@ names(curvas)
 
 dev.off() 
 
+
+results_complete <- rbind(results_back_correct, results_no_correct)
+
+complete_curve <- apply(results_complete, 2, as.character) #This coerces the dataframe into character first
+#write.csv(complete_curve, file = "~/Documents/GitHub/DAT_Proj/Results/curve_fitting_out.csv", #Had trouble with the wd situation
+#          row.names = FALSE)
+
+write.csv(complete_curve, file = paste0(wd, "/Results/curve_fitting_MG_out.csv"),
+          row.names = FALSE)
