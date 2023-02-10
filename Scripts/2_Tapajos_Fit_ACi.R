@@ -7,7 +7,7 @@ library(ggpubr)
 
 
 # Set working directory to DAT_proj
-wd <- "/Users/emmel/Desktop/DAT_proj/"
+wd <- "~/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
 
@@ -244,8 +244,11 @@ write.csv(x = par_join, file = paste0(wd, "/Results/params_ecophys_no_TPU.csv"),
 # Fitting A/Ci curves with photosynthesis ----------------------------------
 
 library(photosynthesis)
+library(tidyverse)
+library(rpmodel)
 
 cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
+
 DAT_filt <- filter(cmplt.rm_out, Data_point == "Before_DAT")
 cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
 
@@ -260,7 +263,7 @@ DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 DAT_filt$Tleaf <- DAT_filt$Tleaf + 273
 cmplt_trad$Tleaf <- cmplt_trad$Tleaf + 273
 DAT_filt_ex$Tleaf <- DAT_filt_ex$Tleaf + 273
-
+cmplt_trad <- as.data.frame(cmplt_trad)
 
 
 
@@ -285,7 +288,6 @@ k6708l1_trad_fit_photo[[1]]
 
 
 
-
 # fitting many curves at a time
 trad_fits_photo <- fit_many(data = cmplt_trad, fitTPU = FALSE,
                             varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
@@ -298,19 +300,6 @@ trad_fits_photo_pars <- compile_data(trad_fits_photo,
                                      list_element = 1)
 
 
-pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_no_TPU.pdf"), height=10, width=20)
-plot.new()
-for (curve in 1:28){
-  title <- trad_fits_photo_pars$ID[[curve]]
-  plot(trad_fits_photo_graphs[[curve]], main = title)
-  text(30, 5, labels = as.character(title))
-}
-dev.off()
-
-write.csv(x = trad_fits_photo_pars, file = paste0(wd, "Results/trad_fits_photo_pars_no_TPU.csv"),
-          row.names = FALSE)
-
-
 dat_fits_photo <- fit_many(data = DAT_filt_ex, fitTPU = FALSE,## uses the back-filtered data
                            varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                            funct = fit_aci_response,
@@ -321,7 +310,55 @@ dat_fits_photo_pars <- compile_data(dat_fits_photo,
                                     output_type = "dataframe",
                                     list_element = 1)
 
+#Temperature correction. Important: watch celsius vs fahrenheit
 
+grp_curv <- cmplt.rm_out %>% 
+  group_by(Data_point, unique) %>% 
+  summarize(meanTleaf = mean(Tleaf))
+grp_curv2 <- grp_curv %>% 
+  rename(ID = unique)
+grp_dat <- filter(grp_curv2, Data_point == "Before_DAT")
+grp_trad <- filter(grp_curv2, Data_point == "Traditional")
+
+dat_fits_photo_pars$method <- "DAT"
+trad_fits_photo_pars$method <- "Traditional"
+
+curv_dat_temp <- left_join(by = "ID", dat_fits_photo_pars, grp_dat)
+curv_trad_temp <- left_join(by = "ID", trad_fits_photo_pars, grp_trad)
+
+f_fact_dat <- data.frame()
+for (i in 1:nrow(curv_dat_temp)){
+  tcleaf <- curv_dat_temp$meanTleaf[i]
+  tcref <- 25
+  f <- ftemp_inst_vcmax(tcleaf,tcref) #this function is in the rpmodel package
+  f_fact_dat <- rbind(f_fact_dat, f)
+}
+colnames(f_fact_dat) <- "f_fact"
+curv_dat_temp_adj <- curv_dat_temp %>% 
+  mutate(vcmax_25 = V_cmax * f_fact_dat$f_fact)
+
+f_fact_trad <- data.frame()
+for (i in 1:nrow(curv_trad_temp)){
+  tcleaf <- curv_trad_temp$meanTleaf[i]
+  tcref <- 25
+  f <- ftemp_inst_vcmax(tcleaf,tcref) #this function is in the rpmodel package
+  f_fact_trad <- rbind(f_fact_trad, f)
+}
+colnames(f_fact_trad) <- "f_fact"
+curv_trad_temp_adj <- curv_trad_temp %>% 
+  mutate(vcmax_25 = V_cmax * f_fact_trad$f_fact)
+
+
+#Write PDF of outputs
+
+pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_no_TPU.pdf"), height=10, width=20)
+plot.new()
+for (curve in 1:28){
+  title <- trad_fits_photo_pars$ID[[curve]]
+  plot(trad_fits_photo_graphs[[curve]], main = title)
+  text(30, 5, labels = as.character(title))
+}
+dev.off()
 
 pdf(file = paste0(wd,"Figures/dat_fit_photo_figs_filt_no_TPU.pdf"), height=10, width=20)
 plot.new()
@@ -332,8 +369,12 @@ for (curve in 1:33){ ### Change this depending on the number of curves!
 }
 dev.off()
 
+#Write csvs
 
-write.csv(x = dat_fits_photo_pars, file = paste0(wd, "Results/dat_fits_photo_pars_filt_no_TPU.csv"),
+write.csv(x = curv_trad_temp_adj, file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"),
+          row.names = FALSE)
+
+write.csv(x = curv_dat_temp_adj, file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"),
           row.names = FALSE)
 
 

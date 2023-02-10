@@ -4,8 +4,9 @@
 library(tidyverse)
 library(rpmodel)
 
-pars_photo_dat <- read_csv("~/Documents/GitHub/DAT_Proj/Results/dat_fits_photo_pars_filt.csv")
-pars_photo_trad <- read_csv("~/Documents/GitHub/DAT_Proj/Results/trad_fits_photo_pars.csv")
+#CHANGE THIS
+pars_photo_dat <- read_csv("~/Documents/GitHub/DAT_Proj/Results/dat_fits_photo_pars_filt_no_TPU.csv")
+pars_photo_trad <- read_csv("~/Documents/GitHub/DAT_Proj/Results/trad_fits_photo_pars_no_TPU.csv")
 
 cmplt.rm_out <- read_csv("~/Documents/GitHub/DAT_Proj/Inputs/Aci_no_out.csv")
 
