@@ -121,11 +121,15 @@ cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT")
 cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
 
 
-DAT_filt_ex <- cmplt_DAT %>%
+DAT_filt <- cmplt_DAT %>%
   group_by(unique) %>%
   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
-DAT_filt_ex <- as.data.frame(DAT_filt_ex)
+DAT_filt <- as.data.frame(DAT_filt)
 
+
+## Remove K6714L1, since it acts weird with fitacis
+DAT_filt_ex <- filter(DAT_filt_ex, unique != "K6714L1") %>% 
+    as.data.frame()
 
 
 
@@ -137,10 +141,10 @@ plot(DAT_fits_ecophys[[23]], main = coef(DAT_fits_ecophys)$unique[[23]])
 coef(DAT_fits_ecophys)
 
 ### Run K6706L1 separately, since it gives a weird curve
-k6714l1 <- filter(DAT_filt_ex, unique == "K6714l1")
+k6714l1 <- filter(DAT_filt, unique == "K6714L1")
 k6714l1_fit <- fitaci(k6714l1, fitmethod = "bilinear", 
                       varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
-                                      PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE, 
+                                      PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE,
                       citransition = 200) # The Ci transition is specified as 200, as per Sharkey's
                                           # recommendations and to avoid an unreasonable Jmax value
 plot(k6714l1_fit)
@@ -161,7 +165,7 @@ for (curve in 1:33){
   title <- coef(DAT_fits_ecophys)$unique[[curve]]
   plot(DAT_fits_ecophys[[curve]], main = title)
 }
-plot(k6714l1_fit, main = "K6714L1 Fixed")
+plot(k6714l1_fit, main = "K6714L1")
 dev.off()
 
 
