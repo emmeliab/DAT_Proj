@@ -16,11 +16,11 @@ library(tidyverse)
 
 #------------------------------------------ 
 #Change the directory where you want to save your data
-wd <- "C://Users/emmel/Desktop/DAT_proj/"
+wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(paste0(wd, "Results/"))
 
 # Give a name to the files (table and pdf) that will receive the results
-arquivo <-"MG_aci_fits_230210"
+arquivo <-"MG_aci_fits_230213"
 # creates the pdf file that will receive the graphs
 pdf(file = paste0(arquivo, ".pdf"), height = 10, width = 20)
   
@@ -140,7 +140,7 @@ modeled_points <- function (p1,p2,p3){
 setwd(paste0(wd, "/Inputs"))
 dir()
 
-curvas <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
+curvas <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",", fileEncoding = "latin1")
 curvas$unique_id <- paste0(curvas$unique, "_", curvas$Data_point)
 colnames(curvas)
 curvas2 <- subset(curvas, Data_QC == "OK")#to exclude weird points 
@@ -378,3 +378,13 @@ for (i in 1:length(sp[,1])) {
 
 dev.off() 
 
+#NOTE! The column headers and the results have been printing to different locations (Inputs and Results)
+#So This binds them together.
+
+out1 <- read.csv(file = paste0(wd, "Inputs/MG_aci_fits_230213.csv"), sep = ",",
+header = FALSE)
+out2 <- read.csv(file = paste0(wd, "Results/MG_aci_fits_230213.csv"), sep = ",",
+                 header = TRUE)
+colnames(out1) <- colnames(out2)
+
+write.csv(out1, paste0(wd, "Results/MG_fixed_aci_fits_230213.csv"))

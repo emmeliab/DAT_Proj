@@ -6,7 +6,7 @@ library(ggpubr)
 
 
 # Set working directory to DAT_proj
-wd <- "C://Users/emmel/Desktop/DAT_proj/"
+wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
 
@@ -251,15 +251,11 @@ DAT_filt_ex <- cmplt_DAT %>%
   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
 DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 
-
 # Convert leaf temperature to Kelvin
 cmplt_DAT$Tleaf <- cmplt_DAT$Tleaf + 273
 cmplt_trad$Tleaf <- cmplt_trad$Tleaf + 273
 DAT_filt_ex$Tleaf <- DAT_filt_ex$Tleaf + 273
 cmplt_trad <- as.data.frame(cmplt_trad)
-
-
-
 
 # Fitting one curve at a time
 k6708l1_dat_fit_photo <- fit_aci_response(data = DAT_filt[cmplt_DAT$unique == "K6708L1", ],
@@ -270,15 +266,12 @@ k6718l2_dat_fit_photo[[1]]
 k6718l2_dat_fit_photo[[2]]
 
 
-
 k6708l1_trad_fit_photo <- fit_aci_response(data = cmplt_trad[cmplt_trad$unique == "K6708L1", ],
                                            varnames = list(A_net = "A", T_leaf = "Tleaf", 
                                                            C_i = "Ci", PPFD = "Qin"), 
                                            fitTPU = TRUE)
 
 k6708l1_trad_fit_photo[[1]]
-
-
 
 
 # fitting many curves at a time
@@ -305,47 +298,84 @@ dat_fits_photo_pars <- compile_data(dat_fits_photo,
                                     list_element = 1)
 
 
-
-
 #Temperature correction. Important: watch celsius vs fahrenheit
+cmplt.rm_out <- read_csv("~/Documents/GitHub/DAT_Proj/Inputs/Aci_no_out.csv")
+pars_photo_dat <- read_csv("~/Documents/GitHub/DAT_Proj/Results/dat_fits_photo_pars_filt_no_TPU.csv")
+pars_photo_trad <- read_csv("~/Documents/GitHub/DAT_Proj/Results/trad_fits_photo_pars_no_TPU.csv")
 
 grp_curv <- cmplt.rm_out %>% 
-  group_by(Data_point, unique) %>% 
-  summarize(meanTleaf = mean(Tleaf))
+    group_by(Data_point, unique) %>% 
+    summarize(meanTleaf = mean(Tleaf)) %>% 
+    mutate(meanTleafK = meanTleaf + 273.15)
 grp_curv2 <- grp_curv %>% 
-  rename(ID = unique)
+    rename(ID = unique)
 grp_dat <- filter(grp_curv2, Data_point == "Before_DAT")
 grp_trad <- filter(grp_curv2, Data_point == "Traditional")
 
-dat_fits_photo_pars$method <- "DAT"
-trad_fits_photo_pars$method <- "Traditional"
+pars_photo_dat$method <- "DAT"
+pars_photo_trad$method <- "Traditional"
 
-curv_dat_temp <- left_join(by = "ID", dat_fits_photo_pars, grp_dat)
-curv_trad_temp <- left_join(by = "ID", trad_fits_photo_pars, grp_trad)
+curv_dat_temp <- left_join(by = "ID", pars_photo_dat, grp_dat)
+curv_trad_temp <- left_join(by = "ID", pars_photo_dat, grp_dat)
 
-f_fact_dat <- data.frame()
-for (i in 1:nrow(curv_dat_temp)){
-  tcleaf <- curv_dat_temp$meanTleaf[i]
-  tcref <- 25
-  f <- ftemp_inst_vcmax(tcleaf,tcref) #this function is in the rpmodel package
-  f_fact_dat <- rbind(f_fact_dat, f)
+###Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
+R             <- 0.008314    # Gas constant
+R2            <- R * 1000
+Kc   		      <- 40.49		   # Michaelis-Menten constant for CO2 (Pa) (Bernacchi et al 2001,2002) or 404.9 microbar von Caemmerer et al. (1994)
+delta_Kc 		  <- 79430 	     # (J mol-1) from Medlyn et al 2002
+Ko   		      <- 27.84		   # Michaelis-Menten constant for CO2 (kPa)(Bernacchi et al 2001,2002) or 278.4 mbar von Caemmerer et al. (1994)
+delta_Ko 		  <- 36380	     # (J mol-1) from Medlyn et al 2002
+gstar  		    <- 4.275		   # CO2 compensation point (Pa) (Bernacchi et al 2001,2002) or 36.9 microbar von Caemmerer et al. (1994)
+delta_gstar 	<- 37830	     # (J mol-1)
+
+#Other Constants
+curv          <- 0.85        # Curvature for calculating J from Evans (1989)
+Ambient.CO2   <- 400
+O2  	      	<- 21 		     # Estimated Oxygen concentration at chloroplast - (kPa)
+K0            <- 0.388       # for accounting for diffusion of CO2 through the gasket (Licor 6400 only) maybe we need to remove this part the new machine is alredy accounting for it
+
+### Peaked function Medlin et al. 2002PCE
+### Ea = Activation Energy, DeltaS = entropy factor = 200, Hd = Deactivation Energy)
+### updated to Kumarathunge et al 2019, New Phytologist.(222: 768-784) doi: 10.1111/nph.15668
+Ea_V     <- 82620.87 #58550 or 82620.87 or ---- these values are slight different from Kamarathunge
+Delta_V  <- 645.1013   #629.26 or 645.1013 or
+Ed       <- 200000  
+b_V <- 1+exp((298.15 * Delta_V - Ed) / (298.15  *R2))
+
+Ea_J     <- 39676.89 # or 39676.89 
+Delta_J  <- 641.3615 # or 641.3615
+#EdVJ    <- 200000
+b_J <- 1 + exp((298.15 * Delta_J - Ed) / (298.15 * R2))
+
+Vc_peaked_25C <- function (Vc_LeafTemp,Ea_V,Delta_V,Ed) {
+    a <- exp(Ea_V * (meanTleafK - 298.15) / (298.15 * R2 * meanTleafK))
+    c <- 1+exp((meanTleafK * Delta_V - Ed) / (meanTleafK * R2))
+    Vc_25 <- Vc_LeafTemp / (a * (b_V / c))
 }
-colnames(f_fact_dat) <- "f_fact"
-curv_dat_temp_adj <- curv_dat_temp %>% 
-  mutate(vcmax_25 = V_cmax * f_fact_dat$f_fact)
 
+J_peaked_25C <- function (J_LeafTemp,Ea_J,Delta_J,Ed) {
+    a <- exp(Ea_J * (meanTleafK - 298.15)/(298.15 * R2 * meanTleafK))
+    c <- 1 + exp((meanTleafK * Delta_J - Ed) / (meanTleafK * R2))
+    Jmax_25 <- J_LeafTemp / (a * (b_J / c))
+}  
 
-f_fact_trad <- data.frame()
-for (i in 1:nrow(curv_trad_temp)){
-  tcleaf <- curv_trad_temp$meanTleaf[i]
-  tcref <- 25
-  f <- ftemp_inst_vcmax(tcleaf,tcref) #this function is in the rpmodel package
-  f_fact_trad <- rbind(f_fact_trad, f)
-}
-colnames(f_fact_trad) <- "f_fact"
-curv_trad_temp_adj <- curv_trad_temp %>% 
-  mutate(vcmax_25 = V_cmax * f_fact_trad$f_fact)
+meanTleafK <- curv_dat_temp$meanTleafK
 
+best_Vcmax_25C_dat        <- Vc_peaked_25C(curv_dat_temp[[2]],Ea_V, Delta_V, Ed)
+best_Jmax_25C_dat         <- J_peaked_25C(curv_dat_temp[[4]], Ea_J, Delta_J, Ed)
+
+meanTleafK <- curv_trad_temp$meanTleafK
+
+best_Vcmax_25C_trad        <- Vc_peaked_25C(curv_trad_temp[[2]],Ea_V, Delta_V, Ed)
+best_Jmax_25C_trad         <- J_peaked_25C(curv_trad_temp[[4]], Ea_J, Delta_J, Ed)
+
+dat_corrected <- curv_dat_temp %>% 
+    mutate(Best_Vcmax_25C = best_Vcmax_25C_dat,
+           Best_Jmax_25C = best_Jmax_25C_dat)
+
+trad_corrected <- curv_dat_temp %>% 
+    mutate(Best_Vcmax_25C = best_Vcmax_25C_trad,
+           Best_Jmax_25C = best_Jmax_25C_trad)
 
 #Write PDF of outputs
 
@@ -369,13 +399,10 @@ dev.off()
 
 #Write csvs
 
-write.csv(x = curv_trad_temp_adj, file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"),
+write.csv(x = trad_corrected, file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"),
           row.names = FALSE)
 
-write.csv(x = curv_dat_temp_adj, file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"),
+write.csv(x = dat_corrected, file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"),
           row.names = FALSE)
-
-
-
 
 

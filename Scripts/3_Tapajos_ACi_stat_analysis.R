@@ -1,4 +1,5 @@
 # Statistical Analysis of A/Ci curve data
+rm(list = ls())
 
 library(tidyverse)
 library(ggpubr)
@@ -8,43 +9,43 @@ library(hydroGOF)
 wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
-## Read in the datasets
-params_ecophys <- read.csv(file = paste0(wd, "Results/params_ecophys.csv"), sep = ",", 
+## Read in the datasets -- These are files without TPU
+params_ecophys <- read.csv(file = paste0(wd, "Results/params_ecophys_no_TPU.csv"), sep = ",", 
                            header = TRUE) %>% 
   filter(method == "dat")
-params_photo <- read.csv(file = paste0(wd, "Results/dat_fit_ex_photo_pars.csv"), sep = ",", 
+params_photo <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"), sep = ",", 
                          header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
-init_mg <- read.csv(file = paste0(wd, "Results/curve_fitting_MG_out.csv"), sep = ",",
+init_mg <- read.csv(file = paste0(wd, "Results/MG_fixed_aci_fits_230213.csv"), sep = ",",
                       header = TRUE)
-init_mg$back_filt[init_mg$DAT == "Traditional"] <- "irrelevant"
-params_mg <- init_mg %>% 
-  filter(DAT == "Before_DAT", back_filt == "back_filtered")
+params_mg <- init_mg %>%
+    select(-c(X)) %>% 
+    filter(DAT == "Before_DAT") #filters out traditional
+
 
 
 # Comparing fits across photosynthesis, plantecophys, and MG code -----------
-## Note: for comparisons of plantecophys and MG results, I used Vcmax and Jmax corrected to 25 degrees
+## Note:
 
-
-# Vcmax
+# photosynth vs ecophys ----------
 rmse(params_ecophys$Vcmax, params_photo$V_cmax)
-ecovphoto_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_photo$V_cmax, 
+ecovphoto_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_photo$vcmax_25, 
                                         color = params_photo$ID)) +
-  geom_point()+
-  geom_abline(intercept = 0, slope = 1)+
-  theme_classic()+
-  labs(x="Plantecophys Vcmax", y="Photosynthesis Vcmax", col = "Leaf")+
-  theme(axis.title.x=element_text(size=18, family = "serif"),
+    geom_point()+
+    geom_abline(intercept = 0, slope = 1)+
+    theme_classic()+
+    labs(x="Plantecophys Vcmax", y="Photosynthesis Vcmax", col = "Leaf")+
+    theme(axis.title.x=element_text(size=18, family = "serif"),
         axis.title.y=element_text(size=18, family = "serif"),
         axis.text.x=element_text(size=15, family = "serif"),
         axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
-  scale_x_continuous(limits = c(1, 150)) + 
-  scale_y_continuous(limits = c(1, 150)) +
-  annotate(geom = "text", label = "RMSE = 33.32", x = 125, y = 50)
+    scale_x_continuous(limits = c(1, 500)) + 
+    scale_y_continuous(limits = c(1, 500)) +
+    annotate(geom = "text", label = "RMSE", x = 125, y = 50)
 ecovphoto_vcmax
 
-
+#ecophys vs MG ---------------
 rmse(params_ecophys$Vcmax, params_mg$Best_Vcmax_25C)
 ecovMG_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_mg$Best_Vcmax_25C, 
                                      color = params_mg$Tree_id))+
@@ -58,32 +59,32 @@ ecovMG_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_mg$Bes
         axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
-  scale_x_continuous(limits = c(1, 170)) + 
-  scale_y_continuous(limits = c(1, 170)) +
-  annotate(geom = "text", label = "RMSE = 16.63", x = 125, y = 50)
+  scale_x_continuous(limits = c(1, 500)) + 
+  scale_y_continuous(limits = c(1, 500))
+ # annotate(geom = "text", label = "RMSE = 16.63", x = 125, y = 50)
 ecovMG_vcmax
 
-
-rmse(params_photo$V_cmax, params_mg$vcmax_Best_Model)
-photovMG_vcmax <- ggplot(mapping = aes(x = params_photo$V_cmax, y = params_mg$vcmax_Best_Model,
+#Photosynthesis vs MG temp corrected ----------
+cor(params_photo$Best_Vcmax_25C, params_mg$Best_Vcmax_25C)
+photovMG_vcmax <- ggplot(mapping = aes(x = params_photo$Best_Vcmax_25C, y = params_mg$Best_Vcmax_25C,
                                        color = params_photo$ID))+
   geom_point()+
   geom_abline(intercept = 0, slope = 1)+
   theme_classic()+
   labs(x = "Photosynthesis Vcmax", y = "MG Vcmax", col = "Leaf")+
-  theme(axis.title.x=element_text(size=18, family = "serif"),
+  theme(axis.title.x=element_text(size=14, family = "serif"),
         axis.title.y=element_text(size=18, family = "serif"),
         axis.text.x=element_text(size=15, family = "serif"),
         axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
-  scale_x_continuous(limits = c(1, 170)) + 
-  scale_y_continuous(limits = c(1, 170)) +
-  annotate(geom = "text", label = "RMSE = 22.06", x = 125, y = 50)
+  scale_x_continuous(limits = c(1, 90)) + 
+  scale_y_continuous(limits = c(1, 90))+
+  annotate(geom = "text", label = "r = 0.963", x = 65, y = 20)
 photovMG_vcmax
 
-
 #Jmax
+# Ecophys vs MG
 rmse(params_ecophys$Jmax, params_mg$Best.Jmax_25C) ## see if we can fix the 800000 and try again
 ecovMG_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_mg$Best.Jmax_25C,
                                     color = params_mg$Tree_id))+
@@ -103,8 +104,8 @@ ecovMG_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_mg$Best.
 ecovMG_jmax
 # Note: K6706L1 jmax for plantecophys is 800000, and is not included in the graph
 
-
-rmse(params_ecophys$Jmax, params_photo$J_max)
+# Ecophys vs Photosynthesis
+rmse(params_ecophys$Jmax, params_photo$Best_Jmax_25C)
 ecovphoto_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_photo$J_max, 
                                        color = params_photo$ID))+
   geom_point()+
@@ -123,9 +124,9 @@ ecovphoto_jmax <- ggplot(mapping = aes(x = params_ecophys$Jmax, y = params_photo
 ecovphoto_jmax
 # Note: K6706L1 jmax for plantecophys is 800000, and is not included in the graph
 
-
-rmse(params_photo$J_max, params_mg$Jmax_Best)
-photovMG_jmax <- ggplot(mapping = aes(x = params_photo$J_max, y = params_mg$Jmax_Best,
+#Photosynthesis vs MG
+cor(params_photo$Best_Jmax_25C, params_mg$Best.Jmax_25C)
+photovMG_jmax <- ggplot(mapping = aes(x = params_photo$Best_Jmax_25C, y = params_mg$Best.Jmax_25C,
                                       color = params_photo$ID))+
   geom_point()+
   geom_abline(intercept = 0, slope = 1)+
@@ -137,9 +138,9 @@ photovMG_jmax <- ggplot(mapping = aes(x = params_photo$J_max, y = params_mg$Jmax
         axis.text.y=element_text(size=15, family = "serif"),
         legend.text=element_text(size=7, family = "serif"),
         legend.title=element_text(size=11, family = "serif")) +
-  scale_x_continuous(limits = c(1, 200)) + 
-  scale_y_continuous(limits = c(1, 200)) +
-  annotate(geom = "text", label = "RMSE = 37.64", x = 125, y = 50)
+  scale_x_continuous(limits = c(1, 150)) + 
+  scale_y_continuous(limits = c(1, 150)) +
+  annotate(geom = "text", label = "r = 0.996", x = 125, y = 50)
 photovMG_jmax
 
 
