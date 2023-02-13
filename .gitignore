@@ -13,3 +13,7 @@
 .Rproj.user/
 .DS_Store
 >>>>>>> ce985d7f784283b3cc1033be30b439be8d680d82
+.DS_Store
+.Rhistory
+.RData
+.RDatatTmp
