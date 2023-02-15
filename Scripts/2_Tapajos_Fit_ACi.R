@@ -320,7 +320,7 @@ pars_photo_dat$method <- "DAT"
 pars_photo_trad$method <- "Traditional"
 
 curv_dat_temp <- left_join(by = "ID", pars_photo_dat, grp_dat)
-curv_trad_temp <- left_join(by = "ID", pars_photo_dat, grp_dat)
+curv_trad_temp <- left_join(by = "ID", pars_photo_trad, grp_trad)
 
 ###Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
 R             <- 0.008314    # Gas constant
@@ -377,7 +377,7 @@ dat_corrected <- curv_dat_temp %>%
     mutate(Best_Vcmax_25C = best_Vcmax_25C_dat,
            Best_Jmax_25C = best_Jmax_25C_dat)
 
-trad_corrected <- curv_dat_temp %>% 
+trad_corrected <- curv_trad_temp %>% 
     mutate(Best_Vcmax_25C = best_Vcmax_25C_trad,
            Best_Jmax_25C = best_Jmax_25C_trad)
 
