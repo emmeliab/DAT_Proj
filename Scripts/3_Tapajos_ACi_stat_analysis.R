@@ -305,8 +305,6 @@ wilcox.test(filt_par_species$Vcmax ~ filt_par_species$method, paired = TRUE)
 
 # Photosynthesis results visualization ------------------------------------
 
-##### NEED INITIAL PROCESSING!
-#CHANGE ALL VARIABLE NAMES
 #Merge the params_photo DAT with traditional params
 
 # Add in the trad: "Results/trad_fits_photo_pars_correct_no_TPU.csv"
@@ -323,7 +321,6 @@ photo_leaf <- photo_both %>%
 grp_pho_leaf <- photo_leaf %>% group_by(DAT, leaf_unique) %>%
     summarise(mean_vcmax=mean(Best_Vcmax_25C),
               mean_jmax= mean(Best_Jmax_25C),
-              #mean_tpumax= mean(TPU_Best),
               leaf_unique=leaf_unique,
               leaf_id=leaf_id) %>%
     as.data.frame()
@@ -341,7 +338,24 @@ pho_stat <- rename(pho_stat,
 #Describe factor levels. 0 is traditional, 1 is DAT
 pho_stat$method <- factor(pho_stat$method)
 
-#photo stat analysis for vcmax ---------------
+#Create data frame with NONE of the overshoots ------------------------------------------------
+
+pho_nd <- params_photo %>% subset(ID != "K6707L2" & ID != "K6707L2-2" & ID != "K6707L1" & ID != "K6707L1-1" & ID != "K6709L6" & ID != "K6714L2" & ID != "K6714L1" & ID != "K6702L1" & ID != "K6706L2" & ID != "K6706L1" & ID != "K6709L2")
+
+pho_nd_both <- rbind(photo_trad, pho_nodip)
+pho_nd_leaf <- pho_nd_both %>%
+    mutate(leaf_unique = substring(ID, 1, 7),
+           DAT = Data_point,
+           leaf_id = ID)
+pho_nd_stat <- select(pho_nd_leaf, 'DAT', 'Best_Vcmax_25C', 'Best_Jmax_25C', 'leaf_id', 'leaf_unique')
+pho_nd_stat$DAT[pho_nd_stat$DAT == "Before_DAT"] <- "DAT"
+pho_nd_stat <- rename(pho_nd_stat,
+                   method = DAT,
+                   vcmax = Best_Vcmax_25C,
+                   jmax = Best_Jmax_25C)
+pho_nd_stat$method <- factor(pho_nd_stat$method)
+
+#photo stat analysis for vcmax -------------------------------------------------------------
 #displays grouped summary
 pho_summary <- pho_stat %>%
     group_by(method) %>%
@@ -524,6 +538,85 @@ plot(pwr1)
 pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
 plot(pwr2)
 
+# Quick analysis of methods WITHOUT THE OVERSHOOT CURVES --------------------------------------
+
+grp_pho_nd_dat <- pho_nd_stat %>%
+    filter(method == "DAT") %>%
+    subset(leaf_unique != "K6707L2"
+           & leaf_unique != "K6707L2-2"
+           & leaf_unique != "K6707L1"
+           & leaf_unique != "K6707L1-1"
+           & leaf_unique != "K6709L6"
+           & leaf_unique != "K6714L2"
+           & leaf_unique != "K6714L1"
+           & leaf_unique != "K6702L1"
+           & leaf_unique != "K6706L2"
+           & leaf_unique != "K6706L1"
+           & leaf_unique != "K6709L2") %>%
+    group_by(leaf_unique) %>%
+    summarise(mean_vcmax = mean(vcmax),
+              mean_jmax = mean(jmax)) %>% 
+    mutate(method = "DAT")
+
+grp_pho_nd_trad <- pho_nd_stat %>%
+    filter(method == "Traditional") %>% 
+    group_by(leaf_unique) %>% 
+    subset(leaf_unique != "K6702L1"
+           & leaf_unique != "K6706L1"
+           & leaf_unique != "K6706L2"
+           & leaf_unique != "K6707L1"
+           & leaf_unique != "K6707L2"
+           & leaf_unique != "K6709L6"
+           & leaf_unique != "K6714L1"
+           & leaf_unique != "K6714L2") %>%
+    summarise(mean_vcmax = mean(vcmax),
+              mean_jmax = mean(jmax)) %>% 
+    mutate(method = "Traditional")
+
+grp_pho_nd_all <- rbind(grp_pho_nd_dat, grp_pho_nd_trad)
+
+
+wilcox.test(mean_vcmax ~ method, data = grp_pho_nd_all, paired = TRUE) #ns
+wilcox.test(mean_jmax ~ method, data = grp_pho_nd_all, paried. = TRUE) #ns
+
+#Effect size for the independent sample t-test:
+cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_nd_all, paired = TRUE)
+#negligible effect size, also CI crosses 0 so not great
+cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_nd_all, paired = TRUE)
+#small effect size
+
+d1 <- cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_nd_all, paired = TRUE)
+#What was the power of our study?
+pwr.t.test(n = 20, d = d1[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
+#super weak
+
+d2 <- cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_nd_all, paired = TRUE)
+#What was the power of our study?
+pwr.t.test(n = 20, d = d2[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
+#fairly weak
+
+nd_vcmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_vcmax)) +
+    geom_boxplot()+
+    labs(x="Method", y = "Vcmax")+
+    theme_classic()+
+    theme(axis.title.x=element_text(size=18, family = "serif"),
+          axis.title.y=element_text(size=18, family = "serif"),
+          axis.text.x=element_text(size=15, family = "serif"),
+          axis.text.y=element_text(size=15, family = "serif"),
+          legend.position="none")
+nd_vcmax_box
+
+nd_jmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_jmax)) +
+    geom_boxplot()+
+    labs(x="Method", y = "Jmax")+
+    theme_classic()+
+    theme(axis.title.x=element_text(size=18, family = "serif"),
+          axis.title.y=element_text(size=18, family = "serif"),
+          axis.text.x=element_text(size=15, family = "serif"),
+          axis.text.y=element_text(size=15, family = "serif"),
+          legend.position="none")
+nd_jmax_box
+
 
 # Visualization of DAT vs Traditional in Photosynthesis package -- NEED TO CHANGE -----
 
@@ -551,19 +644,6 @@ b5 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Jmax_25C)) +
           legend.position="none")+
     scale_x_discrete(labels=lab_DATTrad)
 b5
-
-# b6 <- ggplot(mg_leaf, aes(x=DAT, y=TPU_Best)) +
-#     geom_boxplot()+
-#     labs(x="Method", y = "TPU")+
-#     theme_classic()+
-#     theme(axis.title.x=element_text(size=18, family = "serif"),
-#           axis.title.y=element_text(size=18, family = "serif"),
-#           axis.text.x=element_text(size=15, family = "serif"),
-#           axis.text.y=element_text(size=15, family = "serif"),
-#           legend.position="none")+
-#     scale_x_discrete(labels=lab_DATTrad)
-# b6
-
 
 # Stacked scatters for photosynthesis package
 filt_par_dummy <- mutate(.data = grp_pho_leaf,# makes a dummy variable to plot
