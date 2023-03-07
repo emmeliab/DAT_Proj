@@ -6,7 +6,7 @@ library(ggpubr)
 
 
 # Set working directory to DAT_proj
-wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
+wd <- "C://Users/emmel/Desktop/DAT_proj"
 setwd(wd)
 
 
@@ -16,7 +16,6 @@ setwd(wd)
 complete_sp <- read.csv("Inputs/clean_aci_with_uniquecode.csv", sep = ",", header = TRUE,
                         fileEncoding="latin1") 
 complete_sp <- filter(complete_sp, Data_QC == "OK") # All A/Ci curve data
-unique_ids <- read.csv("Inputs/unique_ids.csv") # ID data table
 
 
 ## Identify Outliers and Write new data frame
@@ -74,7 +73,7 @@ exclude_backwardsCi <- function(data, givedf){
 
 # Plotting ACi Curves -----------------------------------------------------
 
-cmplt.grp <- groupby(cmplt.rm_out, k67.id)
+cmplt.grp <- group_by(cmplt.rm_out, k67.id)
 
 
 ## Plot all ACi curves on one graph by Species
@@ -82,20 +81,8 @@ ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = unique)) +
   geom_point(mapping = aes(pch = Data_point)) +
   theme_classic()
 
-## Make and save plots for each tree
-for (code in unique(cmplt.grp$unique)) {
-  df1 <- cmplt.grp %>% filter(unique == code)
-  gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, color = Data_point)) +
-    geom_point() +
-    theme_classic() +
-    scale_color_viridis_d() +
-    ggtitle(code)
-  plot(gg1)
-  filename1 <- paste("plot_", code, ".png")
-  ggsave(filename1, gg1, path = paste0(getwd(), "/Figures/"))
-}
 
-#The same, but for each leaf
+# Make and save plots fot each leaf
 for (id in unique(cmplt.grp$unique)) {
   df1 <- cmplt.grp %>% filter(unique == id)
   gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, color = Data_point)) +
@@ -127,10 +114,11 @@ DAT_filt <- cmplt_DAT %>%
 DAT_filt <- as.data.frame(DAT_filt)
 
 
+
+
 ## Remove K6714L1, since it acts weird with fitacis
 DAT_filt_ex <- filter(DAT_filt_ex, unique != "K6714L1") %>% 
     as.data.frame()
-
 
 
 ## Fit the ACi curves for each species for DAT using fitacis
@@ -150,13 +138,7 @@ k6714l1_fit <- fitaci(k6714l1, fitmethod = "bilinear",
 plot(k6714l1_fit)
 coef(k6714l1_fit)
 
-# #For loop to save all the plots
-# for (curve in 1:33){
-#   title <- coef(DAT_fits_ecophys)$unique[[curve]]
-#   png(filename = paste0(getwd(), "/Figures/", title,"_dataci_curve.png"))
-#   plot(DAT_fits_ecophys[[curve]], main = title)
-#   dev.off()
-# }
+
 
 # PDF file of all plots
 pdf(file = paste0(wd,"Figures/dataci_ecophys_no_TPU.pdf"), height=10, width=20)
@@ -192,16 +174,8 @@ table(par_dat$method) ## number of initial DAT curves
 trad_fits_ecophys <- fitacis(cmplt_trad, group = "unique", fitmethod = "bilinear",
                              varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                              PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(trad_fits_ecophys[[14]], main = coef(trad_fits_ecophys)$unique[14]) # 20 is pretty ugly
+plot(trad_fits_ecophys[[14]], main = coef(trad_fits_ecophys)$unique[14])
 coef(trad_fits_ecophys)
-
-# # For loop to plot all the curves
-# for (curve in 1:28){
-#   title <- coef(trad_fits_ecophys)$unique[[curve]]
-#   png(filename = paste0(getwd(), "/Figures/", title,"_tradaci_curve.png"))
-#   plot(trad_fits_ecophys[[curve]], main = title)
-#   dev.off()
-# }
 
 
 # Save all plots to a pdf
@@ -210,12 +184,10 @@ plot.new()
 for (curve in 1:28){
   title <- coef(trad_fits_ecophys)$unique[[curve]]
   plot(trad_fits_ecophys[[curve]], main = title)
-  #text(30, 5, labels = as.character(title))
 }
 dev.off()
 
-write.csv(x = trad_fits_ecophys, file = paste0(wd, "Results/trad_fits_photo_pars.csv"),
-          row.names = FALSE)
+
 
 
 
@@ -255,74 +227,59 @@ DAT_filt_ex <- cmplt_DAT %>%
   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
 DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 
+
 # Convert leaf temperature to Kelvin
 cmplt_DAT$Tleaf <- cmplt_DAT$Tleaf + 273
 cmplt_trad$Tleaf <- cmplt_trad$Tleaf + 273
 DAT_filt_ex$Tleaf <- DAT_filt_ex$Tleaf + 273
 cmplt_trad <- as.data.frame(cmplt_trad)
 
-# # Fitting one curve at a time
-# k6708l1_dat_fit_photo <- fit_aci_response(data = DAT_filt[cmplt_DAT$unique == "K6708L1", ],
-#                                           varnames = list(A_net = "A", T_leaf = "Tleaf", 
-#                                                           C_i = "Ci", PPFD = "Qin"), 
-#                                           fitTPU = TRUE)
-# k6718l2_dat_fit_photo[[1]]
-# k6718l2_dat_fit_photo[[2]]
-# 
-# 
-# k6708l1_trad_fit_photo <- fit_aci_response(data = cmplt_trad[cmplt_trad$unique == "K6708L1", ],
-#                                            varnames = list(A_net = "A", T_leaf = "Tleaf", 
-#                                                            C_i = "Ci", PPFD = "Qin"), 
-#                                            fitTPU = TRUE)
-# 
-# k6708l1_trad_fit_photo[[1]]
 
 
 # fitting many curves at a time: NO TPU --------------------------------------------------
-trad_fits_photo <- fit_many(data = cmplt_trad, fitTPU = FALSE,
+trad_fits_photo_noTPU <- fit_many(data = cmplt_trad, fitTPU = FALSE,
                             varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                             funct = fit_aci_response,
                             group = "unique")
-trad_fits_photo_graphs <- compile_data(trad_fits_photo,
+trad_fits_photo_graphs_noTPU <- compile_data(trad_fits_photo_noTPU,
                                        list_element = 2)
-trad_fits_photo_pars <- compile_data(trad_fits_photo,
+trad_fits_photo_pars_noTPU <- compile_data(trad_fits_photo_noTPU,
                                      output_type = "dataframe",
                                      list_element = 1)
 
 
-dat_fits_photo <- fit_many(data = DAT_filt_ex, fitTPU = FALSE,## uses the back-filtered data
+dat_fits_photo_noTPU <- fit_many(data = DAT_filt_ex, fitTPU = FALSE,
                            varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                            funct = fit_aci_response,
                            group = "unique")
-dat_fits_photo_graphs <- compile_data(dat_fits_photo,
+dat_fits_photo_graphs_noTPU <- compile_data(dat_fits_photo_noTPU,
                                       list_element = 2)
-dat_fits_photo_pars <- compile_data(dat_fits_photo,
+dat_fits_photo_pars_noTPU <- compile_data(dat_fits_photo_noTPU,
                                     output_type = "dataframe",
                                     list_element = 1)
 
-write.csv(x = trad_fits_photo_pars, file = paste0(wd, "Results/trad_fits_photo_pars_no_TPU.csv"),
+write.csv(x = trad_fits_photo_pars_noTPU, file = paste0(wd, "Results/trad_fits_photo_pars_no_TPU.csv"),
           row.names = FALSE)
 
-write.csv(x = dat_fits_photo_pars, file = paste0(wd, "Results/dat_fits_photo_pars_filt_no_TPU.csv"),
+write.csv(x = dat_fits_photo_pars_noTPU, file = paste0(wd, "Results/dat_fits_photo_pars_filt_no_TPU.csv"),
           row.names = FALSE)
+
+
 
 #Write PDF of outputs
 
 pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_no_TPU.pdf"), height = 10, width = 20)
 plot.new()
-for (curve in 1:28){
-    title <- trad_fits_photo_pars$ID[[curve]]
-    plot(trad_fits_photo_graphs[[curve]], main = title)
-    text(30, 5, labels = as.character(title))
+for (curve in 1:nrow(trad_fits_photo_pars_noTPU)){
+    plot(trad_fits_photo_graphs_noTPU[[curve]])
 }
 dev.off()
 
+
 pdf(file = paste0(wd,"Figures/dat_fits_photo_figs_filt_no_TPU.pdf"), height=10, width=20)
 plot.new()
-for (curve in 1:33){ ### Change this depending on the number of curves!
-    title <- dat_fits_photo_pars$ID[[curve]]
-    plot(dat_fits_photo_graphs[[curve]], main = title)
-    text(30, 5, labels = as.character(title))
+for (curve in 1:nrow(dat_fits_photo_pars_noTPU)){
+    plot(dat_fits_photo_graphs_noTPU[[curve]])
 }
 dev.off()
 
@@ -349,31 +306,32 @@ dat_fits_photo_pars <- compile_data(dat_fits_photo,
                                     output_type = "dataframe",
                                     list_element = 1)
 
+
+
 write.csv(x = trad_fits_photo_pars, file = paste0(wd, "Results/trad_fits_photo_pars.csv"),
           row.names = FALSE)
 
 write.csv(x = dat_fits_photo_pars, file = paste0(wd, "Results/dat_fit_ex_photo_pars.csv"),
           row.names = FALSE)
 
+
+
 #Write PDF of outputs
 
 pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_with_TPU.pdf"), height = 10, width = 20)
 plot.new()
-for (curve in 1:28){
-    title <- trad_fits_photo_pars$ID[[curve]]
-    plot(trad_fits_photo_graphs[[curve]], main = title)
-    text(30, 5, labels = as.character(title))
+for (curve in 1:nrow(trad_fits_photo_pars)){
+    plot(trad_fits_photo_graphs[[curve]])
 }
 dev.off()
 
 pdf(file = paste0(wd,"Figures/dat_fits_photo_figs_filt_with_TPU.pdf"), height=10, width=20)
 plot.new()
-for (curve in 1:33){ ### Change this depending on the number of curves!
-    title <- dat_fits_photo_pars$ID[[curve]]
-    plot(dat_fits_photo_graphs[[curve]], main = title)
-    text(30, 5, labels = as.character(title))
+for (curve in 1:nrow(dat_fits_photo_pars)){ 
+    plot(dat_fits_photo_graphs[[curve]])
 }
 dev.off()
+
 
 #Temperature correction: For NO TPU data -------------------------------
 cmplt.rm_out <- read_csv("~/Documents/GitHub/DAT_Proj/Inputs/Aci_no_out.csv")

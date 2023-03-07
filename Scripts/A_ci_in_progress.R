@@ -7,7 +7,6 @@ cat("\014")     #Remove script in windows console
 library(chron)
 library(grDevices)
 library(optimx)
-#library(plantecophys)
 library(DEoptim)
 library(weathermetrics)
 library(minpack.lm)

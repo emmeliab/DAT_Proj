@@ -15,7 +15,7 @@ library(pwr)
 wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
-## Read in the datasets -- These are files without TPU
+## Read in the datasets
 params_ecophys <- read.csv(file = paste0(wd, "Results/params_ecophys_no_TPU.csv"), sep = ",", 
                            header = TRUE) %>% 
   filter(method == "dat")
@@ -33,9 +33,8 @@ params_mg <- init_mg %>%
 
 
 # Comparing fits across photosynthesis, plantecophys, and MG code -----------
-## Note:
 
-# photosynth vs ecophys ----------
+# photosynth vs ecophys
 rmse(params_ecophys$Vcmax, params_photo$V_cmax)
 ecovphoto_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_photo$vcmax_25, 
                                         color = params_photo$ID)) +
@@ -54,7 +53,7 @@ ecovphoto_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_pho
     annotate(geom = "text", label = "RMSE", x = 125, y = 50)
 ecovphoto_vcmax
 
-#ecophys vs MG ---------------
+#ecophys vs MG 
 rmse(params_ecophys$Vcmax, params_mg$Best_Vcmax_25C)
 ecovMG_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_mg$Best_Vcmax_25C, 
                                      color = params_mg$Tree_id))+
@@ -73,7 +72,7 @@ ecovMG_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_mg$Bes
  # annotate(geom = "text", label = "RMSE = 16.63", x = 125, y = 50)
 ecovMG_vcmax
 
-#Photosynthesis vs MG temp corrected ----------
+#Photosynthesis temp corrected vs MG temp corrected
 cor(params_photo$Best_Vcmax_25C, params_mg$Best_Vcmax_25C)
 photovMG_vcmax <- ggplot(mapping = aes(x = params_photo$Best_Vcmax_25C, y = params_mg$Best_Vcmax_25C,
                                        color = params_photo$ID))+
@@ -217,94 +216,6 @@ ggsave("Figures/Photo_MG_jmax.pdf")
 
 
 
-# Plantecophys result visualization (fix code to make sense with new variables)---------------------------------------
-## Boxplots
-
-### Vcmax
-box_both_vcmax <- filt_par_species %>%
-  ggplot() +
-  geom_boxplot(aes(x = method, y = Vcmax))
-box_both_vcmax
-
-
-### Jmax
-box_both_jmax <- filt_par_species %>% 
-  ggplot() +
-  geom_boxplot(aes(x = method, y = Jmax))
-box_both_jmax
-
-
-
-# Stacked Scatters
-filt_par_dummy <- mutate(.data = filt_par_species,# makes a dummy variable to plot
-                         dummy = if_else(filt_par_species$method == "dat", 0,1))
-
-
-
-## Vcmax
-scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = Vcmax,
-                                                          color = unique)) + 
-  geom_line() + 
-  geom_point() +
-  theme_light() +
-  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Trad")) +
-  xlab("Method")
-scat_vcmax
-
-
-## Jmax
-scat_jmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = Jmax,
-                                                         color = unique)) + 
-  geom_line() + 
-  geom_point() +
-  theme_light() +
-  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Trad")) +
-  xlab("Method")
-scat_jmax
-
-
-# Testing Assumptions of Plantecophys results -------------------------------------------------------
-
-
-#### Delete this after fixing code v
-# ## read in the data
-# par_species <- read.csv(file = paste0(wd, "/Results/params_ecophys.csv"), header = TRUE, sep = ",")
-# 
-# ## Filter some outliers
-# which(par_species$Vcmax > 100)
-# which(par_species$Vcmax < 0)
-# filt_par_species <- par_species %>% 
-#   filter(Vcmax < 100 & Vcmax > 0)
-# head(filt_par_species)
-###### ^
-
-## Summary Stats
-table(filt_par_species$method) ## number of each type of curve
-
-group_by(filt_par_species, method) %>%
-  summarise(
-    count = n(),
-    mean = mean(Vcmax, na.rm = TRUE),
-    sd = sd(Vcmax, na.rm = TRUE))
-
-
-# Q-Q plots
-ggqqplot(filt_par_species$Vcmax)
-ggqqplot(filt_par_species$Jmax)
-
-
-
-# Shapiro-Wilk test
-shapiro.test(filt_par_species$Vcmax)
-shapiro.test(filt_par_species$Jmax)
-
-
-
-#I think a wilcox signed-rank test uses non-parametric, paired data.
-wilcox.test(filt_par_species$Vcmax ~ filt_par_species$method, paired = TRUE)
-
-
-
 
 
 
@@ -337,8 +248,7 @@ pho_stat$DAT[pho_stat$DAT == "Before_DAT"] <- "DAT"
 pho_stat <- rename(pho_stat,
                     method = DAT,
                     vcmax = Best_Vcmax_25C,
-                    jmax = Best_Jmax_25C,
-                    #tpu = TPU_Best,
+                    jmax = Best_Jmax_25C
 )
 #Describe factor levels. 0 is traditional, 1 is DAT
 pho_stat$method <- factor(pho_stat$method)
@@ -608,7 +518,7 @@ nd_jmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_jmax)) +
 nd_jmax_box
 ggsave("Figures/photo_box_nodip_datvtrad_jmax.pdf")
 
-# Visualization of DAT vs Traditional in Photosynthesis package -- NEED TO CHANGE -----
+# Visualization of DAT vs Traditional in Photosynthesis package -----
 
 lab_DATTrad <- c('DAT', 'Traditional')
 b4 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Vcmax_25C)) +
@@ -637,65 +547,65 @@ b5 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Jmax_25C)) +
 b5
 ggsave("Figures/photo_box_datvtrad_jmax.pdf")
 
-# Stacked scatters for photosynthesis package
-filt_par_dummy <- mutate(.data = grp_pho_leaf,# makes a dummy variable to plot
-                         dummy = if_else(grp_pho_leaf$DAT == "Before_DAT", 0,1))
-
-scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_vcmax,
-                                                          color = leaf_unique,
-                                                          label = leaf_unique)) +
-    geom_line() + 
-    geom_point() +
-    theme_classic() +
-    geom_text_repel(data          = subset(filt_par_dummy, DAT == "Before_DAT"),
-                    size          = 2.4,
-                    box.padding   = 0.25,
-                    point.padding = 0.25,
-                    segment.size  = 0.2,
-                    segment.linetype = 3,
-                    direction     = "y",
-                    nudge_x = -0.2)+ ## Playing around with this to help visualize
-    scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
-                       expand = expansion(mult=0.3)) +
-    labs(x="Method", y="Vcmax")+
-    theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
-          axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"),
-          legend.text=element_text(size=9, family = "serif"),
-          legend.title=element_text(size=11, family = "serif"),
-          legend.position="none")
-scat_vcmax
-ggsave("Figures/photo_grpscat_datvtrad_vcmax.pdf")
-
-scat_jmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_jmax,
-                                                         color = leaf_unique,
-                                                         label = leaf_unique)) +
-    geom_line() + 
-    geom_point() +
-    theme_classic() +
-    geom_text_repel(data          = subset(filt_par_dummy, DAT == "Before_DAT"),
-                    size          = 2.8,
-                    box.padding   = 0.25,
-                    point.padding = 0.25,
-                    segment.size  = 0.2,
-                    direction     = "y",
-                    nudge_x = -0.2)+ ## Playing around with this to help visualize
-    scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
-                       expand = expansion(mult=0.3)) +
-    labs(x="Method", y="Jmax")+
-    theme(aspect.ratio = 1.5,
-          axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"),
-          legend.text=element_text(size=9, family = "serif"),
-          legend.title=element_text(size=11, family = "serif"),
-          legend.position="none")+
-    guides(color = guide_legend(title = "Leaf Identifier"))
-scat_jmax
-ggsave("Figures/photo_grpscat_datvtrad_jmax.pdf")
+# # Stacked scatters for photosynthesis package
+# filt_par_dummy <- mutate(.data = grp_pho_leaf,# makes a dummy variable to plot
+#                          dummy = if_else(grp_pho_leaf$DAT == "Before_DAT", 0,1))
+# 
+# scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_vcmax,
+#                                                           color = leaf_unique,
+#                                                           label = leaf_unique)) +
+#     geom_line() + 
+#     geom_point() +
+#     theme_classic() +
+#     geom_text_repel(data          = subset(filt_par_dummy, DAT == "Before_DAT"),
+#                     size          = 2.4,
+#                     box.padding   = 0.25,
+#                     point.padding = 0.25,
+#                     segment.size  = 0.2,
+#                     segment.linetype = 3,
+#                     direction     = "y",
+#                     nudge_x = -0.2)+ ## Playing around with this to help visualize
+#     scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
+#                        expand = expansion(mult=0.3)) +
+#     labs(x="Method", y="Vcmax")+
+#     theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
+#           axis.title.x=element_text(size=18, family = "serif"),
+#           axis.title.y=element_text(size=18, family = "serif"),
+#           axis.text.x=element_text(size=15, family = "serif"),
+#           axis.text.y=element_text(size=15, family = "serif"),
+#           legend.text=element_text(size=9, family = "serif"),
+#           legend.title=element_text(size=11, family = "serif"),
+#           legend.position="none")
+# scat_vcmax
+# ggsave("Figures/photo_grpscat_datvtrad_vcmax.pdf")
+# 
+# scat_jmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_jmax,
+#                                                          color = leaf_unique,
+#                                                          label = leaf_unique)) +
+#     geom_line() + 
+#     geom_point() +
+#     theme_classic() +
+#     geom_text_repel(data          = subset(filt_par_dummy, DAT == "Before_DAT"),
+#                     size          = 2.8,
+#                     box.padding   = 0.25,
+#                     point.padding = 0.25,
+#                     segment.size  = 0.2,
+#                     direction     = "y",
+#                     nudge_x = -0.2)+ ## Playing around with this to help visualize
+#     scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
+#                        expand = expansion(mult=0.3)) +
+#     labs(x="Method", y="Jmax")+
+#     theme(aspect.ratio = 1.5,
+#           axis.title.x=element_text(size=18, family = "serif"),
+#           axis.title.y=element_text(size=18, family = "serif"),
+#           axis.text.x=element_text(size=15, family = "serif"),
+#           axis.text.y=element_text(size=15, family = "serif"),
+#           legend.text=element_text(size=9, family = "serif"),
+#           legend.title=element_text(size=11, family = "serif"),
+#           legend.position="none")+
+#     guides(color = guide_legend(title = "Leaf Identifier"))
+# scat_jmax
+# ggsave("Figures/photo_grpscat_datvtrad_jmax.pdf")
 
 ## 1:1 plots DAT vs Trad
 # By leaf
@@ -772,11 +682,8 @@ codes_and_can <- subset(codes_and_can, select = -code.y)
 mg_complete <- left_join(mg_complete, codes_and_can, by = "leaf_id") %>% 
   select(-c(k67.id,code4let))
 
-# For back-filter vs no_back analysis
-#mg_all_dat <- subset(mg_complete, DAT=="Before_DAT")
 
 #This is the data with the back correction filtered out
-#mg_no_back <- subset(mg_complete, back_filt == "back_filtered")
 mg_leaf <- mg_complete %>%
   mutate(leaf_unique = substring(leaf_id, 1, 7))
 
@@ -805,48 +712,6 @@ grp_tree <- mg_leaf %>% group_by(DAT,tree_id) %>%
 
 
 ### MG Visualizations -------------------------------
-## Boxplots of filtered vs. nonfiltered data
-# label_backfilt <- c('Back Filtered', 'Original')
-# b1 <- ggplot(mg_all_dat, aes(x=back_filt, y=Best_Vcmax_25C)) +
-#   geom_boxplot()+
-#   labs(x="Dataset", y = "Vcmax")+
-#   scale_fill_manual(values=c("#E69F00","#7bccc4"))+
-#   theme_classic()+
-#   theme(axis.title.x=element_text(size=18, family = "serif"),
-#         axis.title.y=element_text(size=18, family = "serif"),
-#         axis.text.x=element_text(size=15, family = "serif"),
-#         axis.text.y=element_text(size=15, family = "serif"),
-#         legend.position="none")+
-#   scale_x_discrete(labels=label_backfilt)
-# b1
-# 
-# b2 <- ggplot(mg_all_dat, aes(x=back_filt, y=Best.Jmax_25C)) +
-#   geom_boxplot()+
-#   labs(x="Dataset", y = "Jmax")+
-#   scale_fill_manual(values=c("#E69F00","#7bccc4"))+
-#   theme_classic()+
-#   theme(axis.title.x=element_text(size=18, family = "serif"),
-#         axis.title.y=element_text(size=18, family = "serif"),
-#         axis.text.x=element_text(size=15, family = "serif"),
-#         axis.text.y=element_text(size=15, family = "serif"),
-#         legend.position="none")+
-#   scale_x_discrete(labels=label_backfilt)
-# b2
-# 
-# b3 <- ggplot(mg_all_dat, aes(x=back_filt, y=TPU_Best)) +
-#   geom_boxplot()+
-#   labs(x="Dataset", y = "TPU")+
-#   scale_fill_manual(values=c("#E69F00","#7bccc4"))+
-#   theme_classic()+
-#   theme(axis.title.x=element_text(size=18, family = "serif"),
-#         axis.title.y=element_text(size=18, family = "serif"),
-#         axis.text.x=element_text(size=15, family = "serif"),
-#         axis.text.y=element_text(size=15, family = "serif"),
-#         legend.position="none")+
-#   scale_x_discrete(labels=label_backfilt)
-# b3
-
-
 #### Visualization of DAT vs Traditional
 
 ## Boxplots
@@ -887,80 +752,43 @@ b6 <- ggplot(mg_leaf, aes(x=DAT, y=TPU_Best)) +
   scale_x_discrete(labels=lab_DATTrad)
 b6
 
-#Just a scatter to understand the spread a bit
-# g1 <- ggplot(mg_leaf, aes(x = tree_id, y = Best_Vcmax_25C)) +
+
+
+
+# ## Stacked Scatters by leaf
+# filt_par_dummy <- mutate(.data = grp_leaf,# makes a dummy variable to plot
+#                          dummy = if_else(grp_leaf$DAT == "Before_DAT", 0,1))
+# 
+# scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_vcmax,
+#                                                           color = leaf_unique,
+#                                                           label = tree_id)) +
+#   geom_line() + 
 #   geom_point() +
-#   xlab("Tree")+
-#   ylab("Vcmax") +
 #   theme_classic() +
-#   theme(axis.title.x=element_text(size=11, family = "serif"),
-#         axis.title.y=element_text(size=11, family = "serif"),
-#         axis.text.x=element_text(size=11, family = "serif"),
-#         axis.text.y=element_text(size=11, family = "serif"))
-# g1
-
-
-## Stacked Scatters by leaf
-filt_par_dummy <- mutate(.data = grp_leaf,# makes a dummy variable to plot
-                         dummy = if_else(grp_leaf$DAT == "Before_DAT", 0,1))
-
-scat_vcmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_vcmax,
-                                                          color = leaf_unique,
-                                                          label = tree_id)) +
-  geom_line() + 
-  geom_point() +
-  theme_classic() +
-  geom_text_repel(data          = subset(filt_par_dummy, DAT == "Before_DAT"),
-                  size          = 2.4,
-                  box.padding   = 0.25,
-                  point.padding = 0.25,
-                  segment.size  = 0.2,
-                  segment.linetype = 3,
-                  direction     = "y",
-                  nudge_x = -0.2)+ ## Playing around with this to help visualize
-  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
-                     expand = expansion(mult=0.3)) +
-  labs(x="Method", y="Vcmax")+
-  theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
-        axis.title.x=element_text(size=18, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.text=element_text(size=9, family = "serif"),
-        legend.title=element_text(size=11, family = "serif"),
-        legend.position="none")
-scat_vcmax
-
-scat_jmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_jmax,
-                                                         color = leaf_unique,
-                                                         label = tree_id)) +
-  geom_line() + 
-  geom_point() +
-  theme_classic() +
-  geom_text_repel(data          = subset(filt_par_dummy, DAT == "Before_DAT"),
-                  size          = 2.8,
-                  box.padding   = 0.25,
-                  point.padding = 0.25,
-                  segment.size  = 0.2,
-                  direction     = "y",
-                  nudge_x = -0.2)+ ## Playing around with this to help visualize
-  scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
-                     expand = expansion(mult=0.3)) +
-  labs(x="Method", y="Jmax")+
-  theme(aspect.ratio = 1.5,
-        axis.title.x=element_text(size=18, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.text=element_text(size=9, family = "serif"),
-        legend.title=element_text(size=11, family = "serif"),
-        legend.position="none")+
-  guides(color = guide_legend(title = "Leaf Identifier"))
-scat_jmax
-
-# scat_tpu <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_tpumax,
-#                                                         color = leaf_unique,
-#                                                         label = tree_id)) +
+#   geom_text_repel(data          = subset(filt_par_dummy, DAT == "Before_DAT"),
+#                   size          = 2.4,
+#                   box.padding   = 0.25,
+#                   point.padding = 0.25,
+#                   segment.size  = 0.2,
+#                   segment.linetype = 3,
+#                   direction     = "y",
+#                   nudge_x = -0.2)+ ## Playing around with this to help visualize
+#   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
+#                      expand = expansion(mult=0.3)) +
+#   labs(x="Method", y="Vcmax")+
+#   theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
+#         axis.title.x=element_text(size=18, family = "serif"),
+#         axis.title.y=element_text(size=18, family = "serif"),
+#         axis.text.x=element_text(size=15, family = "serif"),
+#         axis.text.y=element_text(size=15, family = "serif"),
+#         legend.text=element_text(size=9, family = "serif"),
+#         legend.title=element_text(size=11, family = "serif"),
+#         legend.position="none")
+# scat_vcmax
+# 
+# scat_jmax <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_jmax,
+#                                                          color = leaf_unique,
+#                                                          label = tree_id)) +
 #   geom_line() + 
 #   geom_point() +
 #   theme_classic() +
@@ -973,7 +801,7 @@ scat_jmax
 #                   nudge_x = -0.2)+ ## Playing around with this to help visualize
 #   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
 #                      expand = expansion(mult=0.3)) +
-#   labs(x="Method", y="TPU")+
+#   labs(x="Method", y="Jmax")+
 #   theme(aspect.ratio = 1.5,
 #         axis.title.x=element_text(size=18, family = "serif"),
 #         axis.title.y=element_text(size=18, family = "serif"),
@@ -981,171 +809,37 @@ scat_jmax
 #         axis.text.y=element_text(size=15, family = "serif"),
 #         legend.text=element_text(size=9, family = "serif"),
 #         legend.title=element_text(size=11, family = "serif"),
-#         legend.position ="none")+
+#         legend.position="none")+
 #   guides(color = guide_legend(title = "Leaf Identifier"))
-# scat_tpu
+# scat_jmax
+# 
+# # scat_tpu <- ggplot(data = filt_par_dummy, mapping = aes(x = dummy, y = mean_tpumax,
+# #                                                         color = leaf_unique,
+# #                                                         label = tree_id)) +
+# #   geom_line() + 
+# #   geom_point() +
+# #   theme_classic() +
+# #   geom_text_repel(data          = subset(filt_par_dummy, DAT == "Before_DAT"),
+# #                   size          = 2.8,
+# #                   box.padding   = 0.25,
+# #                   point.padding = 0.25,
+# #                   segment.size  = 0.2,
+# #                   direction     = "y",
+# #                   nudge_x = -0.2)+ ## Playing around with this to help visualize
+# #   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
+# #                      expand = expansion(mult=0.3)) +
+# #   labs(x="Method", y="TPU")+
+# #   theme(aspect.ratio = 1.5,
+# #         axis.title.x=element_text(size=18, family = "serif"),
+# #         axis.title.y=element_text(size=18, family = "serif"),
+# #         axis.text.x=element_text(size=15, family = "serif"),
+# #         axis.text.y=element_text(size=15, family = "serif"),
+# #         legend.text=element_text(size=9, family = "serif"),
+# #         legend.title=element_text(size=11, family = "serif"),
+# #         legend.position ="none")+
+# #   guides(color = guide_legend(title = "Leaf Identifier"))
+# # scat_tpu
 
-
-## Stacked scatter by tree
-# filt_par_dummy2 <- mutate(.data = grp_tree,# makes a dummy variable to plot
-#                           dummy = if_else(grp_tree$DAT == "Before_DAT", 0,1))
-# 
-# scat_vcmax2 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_vcmax,
-#                                                             color = tree_id,
-#                                                             label = tree_id)) +
-#   geom_line() + 
-#   geom_point() +
-#   theme_classic() +
-#   geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
-#                   size          = 2.8,
-#                   box.padding   = 0.25,
-#                   point.padding = 0.25,
-#                   segment.size  = 0.2,
-#                   direction     = "y",
-#                   nudge_x = -0.2)+
-#   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
-#                      expand = expansion(mult=0.3)) +
-#   labs(x="Method", y="Vcmax")+
-#   theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
-#         axis.title.x=element_text(size=18, family = "serif"),
-#         axis.title.y=element_text(size=18, family = "serif"),
-#         axis.text.x=element_text(size=15, family = "serif"),
-#         axis.text.y=element_text(size=15, family = "serif"),
-#         legend.text=element_text(size=9, family = "serif"),
-#         legend.title=element_text(size=11, family = "serif"),
-#         legend.position="none")
-# scat_vcmax2
-# 
-# scat_jmax2 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_jmax,
-#                                                            color = tree_id,
-#                                                            label = tree_id)) +
-#   geom_line() + 
-#   geom_point() +
-#   theme_classic() +
-#   geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
-#                   size          = 2.8,
-#                   box.padding   = 0.25,
-#                   point.padding = 0.25,
-#                   segment.size  = 0.2,
-#                   direction     = "y",
-#                   nudge_x = -0.2)+
-#   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
-#                      expand = expansion(mult=0.3)) +
-#   labs(x="Method", y="Jmax")+
-#   theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
-#         axis.title.x=element_text(size=18, family = "serif"),
-#         axis.title.y=element_text(size=18, family = "serif"),
-#         axis.text.x=element_text(size=15, family = "serif"),
-#         axis.text.y=element_text(size=15, family = "serif"),
-#         legend.text=element_text(size=9, family = "serif"),
-#         legend.title=element_text(size=11, family = "serif"),
-#         legend.position="none")
-# scat_jmax2
-# 
-# scat_tpu2 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_tpumax,
-#                                                           color = tree_id,
-#                                                           label = tree_id)) +
-#   geom_line() + 
-#   geom_point() +
-#   theme_classic() +
-#   geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
-#                   size          = 2.8,
-#                   box.padding   = 0.25,
-#                   point.padding = 0.25,
-#                   segment.size  = 0.2,
-#                   direction     = "y",
-#                   nudge_x = -0.2)+
-#   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
-#                      expand = expansion(mult=0.3)) +
-#   labs(x="Method", y="TPU")+
-#   theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
-#         axis.title.x=element_text(size=18, family = "serif"),
-#         axis.title.y=element_text(size=18, family = "serif"),
-#         axis.text.x=element_text(size=15, family = "serif"),
-#         axis.text.y=element_text(size=15, family = "serif"),
-#         legend.text=element_text(size=9, family = "serif"),
-#         legend.title=element_text(size=11, family = "serif"),
-#         legend.position="none")
-# scat_tpu2
-
-#grouped scatters labelled with relative canopy heights
-# scat_vcmax3 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_vcmax,
-#                                                             color = tree_id,
-#                                                             label = rel_can_pos)) +
-#   geom_line() + 
-#   geom_point() +
-#   theme_classic() +
-#   geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
-#                   size          = 2.8,
-#                   box.padding   = 0.25,
-#                   point.padding = 0.25,
-#                   segment.size  = 0.2,
-#                   direction     = "y",
-#                   nudge_x = -0.2)+
-#   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
-#                      expand = expansion(mult=0.3)) +
-#   labs(x="Method", y="Vcmax")+
-#   theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
-#         axis.title.x=element_text(size=18, family = "serif"),
-#         axis.title.y=element_text(size=18, family = "serif"),
-#         axis.text.x=element_text(size=15, family = "serif"),
-#         axis.text.y=element_text(size=15, family = "serif"),
-#         legend.text=element_text(size=9, family = "serif"),
-#         legend.title=element_text(size=11, family = "serif"),
-#         legend.position="none")
-# scat_vcmax3
-# 
-# scat_jmax3 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_jmax,
-#                                                            color = tree_id,
-#                                                            label = rel_can_pos)) +
-#   geom_line() + 
-#   geom_point() +
-#   theme_classic() +
-#   geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
-#                   size          = 2.8,
-#                   box.padding   = 0.25,
-#                   point.padding = 0.25,
-#                   segment.size  = 0.2,
-#                   direction     = "y",
-#                   nudge_x = -0.2)+
-#   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
-#                      expand = expansion(mult=0.3)) +
-#   labs(x="Method", y="Jmax")+
-#   theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
-#         axis.title.x=element_text(size=18, family = "serif"),
-#         axis.title.y=element_text(size=18, family = "serif"),
-#         axis.text.x=element_text(size=15, family = "serif"),
-#         axis.text.y=element_text(size=15, family = "serif"),
-#         legend.text=element_text(size=9, family = "serif"),
-#         legend.title=element_text(size=11, family = "serif"),
-#         legend.position="none")
-# scat_jmax3
-# 
-# scat_tpu3 <- ggplot(data = filt_par_dummy2, mapping = aes(x = dummy, y = mean_tpumax,
-#                                                           color = tree_id,
-#                                                           label = rel_can_pos)) +
-#   geom_line() + 
-#   geom_point() +
-#   theme_classic() +
-#   geom_text_repel(data          = subset(filt_par_dummy2, DAT == "Before_DAT"),
-#                   size          = 2.8,
-#                   box.padding   = 0.25,
-#                   point.padding = 0.25,
-#                   segment.size  = 0.2,
-#                   direction     = "y",
-#                   nudge_x = -0.2)+
-#   scale_x_continuous(breaks = c(0,1), labels = c("DAT", "Traditional"),
-#                      expand = expansion(mult=0.3)) +
-#   labs(x="Method", y="TPU")+
-#   theme(aspect.ratio = 1.5, #Trying to adjust the sizing to look a bit better
-#         axis.title.x=element_text(size=18, family = "serif"),
-#         axis.title.y=element_text(size=18, family = "serif"),
-#         axis.text.x=element_text(size=15, family = "serif"),
-#         axis.text.y=element_text(size=15, family = "serif"),
-#         legend.text=element_text(size=9, family = "serif"),
-#         legend.title=element_text(size=11, family = "serif"),
-#         legend.position="none")
-# scat_tpu3
 
 
 ## 1:1 plots DAT vs Trad
@@ -1216,67 +910,7 @@ mng_leaf_jmax
 # mng_leaf_tpu
 # 
 # 
-# # by tree
-# 
-# #Vcmax
-# tree_sub_vcmax <- select(grp_tree, mean_vcmax, DAT, tree_id)
-# tree_wide_vcmax <- reshape(tree_sub_vcmax, idvar = "tree_id", timevar = "DAT", direction = "wide")
-# names(tree_wide_vcmax)[2:4]=c("vcmax_DAT", "tree_id", "vcmax_Trad")
-# tree_wide_vcmax <- subset(tree_wide_vcmax, select = -tree_id.Traditional)
-# mng_tree_vcmax <- ggplot(data = tree_wide_vcmax, mapping = aes(x = vcmax_Trad,
-#                                                                y = vcmax_DAT,
-#                                                                color = tree_id))+
-#   geom_point()+
-#   geom_abline(intercept = 0, slope = 1)+
-#   theme_classic()+
-#   labs(x="Traditional Vcmax", y="DAT Vcmax", col = "Tree ID")+
-#   theme(axis.title.x=element_text(size=11, family = "serif"),
-#         axis.title.y=element_text(size=11, family = "serif"),
-#         axis.text.x=element_text(size=11, family = "serif"),
-#         axis.text.y=element_text(size=11, family = "serif"),
-#         legend.text=element_text(size=7, family = "serif"),
-#         legend.title=element_text(size=11, family = "serif"))
-# mng_tree_vcmax
-# 
-# #Jmax
-# tree_sub_jmax <- select(grp_tree, mean_jmax, DAT, tree_id)
-# tree_wide_jmax <- reshape(tree_sub_jmax, idvar = "tree_id", timevar = "DAT", direction = "wide")
-# names(tree_wide_jmax)[2:4]=c("jmax_DAT", "tree_id", "jmax_Trad")
-# tree_wide_jmax <- subset(tree_wide_jmax, select = -tree_id.Traditional)
-# mng_tree_jmax <- ggplot(data = tree_wide_jmax, mapping = aes(x = jmax_Trad,
-#                                                              y = jmax_DAT,
-#                                                              color = tree_id))+
-#   geom_point()+
-#   geom_abline(intercept = 0, slope = 1)+
-#   theme_classic()+
-#   labs(x="Traditional Jmax", y="DAT Jmax", col = "Tree ID")+
-#   theme(axis.title.x=element_text(size=11, family = "serif"),
-#         axis.title.y=element_text(size=11, family = "serif"),
-#         axis.text.x=element_text(size=11, family = "serif"),
-#         axis.text.y=element_text(size=11, family = "serif"),
-#         legend.text=element_text(size=7, family = "serif"),
-#         legend.title=element_text(size=11, family = "serif"))
-# mng_tree_jmax
-# 
-# #TPU
-# tree_sub_tpu <- select(grp_tree, mean_tpumax, DAT, tree_id)
-# tree_wide_tpu <- reshape(tree_sub_tpu, idvar = "tree_id", timevar = "DAT", direction = "wide")
-# names(tree_wide_tpu)[2:4]=c("tpu_DAT", "tree_id", "tpu_Trad")
-# tree_wide_tpu <- subset(tree_wide_vcmax, select = -tree_id.Traditional)
-# mng_tree_tpu <- ggplot(data = tree_wide_tpu, mapping = aes(x = tpu_Trad,
-#                                                            y = tpu_DAT,
-#                                                            color = tree_id))+
-#   geom_point()+
-#   geom_abline(intercept = 0, slope = 1)+
-#   theme_classic()+
-#   labs(x="Traditional TPU", y="DAT TPU", col = "Tree ID")+
-#   theme(axis.title.x=element_text(size=11, family = "serif"),
-#         axis.title.y=element_text(size=11, family = "serif"),
-#         axis.text.x=element_text(size=11, family = "serif"),
-#         axis.text.y=element_text(size=11, family = "serif"),
-#         legend.text=element_text(size=7, family = "serif"),
-#         legend.title=element_text(size=11, family = "serif"))
-# mng_tree_tpu
+
 
 
 # MG stat analysis for vcmax --------------------------------

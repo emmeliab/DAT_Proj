@@ -48,6 +48,10 @@ pho_stat <- rename(pho_stat,
 #Describe factor levels. 0 is traditional, 1 is DAT
 pho_stat$method <- factor(pho_stat$method)
 
+
+
+
+
 #These are the files WITH TPU
 pho_dat_tpu <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_with_TPU.csv"), sep = ",", 
                          header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
@@ -248,7 +252,7 @@ photo_leaf_tpu <- ggplot(data = leaf_wide_tpu, mapping = aes(x = tpu_Trad,
     scale_y_continuous(limits = c(1, 15))
 photo_leaf_tpu
 
-### comparing photosynthesis with and without TPU using ANOVA? CHANGE FOR THIS COMPARISON -----------------
+### comparing photosynthesis with and without TPU using ANOVA? -----------------
 
 tpu_results <- pho_stat_tpu %>%
     mutate(fit_type = "TPU")

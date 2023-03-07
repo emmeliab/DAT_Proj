@@ -1,13 +1,7 @@
-## This script is for cleaning and assembling the ACi curve data collected at the
-## Tapajos National Forest in Aug 2022 into one file for further analysis
-
-
 library(tidyverse)
-library(googledrive)
 library(readxl)
 
 wd <- "C://Users/emmel/Desktop/DAT_proj"
-
 setwd(wd)
 
 
@@ -153,38 +147,38 @@ complete_sp <- all_aci_cln_num %>%
   mutate(fourlettercode = Tree_Identifier, SciName = Tree_Identifier,
          k67.id = Tree_Identifier)
 
-complete_sp$fourlettercode <- recode(complete_sp$fourlettercode,
-                                     'Maca1' = 'MAEL',
-                                     'Tree3' = 'CHTU',
-                                     'tree8' = 'COSP',
-                                     'Tree8' = 'COSP',
-                                     'tree9' = 'APCO',
-                                     'Tree10' = 'VICA',
-                                     'tree11' = 'COST',
-                                     'tree12' = 'UNKN',
-                                     'tree22' = 'ABMA',
-                                     '1' = 'TACH',
-                                     '4' = 'ESSP',
-                                     'Tree5' = 'ABMA',
-                                     'Tree6' = 'PRAP',
-                                     'Mela7' = 'MELA',
-                                     'maca1' = 'MAEL')
-complete_sp$SciName <- recode(complete_sp$SciName,
-                              'Maca1' = 'Manilkara elata',
-                              'Tree3' = 'Chimaris turbinata',
-                              'tree8' = 'Coussarea sp',
-                              'Tree8' = 'Coussarea sp',
-                              'tree9' = 'Aparisthmium cordatum',
-                              'Tree10' = 'Vismia cayennensis',
-                              'tree11' = 'Couratari stellata',
-                              'tree12' = 'Unknown sp',
-                              'tree22' = 'Abarema mataybifolia',
-                              '1' = 'Tachigali chrysophylla',
-                              '4' = 'Eschweilera sp.',
-                              'Tree5' = 'Abarema mataybifolia',
-                              'Tree6' = 'Protium apiculatum',
-                              'Mela7' = 'Unknown sp.',
-                              'maca1' = 'Manilkara elata')
+# # complete_sp$fourlettercode <- recode(complete_sp$fourlettercode,
+# #                                      'Maca1' = 'MAEL',
+# #                                      'Tree3' = 'CHTU',
+# #                                      'tree8' = 'COSP',
+# #                                      'Tree8' = 'COSP',
+# #                                      'tree9' = 'APCO',
+# #                                      'Tree10' = 'VICA',
+# #                                      'tree11' = 'COST',
+# #                                      'tree12' = 'UNKN',
+# #                                      'tree22' = 'ABMA',
+# #                                      '1' = 'TACH',
+# #                                      '4' = 'ESSP',
+# #                                      'Tree5' = 'ABMA',
+# #                                      'Tree6' = 'PRAP',
+# #                                      'Mela7' = 'MELA',
+# #                                      'maca1' = 'MAEL')
+# complete_sp$SciName <- recode(complete_sp$SciName,
+#                               'Maca1' = 'Manilkara elata',
+#                               'Tree3' = 'Chimaris turbinata',
+#                               'tree8' = 'Coussarea sp',
+#                               'Tree8' = 'Coussarea sp',
+#                               'tree9' = 'Aparisthmium cordatum',
+#                               'Tree10' = 'Vismia cayennensis',
+#                               'tree11' = 'Couratari stellata',
+#                               'tree12' = 'Unknown sp',
+#                               'tree22' = 'Abarema mataybifolia',
+#                               '1' = 'Tachigali chrysophylla',
+#                               '4' = 'Eschweilera sp.',
+#                               'Tree5' = 'Abarema mataybifolia',
+#                               'Tree6' = 'Protium apiculatum',
+#                               'Mela7' = 'Unknown sp.',
+#                               'maca1' = 'Manilkara elata')
 complete_sp$k67.id <- recode(complete_sp$k67.id,
                              'Maca1' = 'K67-WT-09',
                              'maca1' = 'K67-WT-09',
@@ -201,7 +195,7 @@ complete_sp$k67.id <- recode(complete_sp$k67.id,
                              'tree11' = 'K67-WT-02',
                              'tree12' = 'K67-WT-14',
                              'tree22' = 'K67-WT-18')
-unique(complete_sp$fourlettercode)
+# unique(complete_sp$fourlettercode)
 unique(complete_sp$k67.id)
 
 
@@ -210,19 +204,3 @@ unique(complete_sp$k67.id)
 ## Save the assembled file as a .csv
 write.csv(x = complete_sp, file = paste0(getwd(), "/Inputs/clean_aci_data_one_file.csv"), 
           row.names = FALSE)
-
-
-
-
-
-
-
-## Lessons learned:
-### Add a Data_QC column as a user constant and just populate it afterward- this avoids
-### Us accidentally putting the column name in the wrong row
-
-### Absolutely DO NOT mess with user constants/stability criteria in between files
-### At the very least, just double-check that capitalization rules are the same. We 
-### should standardize this just in case we lose our configuration
-
-### It's better to just remove the stability criteria columns rather than trying to deal
