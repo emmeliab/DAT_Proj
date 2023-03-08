@@ -298,7 +298,7 @@ pho_hist
 skewness(pho_stat$vcmax)
 #value close to 1, should be okay
 kurtosis(pho_stat$vcmax)
-#It's a bit high
+#It's a bit high, but not bad
 
 #Test the assumption of equal variances for each group for t-test with Levene's
 leveneTest(vcmax ~ method, data = pho_stat)
@@ -317,21 +317,29 @@ grp_pho_dat <- pho_stat %>%
     filter(method == "DAT") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_vcmax = length(vcmax),
-              mean_vcmax = mean(vcmax),
-              sd_vcmax = sd(vcmax),
-              se_vcmax = sd(vcmax)/sqrt(n())) %>% 
+              mean_vcmax = mean(vcmax)) %>% 
     mutate(method = "DAT")
+
+sd(grp_pho_dat$mean_vcmax)
 
 grp_pho_trad <- pho_stat %>%
     filter(method == "Traditional") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_vcmax = length(vcmax),
               mean_vcmax = mean(vcmax),
-              sd_vcmax = sd(vcmax),
-              se_vcmax = sd(vcmax)/sqrt(n())) %>% 
+              med_vcmax = median(vcmax)) %>% 
     mutate(method = "Traditional")
 
+sd(grp_pho_trad$mean_vcmax)
+
 grp_pho_all <- rbind(grp_pho_dat, grp_pho_trad)
+
+ci.mean(mean_vcmax ~ method, data = grp_pho_all)
+ci1<-ci.mean(mean_vcmax~method, data=grp_pho_all)
+plot(ci1,title.labels="Method")
+
+grp_pho_all %>% filter(method == "DAT") %>% summary()
+grp_pho_all %>% filter(method == "Traditional") %>% summary()
 
 with(grp_pho_all, shapiro.test(mean_vcmax))
 # Shapiro-Wilk normality test for the DAT measurement methodology
@@ -341,11 +349,10 @@ with(grp_pho_all, shapiro.test(mean_vcmax[method == "Traditional"]))
 #All are significant. Rejects null hypothesis that these data are not normally distributed.
 # Therefore the sample varies from the normal distribution.
 
-wilcox.test(mean_vcmax ~ method, data = grp_pho_all, paired = TRUE)
+wilcox.test(mean_vcmax ~ method, data = grp_pho_all, conf.int = TRUE, paired = TRUE)
 #This result is significant
 
 #Effect size for the independent sample t-test:
-cohen.ES(test = "t", size = "small") # To remind oneself
 cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_all, paired = TRUE)
 #small effect size
 
@@ -406,20 +413,24 @@ grp_pho_jmax_dat <- pho_stat %>%
     group_by(leaf_unique) %>% 
     summarise(n_jmax = length(jmax),
               mean_jmax = mean(jmax),
-              sd_jmax = sd(jmax),
-              se_jmax = sd(jmax)/sqrt(n())) %>% 
+              sd_jmax = sd(jmax)) %>% 
     mutate(method = "DAT")
+
+sd(grp_pho_jmax_dat$mean_jmax)
 
 grp_pho_jmax_trad <- pho_stat %>%
     filter(method == "Traditional") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_jmax = length(jmax),
-              mean_jmax = mean(jmax),
-              sd_jmax = sd(jmax),
-              se_jmax = sd(jmax)/sqrt(n())) %>% 
+              mean_jmax = mean(jmax)) %>% 
     mutate(method = "Traditional")
 
+sd(grp_pho_jmax_trad$mean_jmax)
+
 grp_pho_jmax_all <- rbind(grp_pho_jmax_dat, grp_pho_jmax_trad)
+
+grp_pho_jmax_all %>% filter(method == "DAT") %>% summary()
+grp_pho_jmax_all %>% filter(method == "Traditional") %>% summary()
 
 with(grp_pho_jmax_all, shapiro.test(mean_jmax))
 # Shapiro-Wilk normality test for the DAT measurement methodology
@@ -429,11 +440,10 @@ with(grp_pho_jmax_all, shapiro.test(mean_jmax[method == "Traditional"]))
 #2/3 are significant. Rejects null hypothesis that these data are not normally distributed.
 # Therefore the sample varies from the normal distribution.
 
-wilcox.test(mean_jmax ~ method, data = grp_pho_jmax_all, paired = TRUE)
+wilcox.test(mean_jmax ~ method, data = grp_pho_jmax_all, conf.int = TRUE, paired = TRUE)
 #This result is significant
 
 #Effect size for the independent sample t-test:
-cohen.ES(test = "t", size = "small") # To remind oneself
 cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_jmax_all, paired = TRUE)
 #small effect size
 
@@ -457,6 +467,9 @@ grp_pho_nd_dat <- pho_nd_stat %>%
               mean_jmax = mean(jmax)) %>% 
     mutate(method = "DAT")
 
+sd(grp_pho_nd_dat$mean_vcmax)
+sd(grp_pho_nd_dat$mean_jmax)
+
 grp_pho_nd_trad <- pho_nd_stat %>%
     filter(method == "Traditional") %>% 
     group_by(leaf_unique) %>% 
@@ -472,11 +485,16 @@ grp_pho_nd_trad <- pho_nd_stat %>%
               mean_jmax = mean(jmax)) %>% 
     mutate(method = "Traditional")
 
+sd(grp_pho_nd_trad$mean_vcmax)
+sd(grp_pho_nd_trad$mean_jmax)
+
 grp_pho_nd_all <- rbind(grp_pho_nd_dat, grp_pho_nd_trad)
 
+grp_pho_nd_all %>% filter(method == "DAT") %>% summary()
+grp_pho_nd_all %>% filter(method == "Traditional") %>% summary()
 
-wilcox.test(mean_vcmax ~ method, data = grp_pho_nd_all, paired = TRUE) #ns
-wilcox.test(mean_jmax ~ method, data = grp_pho_nd_all, paried. = TRUE) #ns
+wilcox.test(mean_vcmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired = TRUE) #ns
+wilcox.test(mean_jmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired. = TRUE) #ns
 
 #Effect size for the independent sample t-test:
 cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_nd_all, paired = TRUE)
