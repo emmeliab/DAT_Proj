@@ -98,18 +98,14 @@ grp_pho_dat_tpu <- pho_stat_tpu %>%
     filter(method == "DAT") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_vcmax = length(vcmax),
-              mean_vcmax = mean(vcmax),
-              sd_vcmax = sd(vcmax),
-              se_vcmax = sd(vcmax)/sqrt(n())) %>% 
+              mean_vcmax = mean(vcmax)) %>% 
     mutate(method = "DAT")
 
 grp_pho_trad_tpu <- pho_stat_tpu %>%
     filter(method == "Traditional") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_vcmax = length(vcmax),
-              mean_vcmax = mean(vcmax),
-              sd_vcmax = sd(vcmax),
-              se_vcmax = sd(vcmax)/sqrt(n())) %>% 
+              mean_vcmax = mean(vcmax)) %>% 
     mutate(method = "Traditional")
 
 grp_pho_all_tpu <- rbind(grp_pho_dat_tpu, grp_pho_trad_tpu)
@@ -141,18 +137,14 @@ grp_pho_jmax_dat_tpu <- pho_stat_tpu %>%
     filter(method == "DAT") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_jmax = length(jmax),
-              mean_jmax = mean(jmax),
-              sd_jmax = sd(jmax),
-              se_jmax = sd(jmax)/sqrt(n())) %>% 
+              mean_jmax = mean(jmax)) %>% 
     mutate(method = "DAT")
 
 grp_pho_jmax_trad_tpu <- pho_stat_tpu %>%
     filter(method == "Traditional") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_jmax = length(jmax),
-              mean_jmax = mean(jmax),
-              sd_jmax = sd(jmax),
-              se_jmax = sd(jmax)/sqrt(n())) %>% 
+              mean_jmax = mean(jmax)) %>% 
     mutate(method = "Traditional")
 
 grp_pho_jmax_all_tpu <- rbind(grp_pho_jmax_dat_tpu, grp_pho_jmax_trad_tpu)
@@ -172,27 +164,8 @@ d <- cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_jmax_all_tp
 pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
 
 #photo stat analysis for TPU ---------------------------------------
-grp_pho_tpu_dat_tpu <- pho_stat_tpu %>%
-    filter(method == "DAT") %>% 
-    group_by(leaf_unique) %>% 
-    summarise(n_tpu = length(tpu),
-              mean_tpu = mean(tpu),
-              sd_tpu = sd(tpu),
-              se_tpu = sd(tpu)/sqrt(n())) %>% 
-    mutate(method = "DAT")
-
-grp_pho_tpu_trad_tpu <- pho_stat_tpu %>%
-    filter(method == "Traditional") %>% 
-    group_by(leaf_unique) %>% 
-    summarise(n_tpu = length(tpu),
-              mean_tpu = mean(tpu),
-              sd_tpu = sd(tpu),
-              se_tpu = sd(tpu)/sqrt(n())) %>% 
-    mutate(method = "Traditional")
-
-grp_pho_tpu_all_tpu <- rbind(grp_pho_tpu_dat_tpu, grp_pho_tpu_trad_tpu)
-
-#different samples with TPU, therefore can't compare with wilcox test.
+pho_stat_tpu %>% filter(method == "DAT") %>% summary() #11 curves without TPU
+pho_stat_tpu %>% filter(method == "Traditional") %>% summary() #22 curves without TPU
 
 # Visualization of DAT vs Traditional in Photosynthesis package -----
 
@@ -328,14 +301,17 @@ mod_table
 summary(lm_null)
 
 
-kruskal.test(vcmax ~ fit_type, data = all_results) #non-parametric ANOVA
-#chi-squared = 0.029, df = 1, p-value = 0.8654. Not significant.
+wilcox.test(vcmax ~ fit_type, data = all_results, conf.int = TRUE, paired = TRUE, exact = FALSE)
+#Overall, there is a significant difference in whether TPU is fit or not, using a normal approximation of p-values.
+wilcox.test(jmax ~ fit_type, data = all_results, conf.int = TRUE, paired = TRUE, exact = FALSE)
+#Overall, there is a significant difference in whether TPU is fit or not, using a normal approximation of p-values.
 
-
-#REPORT THESE!!!!! THIS IS POOLED DATA
-wilcox.test(vcmax ~ fit_type, data = all_results, conf.int = TRUE)
-wilcox.test(vcmax ~ method, data = all_results, conf.int = TRUE)
-#REPORT THESE!!!! THIS IS POOLED DATA
+#What about JUST the DAT data with TPU fitting
+dat_all_results <- all_results %>% filter(method == "DAT")
+wilcox.test(vcmax ~ fit_type, data = dat_all_results, conf.int = TRUE, paired = TRUE, exact = FALSE)
+#significant
+wilcox.test(jmax ~ fit_type, data = dat_all_results, conf.int = TRUE, paired = TRUE, exact = FALSE)
+#Not significant
 
 
 aov_both <- aov(vcmax ~ method + fit_type, data = all_results)
@@ -360,15 +336,9 @@ mod2_table
 summary(lm2_method)
 
 
-kruskal.test(jmax ~ fit_type, data = all_results) #non-parametric ANOVA
-#chi-squared = 0.029, df = 1, p-value = 0.8654. Not significant.
-kruskal.test(jmax ~ method, data = all_results) #Not significant with pooled TPU and no-TPU data.
-
-#REPORT THESE!!! THIS IS POOLED DATA
 wilcox.test(jmax ~ fit_type, data = all_results, conf.int = TRUE)
 wilcox.test(jmax ~ method, data = all_results, conf.int = TRUE)
-#REPORT THESE!!! THIS IS POOLED DATA
-
+#OVERALL, no difference between Jmax estimates with either fit-type or method with the pooled data.
 
 aov_jmax_both <- aov(jmax ~ method + fit_type, data = all_results)
 summary(aov_jmax_both)

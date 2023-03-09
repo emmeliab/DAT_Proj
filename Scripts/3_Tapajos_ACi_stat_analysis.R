@@ -326,8 +326,7 @@ grp_pho_trad <- pho_stat %>%
     filter(method == "Traditional") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_vcmax = length(vcmax),
-              mean_vcmax = mean(vcmax),
-              med_vcmax = median(vcmax)) %>% 
+              mean_vcmax = mean(vcmax)) %>% 
     mutate(method = "Traditional")
 
 sd(grp_pho_trad$mean_vcmax)
@@ -412,8 +411,7 @@ grp_pho_jmax_dat <- pho_stat %>%
     filter(method == "DAT") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_jmax = length(jmax),
-              mean_jmax = mean(jmax),
-              sd_jmax = sd(jmax)) %>% 
+              mean_jmax = mean(jmax)) %>% 
     mutate(method = "DAT")
 
 sd(grp_pho_jmax_dat$mean_jmax)
@@ -1205,12 +1203,12 @@ summary(lm_null)
 summary(lm_fit) # this explains a negligible amount of the variance in vcmax
 summary(lm_method) # this explains a negligible amount of the variance in vcmax
 
-kruskal.test(vcmax ~ method, data = all_results) #non-parametric ANOVA
+#kruskal.test(vcmax ~ method, data = all_results) #non-parametric ANOVA
 #chi-squared = 0.00042, df = 1, p-value = 0.9836. Not significant.
 
 #RUN THIS!!!!!!!!!!
-#Maybe should wilcox.test(vcmax ~ method, data = all_results, conf.int = TRUE)
-#Maybe should wilcox.test(vcmax ~ fit_type, data = all_results, conf.int = TRUE)
+wilcox.test(vcmax ~ method, data = all_results, conf.int = TRUE)
+wilcox.test(vcmax ~ fit_type, data = all_results, conf.int = TRUE)
 
 
 car::vif(lm_null)
@@ -1235,9 +1233,8 @@ kruskal.test(jmax ~ method, data = all_results) #non-parametric ANOVA
 
 #Maybe should do wilcox.test(jmax ~ method, data = all_results, conf.int = TRUE)
 
-#RUN THIS!!!!!!!!!!
-#Maybe should wilcox.test(jmax ~ method, data = all_results, conf.int = TRUE)
-#Maybe should wilcox.test(jmax ~ fit_type, data = all_results, conf.int = TRUE)
+wilcox.test(jmax ~ method, data = all_results, conf.int = TRUE)
+wilcox.test(jmax ~ fit_type, data = all_results, conf.int = TRUE)
 
 
 #Testing outliers
