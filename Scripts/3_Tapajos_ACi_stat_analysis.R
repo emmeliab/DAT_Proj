@@ -1208,6 +1208,11 @@ summary(lm_method) # this explains a negligible amount of the variance in vcmax
 kruskal.test(vcmax ~ method, data = all_results) #non-parametric ANOVA
 #chi-squared = 0.00042, df = 1, p-value = 0.9836. Not significant.
 
+#RUN THIS!!!!!!!!!!
+#Maybe should wilcox.test(vcmax ~ method, data = all_results, conf.int = TRUE)
+#Maybe should wilcox.test(vcmax ~ fit_type, data = all_results, conf.int = TRUE)
+
+
 car::vif(lm_null)
 check_heteroscedasticity(lm_null)
 
@@ -1227,6 +1232,12 @@ summary(lm2_both) # only 2% here
 
 kruskal.test(jmax ~ method, data = all_results) #non-parametric ANOVA
 #chi-squared = 2.72, df = 1, p-value =0.0991. Not significant.
+
+#Maybe should do wilcox.test(jmax ~ method, data = all_results, conf.int = TRUE)
+
+#RUN THIS!!!!!!!!!!
+#Maybe should wilcox.test(jmax ~ method, data = all_results, conf.int = TRUE)
+#Maybe should wilcox.test(jmax ~ fit_type, data = all_results, conf.int = TRUE)
 
 
 #Testing outliers

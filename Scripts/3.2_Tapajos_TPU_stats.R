@@ -331,6 +331,13 @@ summary(lm_null)
 kruskal.test(vcmax ~ fit_type, data = all_results) #non-parametric ANOVA
 #chi-squared = 0.029, df = 1, p-value = 0.8654. Not significant.
 
+
+#REPORT THESE!!!!! THIS IS POOLED DATA
+wilcox.test(vcmax ~ fit_type, data = all_results, conf.int = TRUE)
+wilcox.test(vcmax ~ method, data = all_results, conf.int = TRUE)
+#REPORT THESE!!!! THIS IS POOLED DATA
+
+
 aov_both <- aov(vcmax ~ method + fit_type, data = all_results)
 summary(aov_both)
 
@@ -356,6 +363,11 @@ summary(lm2_method)
 kruskal.test(jmax ~ fit_type, data = all_results) #non-parametric ANOVA
 #chi-squared = 0.029, df = 1, p-value = 0.8654. Not significant.
 kruskal.test(jmax ~ method, data = all_results) #Not significant with pooled TPU and no-TPU data.
+
+#REPORT THESE!!! THIS IS POOLED DATA
+wilcox.test(jmax ~ fit_type, data = all_results, conf.int = TRUE)
+wilcox.test(jmax ~ method, data = all_results, conf.int = TRUE)
+#REPORT THESE!!! THIS IS POOLED DATA
 
 
 aov_jmax_both <- aov(jmax ~ method + fit_type, data = all_results)
