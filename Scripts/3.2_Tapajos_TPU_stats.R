@@ -114,6 +114,8 @@ grp_pho_trad_tpu <- pho_stat_tpu %>%
 
 grp_pho_all_tpu <- rbind(grp_pho_dat_tpu, grp_pho_trad_tpu)
 
+wilcox.test(mean_vcmax ~ method, data = grp_pho_all_tpu, conf.int = TRUE, paired = TRUE)
+
 #Effect size for the independent sample t-test:
 cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_all_tpu, paired = TRUE)
 #small effect size
@@ -155,6 +157,9 @@ grp_pho_jmax_trad_tpu <- pho_stat_tpu %>%
 
 grp_pho_jmax_all_tpu <- rbind(grp_pho_jmax_dat_tpu, grp_pho_jmax_trad_tpu)
 
+wilcox.test(mean_jmax ~ method, data = grp_pho_jmax_all_tpu, conf.int = TRUE, paired = TRUE)
+
+
 #Effect size for the independent sample t-test:
 cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_jmax_all_tpu, paired = TRUE)
 #small effect size
@@ -187,6 +192,7 @@ grp_pho_tpu_trad_tpu <- pho_stat_tpu %>%
 
 grp_pho_tpu_all_tpu <- rbind(grp_pho_tpu_dat_tpu, grp_pho_tpu_trad_tpu)
 
+#different samples with TPU, therefore can't compare with wilcox test.
 
 # Visualization of DAT vs Traditional in Photosynthesis package -----
 
@@ -322,6 +328,18 @@ mod_table
 summary(lm_null)
 
 
+kruskal.test(vcmax ~ fit_type, data = all_results) #non-parametric ANOVA
+#chi-squared = 0.029, df = 1, p-value = 0.8654. Not significant.
+
+aov_both <- aov(vcmax ~ method + fit_type, data = all_results)
+summary(aov_both)
+
+lm_both <- lm(vcmax ~ method + fit_type, data = all_results)
+summary(lm_both)
+#So there's an increase in Vcmax with TPU relative to no_TPU
+#and a decrease in Vcmax with Traditional relative to no_TPU
+#This relationship is not significant
+
 #jmax
 lm2_method <- lm(jmax ~ method, data = all_results)
 lm2_fit <- lm(jmax ~ fit_type, data = all_results)
@@ -333,7 +351,22 @@ mod2_names <- c("Method", "Fit Type", "Method + Fit Type", "Intercept Only")
 mod2_table <- aictab(list(lm2_method, lm2_fit, lm2_both, lm2_null), modnames = mod_names)
 mod2_table
 summary(lm2_method)
-kruskal.test(jmax ~ method, data = all_results) #non-parametric ANOVA
+
+
+kruskal.test(jmax ~ fit_type, data = all_results) #non-parametric ANOVA
+#chi-squared = 0.029, df = 1, p-value = 0.8654. Not significant.
+kruskal.test(jmax ~ method, data = all_results) #Not significant with pooled TPU and no-TPU data.
+
+
+aov_jmax_both <- aov(jmax ~ method + fit_type, data = all_results)
+summary(aov_jmax_both)
+
+lm_jmax_both <- lm(jmax ~ method + fit_type, data = all_results)
+summary(lm_jmax_both)
+#So there's an increase in Jmax with TPU relative to no_TPU
+#and an in Jmax with Traditional relative to no_TPU
+#This relationship is not significant
+
 
 # 
 # leveragePlots(lm2_method)

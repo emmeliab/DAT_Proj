@@ -715,6 +715,7 @@ grp_leaf <- mg_leaf %>% group_by(DAT, leaf_unique) %>%
             leaf_id=leaf_id,
             rel_can_pos=rel_can_pos) %>%
   as.data.frame()
+
 summary(grp_leaf)
 
 grp_tree <- mg_leaf %>% group_by(DAT,tree_id) %>% 
@@ -1201,6 +1202,14 @@ mod_names <- c("Method", "Fit Type", "Method + Fit Type", "Intercept Only")
 mod_table <- aictab(list(lm_method, lm_fit, lm_both, lm_null), modnames = mod_names)
 mod_table #This suggests the best model is the intercept model! Fit type has minor support
 summary(lm_null)
+summary(lm_fit) # this explains a negligible amount of the variance in vcmax
+summary(lm_method) # this explains a negligible amount of the variance in vcmax
+
+kruskal.test(vcmax ~ method, data = all_results) #non-parametric ANOVA
+#chi-squared = 0.00042, df = 1, p-value = 0.9836. Not significant.
+
+car::vif(lm_null)
+check_heteroscedasticity(lm_null)
 
 
 #jmax
@@ -1214,7 +1223,11 @@ mod2_names <- c("Method", "Fit Type", "Method + Fit Type", "Intercept Only")
 mod2_table <- aictab(list(lm2_method, lm2_fit, lm2_both, lm2_null), modnames = mod_names)
 mod2_table # The best model is the method, followed by the method and fit type models
 summary(lm2_method) # We're still only explaining 3% of the variation here...
+summary(lm2_both) # only 2% here
+
 kruskal.test(jmax ~ method, data = all_results) #non-parametric ANOVA
+#chi-squared = 2.72, df = 1, p-value =0.0991. Not significant.
+
 
 #Testing outliers
 leveragePlots(lm2_method) #70, 106, 34, 35
