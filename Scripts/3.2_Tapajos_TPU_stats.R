@@ -112,6 +112,25 @@ grp_pho_all_tpu <- rbind(grp_pho_dat_tpu, grp_pho_trad_tpu)
 
 wilcox.test(mean_vcmax ~ method, data = grp_pho_all_tpu, conf.int = TRUE, paired = TRUE)
 
+#NEW STATS
+n <-  28 #number of pairs
+N <-  n + n
+wt <- wilcox.test(mean_vcmax ~ method, data = grp_pho_all_tpu, conf.int = TRUE, paired = TRUE, exact = FALSE)
+wt
+zval <- qnorm(wt$p.value/2) #z-score applied to a normal distribution
+zval
+r <- abs(zval)/sqrt(N) #effect size for Mann Whitney test. Rosenthal, R. (1994). Parametric measures of effect size. In H. Cooper & L. V. Hedges (Eds.), The handbook of research synthesis. (pp. 231-244). New York: Russell Sage Foundation.
+r
+
+
+library(rcompanion)
+set.seed(67)
+wilcoxonPairedRC(x = grp_pho_all_tpu$mean_vcmax,
+                 g = grp_pho_all_tpu$method,
+                 ci = TRUE,
+                 R = 1000) # see King B. M., Rosopa P. J., Minium E. W. (2011) Statistical reasoning in the behavioral sciences (6th ed.). Hoboken, NJ: John Wiley. This is the matched-pairs rank biserial correlation coefficient (rc).
+
+
 #Effect size for the independent sample t-test:
 cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_all_tpu, paired = TRUE)
 #small effect size
@@ -150,7 +169,6 @@ grp_pho_jmax_trad_tpu <- pho_stat_tpu %>%
 grp_pho_jmax_all_tpu <- rbind(grp_pho_jmax_dat_tpu, grp_pho_jmax_trad_tpu)
 
 wilcox.test(mean_jmax ~ method, data = grp_pho_jmax_all_tpu, conf.int = TRUE, paired = TRUE)
-
 
 #Effect size for the independent sample t-test:
 cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_jmax_all_tpu, paired = TRUE)
@@ -312,6 +330,8 @@ wilcox.test(vcmax ~ fit_type, data = dat_all_results, conf.int = TRUE, paired = 
 #significant
 wilcox.test(jmax ~ fit_type, data = dat_all_results, conf.int = TRUE, paired = TRUE, exact = FALSE)
 #Not significant
+
+spearman
 
 
 aov_both <- aov(vcmax ~ method + fit_type, data = all_results)
