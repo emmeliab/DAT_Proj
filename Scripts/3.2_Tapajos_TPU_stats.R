@@ -9,9 +9,8 @@ library(hydroGOF)
 library(Publish) 
 library(moments) 
 library(vcd)
-library(effsize)
 library(car)
-library(pwr)
+library(rcompanion) #for wilcoxonPairedRC function
 
 wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
@@ -84,7 +83,7 @@ pho_stat_tpu <- rename(pho_stat_tpu,
 pho_stat_tpu$method <- factor(pho_stat_tpu$method)
 
 
-#photo stat analysis for vcmax ---------------
+#photo stat analysis for vcmax by method, with TPU fit = TRUE, all data ---------------
 
 #Histogram to visualize
 pho_hist_tpu<-ggplot(pho_stat_tpu, aes(x=vcmax)) + 
@@ -108,40 +107,29 @@ grp_pho_trad_tpu <- pho_stat_tpu %>%
               mean_vcmax = mean(vcmax)) %>% 
     mutate(method = "Traditional")
 
+
 grp_pho_all_tpu <- rbind(grp_pho_dat_tpu, grp_pho_trad_tpu)
 
-wilcox.test(mean_vcmax ~ method, data = grp_pho_all_tpu, conf.int = TRUE, paired = TRUE)
+grp_pho_all_tpu %>% group_by(method) %>% summarize(mean = mean(mean_vcmax),
+                              median = median(mean_vcmax),
+                              sd = sd(mean_vcmax),
+                              min = min(mean_vcmax),
+                              max = max(mean_vcmax))
 
-#NEW STATS
-n <-  28 #number of pairs
-N <-  n + n
-wt <- wilcox.test(mean_vcmax ~ method, data = grp_pho_all_tpu, conf.int = TRUE, paired = TRUE, exact = FALSE)
+boxplot(mean_vcmax~ method, data = grp_pho_all_tpu)
+
+#STATS
+wt <- wilcox.test(mean_vcmax ~ method, data = grp_pho_all_tpu, conf.int = TRUE, paired = TRUE)
 wt
 zval <- qnorm(wt$p.value/2) #z-score applied to a normal distribution
 zval
-r <- abs(zval)/sqrt(N) #effect size for Mann Whitney test. Rosenthal, R. (1994). Parametric measures of effect size. In H. Cooper & L. V. Hedges (Eds.), The handbook of research synthesis. (pp. 231-244). New York: Russell Sage Foundation.
-r
 
-
-library(rcompanion)
 set.seed(67)
 wilcoxonPairedRC(x = grp_pho_all_tpu$mean_vcmax,
                  g = grp_pho_all_tpu$method,
                  ci = TRUE,
                  R = 1000) # see King B. M., Rosopa P. J., Minium E. W. (2011) Statistical reasoning in the behavioral sciences (6th ed.). Hoboken, NJ: John Wiley. This is the matched-pairs rank biserial correlation coefficient (rc).
 
-
-#Effect size for the independent sample t-test:
-cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_all_tpu, paired = TRUE)
-#small effect size
-
-#### Power Analysis
-
-d <- cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_all_tpu, paired = TRUE)
-d[["estimate"]]
-
-#What was the power?
-pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
 
 #photo stat analysis for jmax -------------------------------
 #Histogram to visualize
@@ -150,7 +138,6 @@ pho_jmax_hist_tpu<-ggplot(pho_stat_tpu, aes(x=jmax)) +
     geom_vline(aes(xintercept=mean(jmax)),
                color="red", linetype="dashed", linewidth=0.5)+
     theme_classic()
-pho_jmax_hist_tpu
 
 grp_pho_jmax_dat_tpu <- pho_stat_tpu %>%
     filter(method == "DAT") %>% 
@@ -159,6 +146,8 @@ grp_pho_jmax_dat_tpu <- pho_stat_tpu %>%
               mean_jmax = mean(jmax)) %>% 
     mutate(method = "DAT")
 
+max(grp_pho_jmax_dat_tpu$mean_jmax)
+
 grp_pho_jmax_trad_tpu <- pho_stat_tpu %>%
     filter(method == "Traditional") %>% 
     group_by(leaf_unique) %>% 
@@ -166,24 +155,76 @@ grp_pho_jmax_trad_tpu <- pho_stat_tpu %>%
               mean_jmax = mean(jmax)) %>% 
     mutate(method = "Traditional")
 
+max(grp_pho_jmax_trad_tpu$mean_jmax)
+
 grp_pho_jmax_all_tpu <- rbind(grp_pho_jmax_dat_tpu, grp_pho_jmax_trad_tpu)
 
-wilcox.test(mean_jmax ~ method, data = grp_pho_jmax_all_tpu, conf.int = TRUE, paired = TRUE)
+grp_pho_jmax_all_tpu %>% group_by(method) %>% summarize(mean = mean(mean_jmax),
+                                                   median = median(mean_jmax),
+                                                   sd = sd(mean_jmax),
+                                                   min = min(mean_jmax),
+                                                   max = max(mean_jmax))
 
-#Effect size for the independent sample t-test:
-cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_jmax_all_tpu, paired = TRUE)
-#small effect size
+boxplot(mean_jmax~ method, data = grp_pho_jmax_all_tpu)
+#STATS
+wt1 <- wilcox.test(mean_jmax ~ method, data = grp_pho_jmax_all_tpu, conf.int = TRUE, paired = TRUE)
+wt1
+zval1 <- qnorm(wt1$p.value/2) #z-score applied to a normal distribution
+zval1
 
-#### Power Analysis
-
-d <- cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_jmax_all_tpu, paired = TRUE)
-
-#What was the power of our study?
-pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
+set.seed(67)
+wilcoxonPairedRC(x = grp_pho_jmax_all_tpu$mean_jmax,
+                 g = grp_pho_jmax_all_tpu$method,
+                 ci = TRUE,
+                 R = 1000)
 
 #photo stat analysis for TPU ---------------------------------------
+
 pho_stat_tpu %>% filter(method == "DAT") %>% summary() #11 curves without TPU
 pho_stat_tpu %>% filter(method == "Traditional") %>% summary() #22 curves without TPU
+
+grp_narm_pho_tpu <- pho_stat_tpu %>%
+    na.omit(.$tpu) #This leaves 6 trad and 22 DAT
+
+grp_tpu_6trad <- grp_narm_pho_tpu %>% filter(method == "Traditional") %>% 
+    group_by(leaf_unique) %>% 
+    summarize(vcmax = vcmax,
+              jmax = jmax,
+              tpu = tpu,
+              method = "Traditional")
+
+grp_tpu_6dat <- grp_narm_pho_tpu %>% filter(method == "DAT") %>%
+    filter(leaf_unique %in% c("K6706L1", "K6707L1", "K6707L2", "K6709L6", "K6714L1", "K6714L2")) %>%
+    group_by(leaf_unique) %>% 
+    summarize(vcmax = mean(vcmax),
+              jmax = mean(jmax),
+              tpu = mean(tpu),
+              method = "DAT")
+
+
+tpu_just6_all <- rbind(grp_tpu_6trad, grp_tpu_6dat)
+
+boxplot(tpu ~ method, data = tpu_just6_all)
+
+#summary stats by group
+tpu_just6_all %>% group_by(method) %>% summarize(median = median(tpu),
+                                                 mean = mean(tpu),
+                                                 min = min(tpu),
+                                                 max = max(tpu),
+                                                 sd = sd(tpu))
+
+
+wt2 <- wilcox.test(tpu ~ method, data = tpu_just6_all, conf.int = TRUE, paired = TRUE)
+wt2
+zval2 <- qnorm(wt2$p.value/2) #z-score applied to a normal distribution
+zval2
+set.seed(67)
+wilcoxonPairedRC(x = tpu_just6_all$tpu,
+                 g = tpu_just6_all$method,
+                 ci = TRUE,
+                 R = 1000)
+
+
 
 # Visualization of DAT vs Traditional in Photosynthesis package -----
 
@@ -318,20 +359,58 @@ mod_table <- aictab(list(lm_method, lm_fit, lm_both, lm_null), modnames = mod_na
 mod_table
 summary(lm_null)
 
+#STATS ---------
 
-wilcox.test(vcmax ~ fit_type, data = all_results, conf.int = TRUE, paired = TRUE, exact = FALSE)
-#Overall, there is a significant difference in whether TPU is fit or not, using a normal approximation of p-values.
-wilcox.test(jmax ~ fit_type, data = all_results, conf.int = TRUE, paired = TRUE, exact = FALSE)
-#Overall, there is a significant difference in whether TPU is fit or not, using a normal approximation of p-values.
+#vcmax by fit_type, pooled data
+wt3 <- wilcox.test(vcmax ~ fit_type, data = all_results, conf.int = TRUE, paired = TRUE, exact = FALSE) #Exact = False because can't compute exact confidence interval with zeroes
+wt3
+zval3 <- qnorm(wt3$p.value/2) #z-score applied to a normal distribution
+zval3
+
+set.seed(67)
+wilcoxonPairedRC(x = all_results$vcmax,
+                 g = all_results$fit_type,
+                 ci = TRUE,
+                 R = 1000)
+
+
+#jmax by fit_type, pooled data
+wt4 <- wilcox.test(jmax ~ fit_type, data = all_results, conf.int = TRUE, exact = FALSE, paired = TRUE)
+wt4
+zval4 <- qnorm(wt4$p.value/2) #z-score applied to a normal distribution
+zval4
+set.seed(67)
+wilcoxonPairedRC(x = all_results$jmax,
+                 g = all_results$fit_type,
+                 ci = TRUE,
+                 R = 1000)
+
 
 #What about JUST the DAT data with TPU fitting
 dat_all_results <- all_results %>% filter(method == "DAT")
-wilcox.test(vcmax ~ fit_type, data = dat_all_results, conf.int = TRUE, paired = TRUE, exact = FALSE)
-#significant
-wilcox.test(jmax ~ fit_type, data = dat_all_results, conf.int = TRUE, paired = TRUE, exact = FALSE)
-#Not significant
 
-spearman
+wt7 <- wilcox.test(vcmax ~ fit_type, data = dat_all_results, conf.int = TRUE, exact = FALSE, paired = TRUE)
+wt7
+zval7 <- qnorm(wt7$p.value/2) #z-score applied to a normal distribution
+zval7
+set.seed(67)
+wilcoxonPairedRC(x = dat_all_results$vcmax,
+                 g = dat_all_results$fit_type,
+                 ci = TRUE,
+                 R = 1000)
+
+#Not significant
+wt8 <- wilcox.test(jmax ~ fit_type, data = dat_all_results, conf.int = TRUE, exact = FALSE, paired = TRUE)
+wt8
+zval8 <- qnorm(wt8$p.value/2) #z-score applied to a normal distribution
+zval8
+abs(zval8)/sqrt(2*20)
+
+set.seed(67)
+wilcoxonPairedRC(x = dat_all_results$jmax,
+                 g = dat_all_results$fit_type,
+                 ci = TRUE,
+                 R = 1000)
 
 
 aov_both <- aov(vcmax ~ method + fit_type, data = all_results)
@@ -356,10 +435,6 @@ mod2_table
 summary(lm2_method)
 
 
-wilcox.test(jmax ~ fit_type, data = all_results, conf.int = TRUE)
-wilcox.test(jmax ~ method, data = all_results, conf.int = TRUE)
-#OVERALL, no difference between Jmax estimates with either fit-type or method with the pooled data.
-
 aov_jmax_both <- aov(jmax ~ method + fit_type, data = all_results)
 summary(aov_jmax_both)
 
@@ -368,6 +443,83 @@ summary(lm_jmax_both)
 #So there's an increase in Jmax with TPU relative to no_TPU
 #and an in Jmax with Traditional relative to no_TPU
 #This relationship is not significant
+
+
+# Quick look at TPU fit = TRUE with No overshoot ------
+pho_dat_tpu <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_with_TPU.csv"), sep = ",", 
+                        header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
+pho_trad_tpu <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_with_TPU.csv"), sep = ",", 
+                         header = TRUE, na.strings = 1000)
+
+pho_dat_nd_tpu <- pho_dat_tpu %>% subset(ID != "K6707L2" & ID != "K6707L2-2" & ID != "K6707L1" & ID != "K6707L1-1" & ID != "K6709L6" & ID != "K6714L2" & ID != "K6714L1" & ID != "K6702L1" & ID != "K6706L2" & ID != "K6706L1" & ID != "K6709L2")
+
+pho_nd_both <- rbind(pho_trad_tpu, pho_dat_nd_tpu)
+pho_nd_leaf <- pho_nd_both %>%
+    mutate(leaf_unique = substring(ID, 1, 7),
+           DAT = Data_point,
+           leaf_id = ID)
+pho_nd_stat <- select(pho_nd_leaf, 'DAT', 'Best_Vcmax_25C', 'Best_Jmax_25C', 'leaf_id', 'leaf_unique')
+pho_nd_stat$DAT[pho_nd_stat$DAT == "Before_DAT"] <- "DAT"
+pho_nd_stat <- rename(pho_nd_stat,
+                      method = DAT,
+                      vcmax = Best_Vcmax_25C,
+                      jmax = Best_Jmax_25C)
+pho_nd_stat$method <- factor(pho_nd_stat$method)
+
+grp_pho_nd_dat <- pho_nd_stat %>%
+    filter(method == "DAT") %>%
+    group_by(leaf_unique) %>%
+    summarise(mean_vcmax = mean(vcmax),
+              mean_jmax = mean(jmax)) %>% 
+    mutate(method = "DAT")
+
+sd(grp_pho_nd_dat$mean_vcmax)
+sd(grp_pho_nd_dat$mean_jmax)
+
+grp_pho_nd_trad <- pho_nd_stat %>%
+    filter(method == "Traditional") %>% 
+    group_by(leaf_unique) %>% 
+    subset(leaf_unique != "K6702L1"
+           & leaf_unique != "K6706L1"
+           & leaf_unique != "K6706L2"
+           & leaf_unique != "K6707L1"
+           & leaf_unique != "K6707L2"
+           & leaf_unique != "K6709L6"
+           & leaf_unique != "K6714L1"
+           & leaf_unique != "K6714L2") %>%
+    summarise(mean_vcmax = mean(vcmax),
+              mean_jmax = mean(jmax)) %>% 
+    mutate(method = "Traditional")
+
+sd(grp_pho_nd_trad$mean_vcmax)
+sd(grp_pho_nd_trad$mean_jmax)
+
+grp_pho_nd_all <- rbind(grp_pho_nd_dat, grp_pho_nd_trad)
+
+grp_pho_nd_all %>% filter(method == "DAT") %>% summary()
+grp_pho_nd_all %>% filter(method == "Traditional") %>% summary()
+
+wt9 <- wilcox.test(mean_vcmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired = TRUE)
+wt9
+zval9 <- qnorm(wt9$p.value/2) #z-score applied to a normal distribution
+zval9
+
+set.seed(67)
+wilcoxonPairedRC(x = grp_pho_nd_all$mean_vcmax,
+                 g = grp_pho_nd_all$method,
+                 ci = TRUE,
+                 R = 1000)
+
+wt10 <- wilcox.test(mean_jmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired = TRUE)
+wt10
+zval10 <- qnorm(wt4$p.value/2) #z-score applied to a normal distribution
+zval10
+
+set.seed(67)
+wilcoxonPairedRC(x = grp_pho_nd_all$mean_jmax,
+                 g = grp_pho_nd_all$method,
+                 ci = TRUE,
+                 R = 1000)
 
 
 # 

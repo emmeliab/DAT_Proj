@@ -8,9 +8,8 @@ library(hydroGOF)
 library(Publish) 
 library(moments) 
 library(vcd)
-library(effsize)
 library(car)
-library(pwr)
+library(rcompanion) #For the point biserial effect size
 
 wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
@@ -35,62 +34,62 @@ params_mg <- init_mg %>%
 # Comparing fits across photosynthesis, plantecophys, and MG code -----------
 
 # photosynth vs ecophys
-rmse(params_ecophys$Vcmax, params_photo$V_cmax)
-ecovphoto_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_photo$vcmax_25, 
-                                        color = params_photo$ID)) +
-    geom_point()+
-    geom_abline(intercept = 0, slope = 1)+
-    theme_classic()+
-    labs(x="Plantecophys Vcmax", y="Photosynthesis Vcmax", col = "Leaf")+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.text=element_text(size=7, family = "serif"),
-        legend.title=element_text(size=11, family = "serif")) +
-    scale_x_continuous(limits = c(1, 500)) + 
-    scale_y_continuous(limits = c(1, 500)) +
-    annotate(geom = "text", label = "RMSE", x = 125, y = 50)
-ecovphoto_vcmax
-
-#ecophys vs MG 
-rmse(params_ecophys$Vcmax, params_mg$Best_Vcmax_25C)
-ecovMG_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_mg$Best_Vcmax_25C, 
-                                     color = params_mg$Tree_id))+
-  geom_point()+
-  geom_abline(intercept = 0, slope = 1)+
-  theme_classic()+
-  labs(x="Plantecophys Vcmax", y="MG Vcmax", col = "Leaf")+
-  theme(axis.title.x=element_text(size=18, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.text=element_text(size=7, family = "serif"),
-        legend.title=element_text(size=11, family = "serif")) +
-  scale_x_continuous(limits = c(1, 500)) + 
-  scale_y_continuous(limits = c(1, 500))
- # annotate(geom = "text", label = "RMSE = 16.63", x = 125, y = 50)
-ecovMG_vcmax
+# rmse(params_ecophys$Vcmax, params_photo$V_cmax)
+# ecovphoto_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_photo$vcmax_25, 
+#                                         color = params_photo$ID)) +
+#     geom_point()+
+#     geom_abline(intercept = 0, slope = 1)+
+#     theme_classic()+
+#     labs(x="Plantecophys Vcmax", y="Photosynthesis Vcmax", col = "Leaf")+
+#     theme(axis.title.x=element_text(size=18, family = "serif"),
+#         axis.title.y=element_text(size=18, family = "serif"),
+#         axis.text.x=element_text(size=15, family = "serif"),
+#         axis.text.y=element_text(size=15, family = "serif"),
+#         legend.text=element_text(size=7, family = "serif"),
+#         legend.title=element_text(size=11, family = "serif")) +
+#     scale_x_continuous(limits = c(1, 500)) + 
+#     scale_y_continuous(limits = c(1, 500)) +
+#     annotate(geom = "text", label = "RMSE", x = 125, y = 50)
+# ecovphoto_vcmax
+# 
+# #ecophys vs MG 
+# rmse(params_ecophys$Vcmax, params_mg$Best_Vcmax_25C)
+# ecovMG_vcmax <- ggplot(mapping = aes(x = params_ecophys$Vcmax, y = params_mg$Best_Vcmax_25C, 
+#                                      color = params_mg$Tree_id))+
+#   geom_point()+
+#   geom_abline(intercept = 0, slope = 1)+
+#   theme_classic()+
+#   labs(x="Plantecophys Vcmax", y="MG Vcmax", col = "Leaf")+
+#   theme(axis.title.x=element_text(size=18, family = "serif"),
+#         axis.title.y=element_text(size=18, family = "serif"),
+#         axis.text.x=element_text(size=15, family = "serif"),
+#         axis.text.y=element_text(size=15, family = "serif"),
+#         legend.text=element_text(size=7, family = "serif"),
+#         legend.title=element_text(size=11, family = "serif")) +
+#   scale_x_continuous(limits = c(1, 500)) + 
+#   scale_y_continuous(limits = c(1, 500))
+#  # annotate(geom = "text", label = "RMSE = 16.63", x = 125, y = 50)
+# ecovMG_vcmax
 
 #Photosynthesis temp corrected vs MG temp corrected
-cor(params_photo$Best_Vcmax_25C, params_mg$Best_Vcmax_25C)
-photovMG_vcmax <- ggplot(mapping = aes(x = params_photo$Best_Vcmax_25C, y = params_mg$Best_Vcmax_25C,
-                                       color = params_photo$ID))+
-  geom_point()+
-  geom_abline(intercept = 0, slope = 1)+
-  theme_classic()+
-  labs(x = "Photosynthesis Vcmax", y = "MG Vcmax", col = "Leaf")+
-  theme(axis.title.x=element_text(size=14, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.text=element_text(size=7, family = "serif"),
-        legend.title=element_text(size=11, family = "serif")) +
-  scale_x_continuous(limits = c(1, 90)) + 
-  scale_y_continuous(limits = c(1, 90))+
-  annotate(geom = "text", label = "r = 0.963", x = 65, y = 20)
-photovMG_vcmax
-ggsave("Figures/Photo_MG_vcmax.pdf")
+# cor(params_photo$Best_Vcmax_25C, params_mg$Best_Vcmax_25C)
+# photovMG_vcmax <- ggplot(mapping = aes(x = params_photo$Best_Vcmax_25C, y = params_mg$Best_Vcmax_25C,
+#                                        color = params_photo$ID))+
+#   geom_point()+
+#   geom_abline(intercept = 0, slope = 1)+
+#   theme_classic()+
+#   labs(x = "Photosynthesis Vcmax", y = "MG Vcmax", col = "Leaf")+
+#   theme(axis.title.x=element_text(size=14, family = "serif"),
+#         axis.title.y=element_text(size=18, family = "serif"),
+#         axis.text.x=element_text(size=15, family = "serif"),
+#         axis.text.y=element_text(size=15, family = "serif"),
+#         legend.text=element_text(size=7, family = "serif"),
+#         legend.title=element_text(size=11, family = "serif")) +
+#   scale_x_continuous(limits = c(1, 90)) + 
+#   scale_y_continuous(limits = c(1, 90))+
+#   annotate(geom = "text", label = "r = 0.963", x = 65, y = 20)
+# photovMG_vcmax
+# ggsave("Figures/Photo_MG_vcmax.pdf")
 
 
 #Jmax
@@ -135,24 +134,24 @@ ggsave("Figures/Photo_MG_vcmax.pdf")
 # Note: K6706L1 jmax for plantecophys is 800000, and is not included in the graph
 
 #Photosynthesis vs MG
-cor(params_photo$Best_Jmax_25C, params_mg$Best.Jmax_25C)
-photovMG_jmax <- ggplot(mapping = aes(x = params_photo$Best_Jmax_25C, y = params_mg$Best.Jmax_25C,
-                                      color = params_photo$ID))+
-  geom_point()+
-  geom_abline(intercept = 0, slope = 1)+
-  theme_classic()+
-  labs(x="Photosynthesis Jmax", y="MG Jmax", col = "Leaf")+
-  theme(axis.title.x=element_text(size=18, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.text=element_text(size=7, family = "serif"),
-        legend.title=element_text(size=11, family = "serif")) +
-  scale_x_continuous(limits = c(1, 150)) + 
-  scale_y_continuous(limits = c(1, 150)) +
-  annotate(geom = "text", label = "r = 0.996", x = 125, y = 50)
-photovMG_jmax
-ggsave("Figures/Photo_MG_jmax.pdf")
+# cor(params_photo$Best_Jmax_25C, params_mg$Best.Jmax_25C)
+# photovMG_jmax <- ggplot(mapping = aes(x = params_photo$Best_Jmax_25C, y = params_mg$Best.Jmax_25C,
+#                                       color = params_photo$ID))+
+#   geom_point()+
+#   geom_abline(intercept = 0, slope = 1)+
+#   theme_classic()+
+#   labs(x="Photosynthesis Jmax", y="MG Jmax", col = "Leaf")+
+#   theme(axis.title.x=element_text(size=18, family = "serif"),
+#         axis.title.y=element_text(size=18, family = "serif"),
+#         axis.text.x=element_text(size=15, family = "serif"),
+#         axis.text.y=element_text(size=15, family = "serif"),
+#         legend.text=element_text(size=7, family = "serif"),
+#         legend.title=element_text(size=11, family = "serif")) +
+#   scale_x_continuous(limits = c(1, 150)) + 
+#   scale_y_continuous(limits = c(1, 150)) +
+#   annotate(geom = "text", label = "r = 0.996", x = 125, y = 50)
+# photovMG_jmax
+# ggsave("Figures/Photo_MG_jmax.pdf")
 
 #TPU
 # rmse(params_ecophys$TPU, params_mg$TPU_Best)
@@ -212,8 +211,6 @@ ggsave("Figures/Photo_MG_jmax.pdf")
 #   scale_y_continuous(limits = c(1, 11)) +
 #   annotate(geom = "text", label = "RMSE = 1.47", x = 7, y = 3)
 # photovMG_tpu
-
-
 
 
 
@@ -293,25 +290,6 @@ pho_hist<-ggplot(pho_stat, aes(x=vcmax)) +
     geom_vline(aes(xintercept=mean(vcmax)),
                color="red", linetype="dashed", linewidth=0.5)+
     theme_classic()
-pho_hist
-#data are positively skewed
-skewness(pho_stat$vcmax)
-#value close to 1, should be okay
-kurtosis(pho_stat$vcmax)
-#It's a bit high, but not bad
-
-#Test the assumption of equal variances for each group for t-test with Levene's
-leveneTest(vcmax ~ method, data = pho_stat)
-#Non-significant. The variances are not significantly different from one another. Therefore we have met the assumption of equal variances
-
-# Shapiro-Wilk normality test for Vcmax for the one-sample t-test
-with(pho_stat, shapiro.test(vcmax))
-# Shapiro-Wilk normality test for the DAT measurement methodology
-with(pho_stat, shapiro.test(vcmax[method == "DAT"]))
-# Shapiro-Wilk normality test for the Traditional measurement methodology
-with(pho_stat, shapiro.test(vcmax[method == "Traditional"])) 
-#All are significant. Rejects null hypothesis that these data are not normally distributed.
-# Therefore the sample varies from the normal distribution.
 
 grp_pho_dat <- pho_stat %>%
     filter(method == "DAT") %>% 
@@ -320,8 +298,6 @@ grp_pho_dat <- pho_stat %>%
               mean_vcmax = mean(vcmax)) %>% 
     mutate(method = "DAT")
 
-sd(grp_pho_dat$mean_vcmax)
-
 grp_pho_trad <- pho_stat %>%
     filter(method == "Traditional") %>% 
     group_by(leaf_unique) %>% 
@@ -329,9 +305,13 @@ grp_pho_trad <- pho_stat %>%
               mean_vcmax = mean(vcmax)) %>% 
     mutate(method = "Traditional")
 
-sd(grp_pho_trad$mean_vcmax)
-
 grp_pho_all <- rbind(grp_pho_dat, grp_pho_trad)
+
+grp_pho_all %>% group_by(method) %>% summarize(mean = mean(mean_vcmax),
+                                               median = median(mean_vcmax),
+                                               sd = sd(mean_vcmax),
+                                               min = min(mean_vcmax),
+                                               max = max(mean_vcmax))
 
 ci.mean(mean_vcmax ~ method, data = grp_pho_all)
 ci1<-ci.mean(mean_vcmax~method, data=grp_pho_all)
@@ -348,22 +328,16 @@ with(grp_pho_all, shapiro.test(mean_vcmax[method == "Traditional"]))
 #All are significant. Rejects null hypothesis that these data are not normally distributed.
 # Therefore the sample varies from the normal distribution.
 
-wilcox.test(mean_vcmax ~ method, data = grp_pho_all, conf.int = TRUE, paired = TRUE)
-#This result is significant
+wt <- wilcox.test(mean_vcmax ~ method, data = grp_pho_all, conf.int = TRUE, paired = TRUE)
+wt
+zval <- qnorm(wt$p.value/2) #z-score applied to a normal distribution
+zval
 
-#Effect size for the independent sample t-test:
-cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_all, paired = TRUE)
-#small effect size
-
-#### Power Analysis
-
-d <- cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_all, paired = TRUE)
-
-#How many samples to achieve a certain power?
-pwr.t.test(n = , d = d[["estimate"]], power = 0.7, sig.level = 0.05, type = "paired", alternative = "two.sided")
-
-#What was the power of our study?
-pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
+set.seed(67)
+wilcoxonPairedRC(x = grp_pho_all$mean_vcmax,
+                 g = grp_pho_all$method,
+                 ci = TRUE,
+                 R = 1000)
 
 #photo stat analysis for jmax -------------------------------
 pho_jmax_summary <- pho_stat %>%
@@ -387,25 +361,6 @@ pho_jmax_hist<-ggplot(pho_stat, aes(x=jmax)) +
     geom_vline(aes(xintercept=mean(jmax)),
                color="red", linetype="dashed", linewidth=0.5)+
     theme_classic()
-pho_jmax_hist
-#data are positively skewed
-skewness(pho_stat$jmax)
-#value close to 1, should be okay
-kurtosis(pho_stat$jmax)
-#It's a bit high
-
-#Test the assumption of equal variances for each group for t-test with Levene's
-leveneTest(jmax ~ method, data = pho_stat)
-#Non-significant. The variances are not significantly different from one another. Therefore we have met the assumption of equal variances
-
-# Shapiro-Wilk normality test for Vcmax for the one-sample t-test
-with(pho_stat, shapiro.test(jmax))
-# Shapiro-Wilk normality test for the DAT measurement methodology
-with(pho_stat, shapiro.test(jmax[method == "DAT"]))
-# Shapiro-Wilk normality test for the Traditional measurement methodology
-with(pho_stat, shapiro.test(jmax[method == "Traditional"])) 
-#2/3 are significant. Rejects null hypothesis that these data are not normally distributed.
-# Therefore the sample varies from the normal distribution.
 
 grp_pho_jmax_dat <- pho_stat %>%
     filter(method == "DAT") %>% 
@@ -414,7 +369,7 @@ grp_pho_jmax_dat <- pho_stat %>%
               mean_jmax = mean(jmax)) %>% 
     mutate(method = "DAT")
 
-sd(grp_pho_jmax_dat$mean_jmax)
+max(grp_pho_jmax_dat$mean_jmax)
 
 grp_pho_jmax_trad <- pho_stat %>%
     filter(method == "Traditional") %>% 
@@ -423,9 +378,15 @@ grp_pho_jmax_trad <- pho_stat %>%
               mean_jmax = mean(jmax)) %>% 
     mutate(method = "Traditional")
 
-sd(grp_pho_jmax_trad$mean_jmax)
+max(grp_pho_jmax_trad$mean_jmax)
 
 grp_pho_jmax_all <- rbind(grp_pho_jmax_dat, grp_pho_jmax_trad)
+
+grp_pho_jmax_all %>% group_by(method) %>% summarize(mean = mean(mean_jmax),
+                                               median = median(mean_jmax),
+                                               sd = sd(mean_jmax),
+                                               min = min(mean_jmax),
+                                               max = max(mean_jmax))
 
 grp_pho_jmax_all %>% filter(method == "DAT") %>% summary()
 grp_pho_jmax_all %>% filter(method == "Traditional") %>% summary()
@@ -438,23 +399,16 @@ with(grp_pho_jmax_all, shapiro.test(mean_jmax[method == "Traditional"]))
 #2/3 are significant. Rejects null hypothesis that these data are not normally distributed.
 # Therefore the sample varies from the normal distribution.
 
-wilcox.test(mean_jmax ~ method, data = grp_pho_jmax_all, conf.int = TRUE, paired = TRUE)
-#This result is significant
+wt2 <- wilcox.test(mean_jmax ~ method, data = grp_pho_jmax_all, conf.int = TRUE, paired = TRUE)
+wt2
+zval2 <- qnorm(wt2$p.value/2) #z-score applied to a normal distribution
+zval2
 
-#Effect size for the independent sample t-test:
-cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_jmax_all, paired = TRUE)
-#small effect size
-
-#### Power Analysis
-
-d <- cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_jmax_all, paired = TRUE)
-
-#How many samples to achieve a certain power?
-pwr.t.test(n = , d = d[["estimate"]], power = 0.7, sig.level = 0.05, type = "paired", alternative = "two.sided")
-
-#What was the power of our study?
-pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
-#Okay power
+set.seed(67)
+wilcoxonPairedRC(x = grp_pho_jmax_all$mean_jmax,
+                 g = grp_pho_jmax_all$method,
+                 ci = TRUE,
+                 R = 1000)
 
 # Quick analysis of methods WITHOUT THE OVERSHOOT CURVES --------------------------------------
 
@@ -491,24 +445,27 @@ grp_pho_nd_all <- rbind(grp_pho_nd_dat, grp_pho_nd_trad)
 grp_pho_nd_all %>% filter(method == "DAT") %>% summary()
 grp_pho_nd_all %>% filter(method == "Traditional") %>% summary()
 
-wilcox.test(mean_vcmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired = TRUE) #ns
-wilcox.test(mean_jmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired. = TRUE) #ns
+wt3 <- wilcox.test(mean_vcmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired = TRUE)
+wt3
+zval3 <- qnorm(wt3$p.value/2) #z-score applied to a normal distribution
+zval3
 
-#Effect size for the independent sample t-test:
-cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_nd_all, paired = TRUE)
-#negligible effect size, also CI crosses 0 so not great
-cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_nd_all, paired = TRUE)
-#small effect size
+set.seed(67)
+wilcoxonPairedRC(x = grp_pho_nd_all$mean_vcmax,
+                 g = grp_pho_nd_all$method,
+                 ci = TRUE,
+                 R = 1000)
 
-d1 <- cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_pho_nd_all, paired = TRUE)
-#What was the power of our study?
-pwr.t.test(n = 20, d = d1[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
-#super weak
+wt4 <- wilcox.test(mean_jmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired = TRUE)
+wt4
+zval4 <- qnorm(wt4$p.value/2) #z-score applied to a normal distribution
+zval4
 
-d2 <- cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_pho_nd_all, paired = TRUE)
-#What was the power of our study?
-pwr.t.test(n = 20, d = d2[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
-#fairly weak
+set.seed(67)
+wilcoxonPairedRC(x = grp_pho_nd_all$mean_jmax,
+                 g = grp_pho_nd_all$method,
+                 ci = TRUE,
+                 R = 1000)
 
 nd_vcmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_vcmax)) +
     geom_boxplot()+
@@ -677,98 +634,98 @@ ggsave("Figures/photo_1to1_datvtrad_jmax.pdf")
 # MG data processing ------------------------------------------------
 
 ## Separate the concatenated tree ID column
-mg_split <- unlist(str_split(init_mg$Tree_id, "_", n=2))
-mg_sub <- subset(mg_split, mg_split != "Before_DAT" & mg_split != "Traditional")
-init_mg$leaf_id <- mg_sub
-mg_complete <- subset(init_mg, select = -c(Tree_id))
-
-leaf_split <- unlist(str_split(mg_complete$leaf_id, "L", n=2))
-leaf_sub <- subset(leaf_split, leaf_split != "1" & leaf_split != "2" & leaf_split != "1-1"
-                   & leaf_split != 3 & leaf_split != "6" & leaf_split != "8" & leaf_split != "2-2")
-mg_complete$tree_id <- leaf_sub
-
-#Add in the relative canopy position
-codes <- read.csv("~/Documents/GitHub/DAT_Proj/Inputs/unique_ids.csv") # need to keep this in for leaf_id
-canopy_pos <- read.csv("~/Documents/GitHub/DAT_Proj/Inputs/rel_canopy_pos.csv")
-names(codes)[1] ="leaf_id"
-codes_and_can <- left_join(codes, canopy_pos, by = "k67.id")
-names(codes_and_can)[3]="code4let"
-codes_and_can <- subset(codes_and_can, select = -code.y)
-
-mg_complete <- left_join(mg_complete, codes_and_can, by = "leaf_id") %>% 
-  select(-c(k67.id,code4let))
-
-
-#This is the data with the back correction filtered out
-mg_leaf <- mg_complete %>%
-  mutate(leaf_unique = substring(leaf_id, 1, 7))
-
-#group data for further analysis
-grp_leaf <- mg_leaf %>% group_by(DAT, leaf_unique) %>%
-  summarise(mean_vcmax=mean(Best_Vcmax_25C),
-            mean_jmax= mean(Best.Jmax_25C),
-            #mean_tpumax= mean(TPU_Best),
-            tree_id = tree_id,
-            leaf_unique=leaf_unique,
-            leaf_id=leaf_id,
-            rel_can_pos=rel_can_pos) %>%
-  as.data.frame()
-
-summary(grp_leaf)
-
-grp_tree <- mg_leaf %>% group_by(DAT,tree_id) %>% 
-  summarise(mean_vcmax=mean(Best_Vcmax_25C),
-            mean_jmax= mean(Best.Jmax_25C),
-            #mean_tpumax= mean(TPU_Best),
-            tree_id = tree_id,
-            leaf_unique=leaf_unique,
-            leaf_id=leaf_id,
-            rel_can_pos=rel_can_pos,
-            .groups = 'drop') %>%
-  as.data.frame()
-
-
-### MG Visualizations -------------------------------
-#### Visualization of DAT vs Traditional
-
-## Boxplots
-lab_DATTrad <- c('DAT', 'Traditional')
-b4 <- ggplot(mg_leaf, aes(x=DAT, y=Best_Vcmax_25C)) +
-  geom_boxplot()+
-  labs(x="Method", y = "Vcmax")+
-  theme_classic()+
-  theme(axis.title.x=element_text(size=18, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.position="none")+
-  scale_x_discrete(labels=lab_DATTrad)
-b4
-
-b5 <- ggplot(mg_leaf, aes(x=DAT, y=Best.Jmax_25C)) +
-  geom_boxplot()+
-  labs(x="Method", y = "Jmax")+
-  theme_classic()+
-  theme(axis.title.x=element_text(size=18, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.position="none")+
-  scale_x_discrete(labels=lab_DATTrad)
-b5
-
-b6 <- ggplot(mg_leaf, aes(x=DAT, y=TPU_Best)) +
-  geom_boxplot()+
-  labs(x="Method", y = "TPU")+
-  theme_classic()+
-  theme(axis.title.x=element_text(size=18, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.position="none")+
-  scale_x_discrete(labels=lab_DATTrad)
-b6
-
+# mg_split <- unlist(str_split(init_mg$Tree_id, "_", n=2))
+# mg_sub <- subset(mg_split, mg_split != "Before_DAT" & mg_split != "Traditional")
+# init_mg$leaf_id <- mg_sub
+# mg_complete <- subset(init_mg, select = -c(Tree_id))
+# 
+# leaf_split <- unlist(str_split(mg_complete$leaf_id, "L", n=2))
+# leaf_sub <- subset(leaf_split, leaf_split != "1" & leaf_split != "2" & leaf_split != "1-1"
+#                    & leaf_split != 3 & leaf_split != "6" & leaf_split != "8" & leaf_split != "2-2")
+# mg_complete$tree_id <- leaf_sub
+# 
+# #Add in the relative canopy position
+# codes <- read.csv("~/Documents/GitHub/DAT_Proj/Inputs/unique_ids.csv") # need to keep this in for leaf_id
+# canopy_pos <- read.csv("~/Documents/GitHub/DAT_Proj/Inputs/rel_canopy_pos.csv")
+# names(codes)[1] ="leaf_id"
+# codes_and_can <- left_join(codes, canopy_pos, by = "k67.id")
+# names(codes_and_can)[3]="code4let"
+# codes_and_can <- subset(codes_and_can, select = -code.y)
+# 
+# mg_complete <- left_join(mg_complete, codes_and_can, by = "leaf_id") %>% 
+#   select(-c(k67.id,code4let))
+# 
+# 
+# #This is the data with the back correction filtered out
+# mg_leaf <- mg_complete %>%
+#   mutate(leaf_unique = substring(leaf_id, 1, 7))
+# 
+# #group data for further analysis
+# grp_leaf <- mg_leaf %>% group_by(DAT, leaf_unique) %>%
+#   summarise(mean_vcmax=mean(Best_Vcmax_25C),
+#             mean_jmax= mean(Best.Jmax_25C),
+#             #mean_tpumax= mean(TPU_Best),
+#             tree_id = tree_id,
+#             leaf_unique=leaf_unique,
+#             leaf_id=leaf_id,
+#             rel_can_pos=rel_can_pos) %>%
+#   as.data.frame()
+# 
+# summary(grp_leaf)
+# 
+# grp_tree <- mg_leaf %>% group_by(DAT,tree_id) %>% 
+#   summarise(mean_vcmax=mean(Best_Vcmax_25C),
+#             mean_jmax= mean(Best.Jmax_25C),
+#             #mean_tpumax= mean(TPU_Best),
+#             tree_id = tree_id,
+#             leaf_unique=leaf_unique,
+#             leaf_id=leaf_id,
+#             rel_can_pos=rel_can_pos,
+#             .groups = 'drop') %>%
+#   as.data.frame()
+# 
+# 
+# ### MG Visualizations -------------------------------
+# #### Visualization of DAT vs Traditional
+# 
+# ## Boxplots
+# lab_DATTrad <- c('DAT', 'Traditional')
+# b4 <- ggplot(mg_leaf, aes(x=DAT, y=Best_Vcmax_25C)) +
+#   geom_boxplot()+
+#   labs(x="Method", y = "Vcmax")+
+#   theme_classic()+
+#   theme(axis.title.x=element_text(size=18, family = "serif"),
+#         axis.title.y=element_text(size=18, family = "serif"),
+#         axis.text.x=element_text(size=15, family = "serif"),
+#         axis.text.y=element_text(size=15, family = "serif"),
+#         legend.position="none")+
+#   scale_x_discrete(labels=lab_DATTrad)
+# b4
+# 
+# b5 <- ggplot(mg_leaf, aes(x=DAT, y=Best.Jmax_25C)) +
+#   geom_boxplot()+
+#   labs(x="Method", y = "Jmax")+
+#   theme_classic()+
+#   theme(axis.title.x=element_text(size=18, family = "serif"),
+#         axis.title.y=element_text(size=18, family = "serif"),
+#         axis.text.x=element_text(size=15, family = "serif"),
+#         axis.text.y=element_text(size=15, family = "serif"),
+#         legend.position="none")+
+#   scale_x_discrete(labels=lab_DATTrad)
+# b5
+# 
+# b6 <- ggplot(mg_leaf, aes(x=DAT, y=TPU_Best)) +
+#   geom_boxplot()+
+#   labs(x="Method", y = "TPU")+
+#   theme_classic()+
+#   theme(axis.title.x=element_text(size=18, family = "serif"),
+#         axis.title.y=element_text(size=18, family = "serif"),
+#         axis.text.x=element_text(size=15, family = "serif"),
+#         axis.text.y=element_text(size=15, family = "serif"),
+#         legend.position="none")+
+#   scale_x_discrete(labels=lab_DATTrad)
+# b6
+# 
 
 
 
@@ -863,48 +820,48 @@ b6
 # By leaf
 
 #Vcmax
-leaf_sub_vcmax <- select(grp_leaf, mean_vcmax, DAT, leaf_unique, tree_id)
-leaf_wide_vcmax <- reshape(leaf_sub_vcmax, idvar = "leaf_unique", timevar = "DAT", direction = "wide")
-names(leaf_wide_vcmax)[2:4]=c("vcmax_DAT", "tree_id", "vcmax_Trad")
-leaf_wide_vcmax <- subset(leaf_wide_vcmax, select = -tree_id.Traditional)
-mng_leaf_vcmax <- ggplot(data = leaf_wide_vcmax, mapping = aes(x = vcmax_Trad,
-                                                               y = vcmax_DAT,
-                                                               color = leaf_unique))+
-  geom_point()+
-  geom_abline(intercept = 0, slope = 1)+
-  theme_classic()+
-  labs(x="Traditional Vcmax", y="DAT Vcmax", col = "Unique Leaf")+
-  theme(axis.title.x=element_text(size=18, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.text=element_text(size=7, family = "serif"),
-        legend.title=element_text(size=11, family = "serif"))+
-    scale_x_continuous(limits = c(1, 80)) + 
-    scale_y_continuous(limits = c(1, 80))
-mng_leaf_vcmax
-
-#Jmax
-leaf_sub_jmax <- select(grp_leaf, mean_jmax, DAT, leaf_unique, tree_id)
-leaf_wide_jmax <- reshape(leaf_sub_jmax, idvar = "leaf_unique", timevar = "DAT", direction = "wide")
-names(leaf_wide_jmax)[2:4]=c("jmax_DAT", "tree_id", "jmax_Trad")
-leaf_wide_jmax <- subset(leaf_wide_jmax, select = -tree_id.Traditional)
-mng_leaf_jmax <- ggplot(data = leaf_wide_jmax, mapping = aes(x = jmax_Trad,
-                                                             y = jmax_DAT,
-                                                             color = leaf_unique))+
-  geom_point()+
-  geom_abline(intercept = 0, slope = 1)+
-  theme_classic()+
-  labs(x="Traditional Jmax", y="DAT Jmax", col = "Unique Leaf")+
-  theme(axis.title.x=element_text(size=18, family = "serif"),
-        axis.title.y=element_text(size=18, family = "serif"),
-        axis.text.x=element_text(size=15, family = "serif"),
-        axis.text.y=element_text(size=15, family = "serif"),
-        legend.text=element_text(size=7, family = "serif"),
-        legend.title=element_text(size=11, family = "serif"))+
-    scale_x_continuous(limits = c(1, 120)) + 
-    scale_y_continuous(limits = c(1, 120))
-mng_leaf_jmax
+# leaf_sub_vcmax <- select(grp_leaf, mean_vcmax, DAT, leaf_unique, tree_id)
+# leaf_wide_vcmax <- reshape(leaf_sub_vcmax, idvar = "leaf_unique", timevar = "DAT", direction = "wide")
+# names(leaf_wide_vcmax)[2:4]=c("vcmax_DAT", "tree_id", "vcmax_Trad")
+# leaf_wide_vcmax <- subset(leaf_wide_vcmax, select = -tree_id.Traditional)
+# mng_leaf_vcmax <- ggplot(data = leaf_wide_vcmax, mapping = aes(x = vcmax_Trad,
+#                                                                y = vcmax_DAT,
+#                                                                color = leaf_unique))+
+#   geom_point()+
+#   geom_abline(intercept = 0, slope = 1)+
+#   theme_classic()+
+#   labs(x="Traditional Vcmax", y="DAT Vcmax", col = "Unique Leaf")+
+#   theme(axis.title.x=element_text(size=18, family = "serif"),
+#         axis.title.y=element_text(size=18, family = "serif"),
+#         axis.text.x=element_text(size=15, family = "serif"),
+#         axis.text.y=element_text(size=15, family = "serif"),
+#         legend.text=element_text(size=7, family = "serif"),
+#         legend.title=element_text(size=11, family = "serif"))+
+#     scale_x_continuous(limits = c(1, 80)) + 
+#     scale_y_continuous(limits = c(1, 80))
+# mng_leaf_vcmax
+# 
+# #Jmax
+# leaf_sub_jmax <- select(grp_leaf, mean_jmax, DAT, leaf_unique, tree_id)
+# leaf_wide_jmax <- reshape(leaf_sub_jmax, idvar = "leaf_unique", timevar = "DAT", direction = "wide")
+# names(leaf_wide_jmax)[2:4]=c("jmax_DAT", "tree_id", "jmax_Trad")
+# leaf_wide_jmax <- subset(leaf_wide_jmax, select = -tree_id.Traditional)
+# mng_leaf_jmax <- ggplot(data = leaf_wide_jmax, mapping = aes(x = jmax_Trad,
+#                                                              y = jmax_DAT,
+#                                                              color = leaf_unique))+
+#   geom_point()+
+#   geom_abline(intercept = 0, slope = 1)+
+#   theme_classic()+
+#   labs(x="Traditional Jmax", y="DAT Jmax", col = "Unique Leaf")+
+#   theme(axis.title.x=element_text(size=18, family = "serif"),
+#         axis.title.y=element_text(size=18, family = "serif"),
+#         axis.text.x=element_text(size=15, family = "serif"),
+#         axis.text.y=element_text(size=15, family = "serif"),
+#         legend.text=element_text(size=7, family = "serif"),
+#         legend.title=element_text(size=11, family = "serif"))+
+#     scale_x_continuous(limits = c(1, 120)) + 
+#     scale_y_continuous(limits = c(1, 120))
+# mng_leaf_jmax
 
 # #TPU
 # leaf_sub_tpu <- select(grp_leaf, mean_tpumax, DAT, leaf_unique, tree_id)
@@ -932,204 +889,204 @@ mng_leaf_jmax
 
 # MG stat analysis for vcmax --------------------------------
 
-#Subset variables of interest
-leaf_stat <- select(mg_leaf, 'DAT', 'Best_Vcmax_25C', 'Best.Jmax_25C', 'leaf_id', 'tree_id', 'leaf_unique', 'rel_can_pos')
-leaf_stat$DAT[leaf_stat$DAT == "Before_DAT"] <- "DAT"
-leaf_stat <- rename(leaf_stat,
-                    method = DAT,
-                    vcmax = Best_Vcmax_25C,
-                    jmax = Best.Jmax_25C,
-                    #tpu = TPU_Best,
-                    )
-#Describe factor levels. 0 is traditional, 1 is DAT
-leaf_stat$method <- factor(leaf_stat$method)
+# #Subset variables of interest
+# leaf_stat <- select(mg_leaf, 'DAT', 'Best_Vcmax_25C', 'Best.Jmax_25C', 'leaf_id', 'tree_id', 'leaf_unique', 'rel_can_pos')
+# leaf_stat$DAT[leaf_stat$DAT == "Before_DAT"] <- "DAT"
+# leaf_stat <- rename(leaf_stat,
+#                     method = DAT,
+#                     vcmax = Best_Vcmax_25C,
+#                     jmax = Best.Jmax_25C,
+#                     #tpu = TPU_Best,
+#                     )
+# #Describe factor levels. 0 is traditional, 1 is DAT
+# leaf_stat$method <- factor(leaf_stat$method)
+# 
+# #displays grouped summary
+# leaf_summary <- leaf_stat %>%
+#   group_by(method) %>%
+#   summarise(n_vcmax = length(vcmax),
+#             mean_vcmax = round(mean(vcmax),3),
+#             sd_vcmax = round(sd(vcmax),3),
+#             se_vcmax = sd(vcmax)/sqrt(n())) %>% 
+#   mutate(low_ci_vcmax = mean_vcmax - qt(1 - (0.05 / 2), n_vcmax - 1) * se_vcmax,
+#          up_ci_vcmax = mean_vcmax + qt(1 - (0.05 / 2), n_vcmax - 1) * se_vcmax)
+# print(leaf_summary)
+# 
+# #Visualize Vcmax by Method
+# ci.mean(vcmax ~ method, data = leaf_stat)
+# ci1<-ci.mean(vcmax~method, data=leaf_stat)
+# plot(ci1,title.labels="Method")
+# 
+# #Histogram to visualize
+# leaf_hist<-ggplot(leaf_stat, aes(x=vcmax)) + 
+#   geom_histogram(color="black", fill="white", bins = 8)+
+#   geom_vline(aes(xintercept=mean(vcmax)),
+#              color="red", linetype="dashed", linewidth=0.5)+
+#   theme_classic()
+# leaf_hist
+# #data are positively skewed
+# skewness(leaf_stat$vcmax)
+# #value close to 1, should be okay
+# kurtosis(leaf_stat$vcmax)
+# #It's a bit high
+# 
+# #Test the assumption of equal variances for each group for t-test with Levene's
+# leveneTest(vcmax ~ method, data = leaf_stat)
+# #Non-significant. The variances are not significantly different from one another. Therefore we have met the assumption of equal variances
+# 
+# # Shapiro-Wilk normality test for Vcmax for the one-sample t-test
+# with(leaf_stat, shapiro.test(vcmax))
+# # Shapiro-Wilk normality test for the DAT measurement methodology
+# with(leaf_stat, shapiro.test(vcmax[method == "DAT"]))
+# # Shapiro-Wilk normality test for the Traditional measurement methodology
+# with(leaf_stat, shapiro.test(vcmax[method == "Traditional"])) 
+# #All are significant. Rejects null hypothesis that these data are not normally distributed.
+# # Therefore the sample varies from the normal distribution.
+# 
+# grp_dat <- leaf_stat %>%
+#   filter(method == "DAT") %>% 
+#   group_by(leaf_unique) %>% 
+#   summarise(n_vcmax = length(vcmax),
+#             mean_vcmax = mean(vcmax),
+#             sd_vcmax = sd(vcmax),
+#             se_vcmax = sd(vcmax)/sqrt(n())) %>% 
+#   mutate(method = "DAT")
+#   
+# grp_trad <- leaf_stat %>%
+#   filter(method == "Traditional") %>% 
+#   group_by(leaf_unique) %>% 
+#   summarise(n_vcmax = length(vcmax),
+#             mean_vcmax = mean(vcmax),
+#             sd_vcmax = sd(vcmax),
+#             se_vcmax = sd(vcmax)/sqrt(n())) %>% 
+#   mutate(method = "Traditional")
+# 
+# grp_all <- rbind(grp_dat, grp_trad)
+# 
+# with(grp_all, shapiro.test(mean_vcmax))
+# # Shapiro-Wilk normality test for the DAT measurement methodology
+# with(grp_all, shapiro.test(mean_vcmax[method == "DAT"]))
+# # Shapiro-Wilk normality test for the Traditional measurement methodology
+# with(grp_all, shapiro.test(mean_vcmax[method == "Traditional"])) 
+# #All are significant. Rejects null hypothesis that these data are not normally distributed.
+# # Therefore the sample varies from the normal distribution.
+# 
+# wilcox.test(mean_vcmax ~ method, data = grp_all, paired = TRUE)
+# #This result is significant
+# 
+# #Effect size for the independent sample t-test:
+# cohen.ES(test = "t", size = "large") # To remind oneself
+# cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_all, paired = TRUE)
+# #small effect size
+# 
+# #### Power Analysis
+# 
+# d <- cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_all, paired = TRUE)
+# d[["estimate"]]
+# 
+# #How many samples to achieve a certain power?
+# pwr1 <- pwr.t.test(n = , d = d[["estimate"]], power = 0.7, sig.level = 0.05, type = "paired", alternative = "two.sided")
+# plot(pwr1)
+# 
+# #What was the power of our study?
+# pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
+# plot(pwr2)
+# 
+# 
+# # MG stat analysis for jmax ------------------------------
+# 
+# leaf_jmax_summary <- leaf_stat %>%
+#     group_by(method) %>%
+#     summarise(n_jmax = length(jmax),
+#               mean_jmax = round(mean(jmax),3),
+#               sd_jmax = round(sd(jmax),3),
+#               se_jmax = sd(jmax)/sqrt(n())) %>% 
+#     mutate(low_ci_jmax = mean_jmax - qt(1 - (0.05 / 2), n_jmax - 1) * se_jmax,
+#            up_ci_jmax = mean_jmax + qt(1 - (0.05 / 2), n_jmax - 1) * se_jmax)
+# print(leaf_jmax_summary)
+# 
+# #Visualize Vcmax by Method
+# ci.mean(jmax ~ method, data = leaf_stat)
+# ci1<-ci.mean(jmax~method, data=leaf_stat)
+# plot(ci1,title.labels="Method")
+# 
+# #Histogram to visualize
+# leaf_jmax_hist<-ggplot(leaf_stat, aes(x=jmax)) + 
+#     geom_histogram(color="black", fill="white", bins = 8)+
+#     geom_vline(aes(xintercept=mean(vcmax)),
+#                color="red", linetype="dashed", linewidth=0.5)+
+#     theme_classic()
+# leaf_jmax_hist
+# #data are positively skewed
+# skewness(leaf_stat$jmax)
+# #value close to 1, should be okay
+# kurtosis(leaf_stat$jmax)
+# #It's a bit high
+# 
+# #Test the assumption of equal variances for each group for t-test with Levene's
+# leveneTest(jmax ~ method, data = leaf_stat)
+# #Non-significant. The variances are not significantly different from one another. Therefore we have met the assumption of equal variances
+# 
+# # Shapiro-Wilk normality test for Vcmax for the one-sample t-test
+# with(leaf_stat, shapiro.test(jmax))
+# # Shapiro-Wilk normality test for the DAT measurement methodology
+# with(leaf_stat, shapiro.test(jmax[method == "DAT"]))
+# # Shapiro-Wilk normality test for the Traditional measurement methodology
+# with(leaf_stat, shapiro.test(jmax[method == "Traditional"])) 
+# #2/3 significant. Rejects null hypothesis that these data are not normally distributed.
+# # Therefore the sample varies from the normal distribution.
+# 
+# grp_jmax_dat <- leaf_stat %>%
+#     filter(method == "DAT") %>% 
+#     group_by(leaf_unique) %>% 
+#     summarise(n_jmax = length(jmax),
+#               mean_jmax = mean(jmax),
+#               sd_jmax = sd(jmax),
+#               se_jmax = sd(jmax)/sqrt(n())) %>% 
+#     mutate(method = "DAT")
+# 
+# grp_jmax_trad <- leaf_stat %>%
+#     filter(method == "Traditional") %>% 
+#     group_by(leaf_unique) %>% 
+#     summarise(n_jmax = length(jmax),
+#               mean_jmax = mean(jmax),
+#               sd_jmax = sd(jmax),
+#               se_jmax = sd(jmax)/sqrt(n())) %>% 
+#     mutate(method = "Traditional")
+# 
+# grp_jmax_all <- rbind(grp_jmax_dat, grp_jmax_trad)
+# 
+# with(grp_jmax_all, shapiro.test(mean_jmax))
+# # Shapiro-Wilk normality test for the DAT measurement methodology
+# with(grp_jmax_all, shapiro.test(mean_jmax[method == "DAT"]))
+# # Shapiro-Wilk normality test for the Traditional measurement methodology
+# with(grp_jmax_all, shapiro.test(mean_jmax[method == "Traditional"])) 
+# #2/3 significant. Rejects null hypothesis that these data are not normally distributed.
+# # Therefore the sample varies from the normal distribution.
+# 
+# wilcox.test(mean_jmax ~ method, data = grp_jmax_all, paired = TRUE)
+# #This result is significant
+# 
+# #Effect size for the independent sample t-test:
+# cohen.ES(test = "t", size = "large") # To remind oneself
+# cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_jmax_all, paired = TRUE)
+# #small effect size
+# 
+# #### Power Analysis
+# 
+# d <- cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_jmax_all, paired = TRUE)
+# d[["estimate"]]
+# 
+# #How many samples to achieve a certain power?
+# pwr1 <- pwr.t.test(n = , d = d[["estimate"]], power = 0.7, sig.level = 0.05, type = "paired", alternative = "two.sided")
+# plot(pwr1)
+# 
+# #What was the power of our study?
+# pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
+# plot(pwr2)
 
-#displays grouped summary
-leaf_summary <- leaf_stat %>%
-  group_by(method) %>%
-  summarise(n_vcmax = length(vcmax),
-            mean_vcmax = round(mean(vcmax),3),
-            sd_vcmax = round(sd(vcmax),3),
-            se_vcmax = sd(vcmax)/sqrt(n())) %>% 
-  mutate(low_ci_vcmax = mean_vcmax - qt(1 - (0.05 / 2), n_vcmax - 1) * se_vcmax,
-         up_ci_vcmax = mean_vcmax + qt(1 - (0.05 / 2), n_vcmax - 1) * se_vcmax)
-print(leaf_summary)
 
-#Visualize Vcmax by Method
-ci.mean(vcmax ~ method, data = leaf_stat)
-ci1<-ci.mean(vcmax~method, data=leaf_stat)
-plot(ci1,title.labels="Method")
-
-#Histogram to visualize
-leaf_hist<-ggplot(leaf_stat, aes(x=vcmax)) + 
-  geom_histogram(color="black", fill="white", bins = 8)+
-  geom_vline(aes(xintercept=mean(vcmax)),
-             color="red", linetype="dashed", linewidth=0.5)+
-  theme_classic()
-leaf_hist
-#data are positively skewed
-skewness(leaf_stat$vcmax)
-#value close to 1, should be okay
-kurtosis(leaf_stat$vcmax)
-#It's a bit high
-
-#Test the assumption of equal variances for each group for t-test with Levene's
-leveneTest(vcmax ~ method, data = leaf_stat)
-#Non-significant. The variances are not significantly different from one another. Therefore we have met the assumption of equal variances
-
-# Shapiro-Wilk normality test for Vcmax for the one-sample t-test
-with(leaf_stat, shapiro.test(vcmax))
-# Shapiro-Wilk normality test for the DAT measurement methodology
-with(leaf_stat, shapiro.test(vcmax[method == "DAT"]))
-# Shapiro-Wilk normality test for the Traditional measurement methodology
-with(leaf_stat, shapiro.test(vcmax[method == "Traditional"])) 
-#All are significant. Rejects null hypothesis that these data are not normally distributed.
-# Therefore the sample varies from the normal distribution.
-
-grp_dat <- leaf_stat %>%
-  filter(method == "DAT") %>% 
-  group_by(leaf_unique) %>% 
-  summarise(n_vcmax = length(vcmax),
-            mean_vcmax = mean(vcmax),
-            sd_vcmax = sd(vcmax),
-            se_vcmax = sd(vcmax)/sqrt(n())) %>% 
-  mutate(method = "DAT")
-  
-grp_trad <- leaf_stat %>%
-  filter(method == "Traditional") %>% 
-  group_by(leaf_unique) %>% 
-  summarise(n_vcmax = length(vcmax),
-            mean_vcmax = mean(vcmax),
-            sd_vcmax = sd(vcmax),
-            se_vcmax = sd(vcmax)/sqrt(n())) %>% 
-  mutate(method = "Traditional")
-
-grp_all <- rbind(grp_dat, grp_trad)
-
-with(grp_all, shapiro.test(mean_vcmax))
-# Shapiro-Wilk normality test for the DAT measurement methodology
-with(grp_all, shapiro.test(mean_vcmax[method == "DAT"]))
-# Shapiro-Wilk normality test for the Traditional measurement methodology
-with(grp_all, shapiro.test(mean_vcmax[method == "Traditional"])) 
-#All are significant. Rejects null hypothesis that these data are not normally distributed.
-# Therefore the sample varies from the normal distribution.
-
-wilcox.test(mean_vcmax ~ method, data = grp_all, paired = TRUE)
-#This result is significant
-
-#Effect size for the independent sample t-test:
-cohen.ES(test = "t", size = "large") # To remind oneself
-cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_all, paired = TRUE)
-#small effect size
-
-#### Power Analysis
-
-d <- cohen.d(mean_vcmax ~ method | Subject(leaf_unique), data=grp_all, paired = TRUE)
-d[["estimate"]]
-
-#How many samples to achieve a certain power?
-pwr1 <- pwr.t.test(n = , d = d[["estimate"]], power = 0.7, sig.level = 0.05, type = "paired", alternative = "two.sided")
-plot(pwr1)
-
-#What was the power of our study?
-pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
-plot(pwr2)
-
-
-# MG stat analysis for jmax ------------------------------
-
-leaf_jmax_summary <- leaf_stat %>%
-    group_by(method) %>%
-    summarise(n_jmax = length(jmax),
-              mean_jmax = round(mean(jmax),3),
-              sd_jmax = round(sd(jmax),3),
-              se_jmax = sd(jmax)/sqrt(n())) %>% 
-    mutate(low_ci_jmax = mean_jmax - qt(1 - (0.05 / 2), n_jmax - 1) * se_jmax,
-           up_ci_jmax = mean_jmax + qt(1 - (0.05 / 2), n_jmax - 1) * se_jmax)
-print(leaf_jmax_summary)
-
-#Visualize Vcmax by Method
-ci.mean(jmax ~ method, data = leaf_stat)
-ci1<-ci.mean(jmax~method, data=leaf_stat)
-plot(ci1,title.labels="Method")
-
-#Histogram to visualize
-leaf_jmax_hist<-ggplot(leaf_stat, aes(x=jmax)) + 
-    geom_histogram(color="black", fill="white", bins = 8)+
-    geom_vline(aes(xintercept=mean(vcmax)),
-               color="red", linetype="dashed", linewidth=0.5)+
-    theme_classic()
-leaf_jmax_hist
-#data are positively skewed
-skewness(leaf_stat$jmax)
-#value close to 1, should be okay
-kurtosis(leaf_stat$jmax)
-#It's a bit high
-
-#Test the assumption of equal variances for each group for t-test with Levene's
-leveneTest(jmax ~ method, data = leaf_stat)
-#Non-significant. The variances are not significantly different from one another. Therefore we have met the assumption of equal variances
-
-# Shapiro-Wilk normality test for Vcmax for the one-sample t-test
-with(leaf_stat, shapiro.test(jmax))
-# Shapiro-Wilk normality test for the DAT measurement methodology
-with(leaf_stat, shapiro.test(jmax[method == "DAT"]))
-# Shapiro-Wilk normality test for the Traditional measurement methodology
-with(leaf_stat, shapiro.test(jmax[method == "Traditional"])) 
-#2/3 significant. Rejects null hypothesis that these data are not normally distributed.
-# Therefore the sample varies from the normal distribution.
-
-grp_jmax_dat <- leaf_stat %>%
-    filter(method == "DAT") %>% 
-    group_by(leaf_unique) %>% 
-    summarise(n_jmax = length(jmax),
-              mean_jmax = mean(jmax),
-              sd_jmax = sd(jmax),
-              se_jmax = sd(jmax)/sqrt(n())) %>% 
-    mutate(method = "DAT")
-
-grp_jmax_trad <- leaf_stat %>%
-    filter(method == "Traditional") %>% 
-    group_by(leaf_unique) %>% 
-    summarise(n_jmax = length(jmax),
-              mean_jmax = mean(jmax),
-              sd_jmax = sd(jmax),
-              se_jmax = sd(jmax)/sqrt(n())) %>% 
-    mutate(method = "Traditional")
-
-grp_jmax_all <- rbind(grp_jmax_dat, grp_jmax_trad)
-
-with(grp_jmax_all, shapiro.test(mean_jmax))
-# Shapiro-Wilk normality test for the DAT measurement methodology
-with(grp_jmax_all, shapiro.test(mean_jmax[method == "DAT"]))
-# Shapiro-Wilk normality test for the Traditional measurement methodology
-with(grp_jmax_all, shapiro.test(mean_jmax[method == "Traditional"])) 
-#2/3 significant. Rejects null hypothesis that these data are not normally distributed.
-# Therefore the sample varies from the normal distribution.
-
-wilcox.test(mean_jmax ~ method, data = grp_jmax_all, paired = TRUE)
-#This result is significant
-
-#Effect size for the independent sample t-test:
-cohen.ES(test = "t", size = "large") # To remind oneself
-cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_jmax_all, paired = TRUE)
-#small effect size
-
-#### Power Analysis
-
-d <- cohen.d(mean_jmax ~ method | Subject(leaf_unique), data=grp_jmax_all, paired = TRUE)
-d[["estimate"]]
-
-#How many samples to achieve a certain power?
-pwr1 <- pwr.t.test(n = , d = d[["estimate"]], power = 0.7, sig.level = 0.05, type = "paired", alternative = "two.sided")
-plot(pwr1)
-
-#What was the power of our study?
-pwr.t.test(n = 28, d = d[["estimate"]], power = , sig.level = 0.05, type = "paired", alternative = "two.sided")
-plot(pwr2)
-
-
-### comparing photosynthesis and MG, barplots and ANOVA? -----------------------
+### comparing photosynthesis and MG, barplots and ANOVA? DECIDE WHETHER TO KEEP THIS. IF SO NEED TO UNCOMMENT SOME OF THE ABOVE -----------------------
 
 mg_results <- leaf_stat %>%
     mutate(fit_type = "MG") %>% 
