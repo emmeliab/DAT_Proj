@@ -298,12 +298,39 @@ notpu_results <- pho_stat %>%
     mutate(fit_type = "No_TPU")
 all_results <- rbind(tpu_results, notpu_results)
 
-#vcmax
-all_res_sum_vcmax <- all_results %>%
+#TRYING THIS OUT ON 3/20 -- grouping by leaf!
+tpu_results_grp <- pho_stat_tpu %>%
+    group_by(method, leaf_unique) %>% 
+    summarise(mean_vcmax = mean(vcmax),
+              mean_jmax = mean(jmax)) %>% 
+    mutate(fit_type = "TPU")
+
+notpu_results_grp <- pho_stat %>%
+    group_by(method, leaf_unique) %>% 
+    summarise(mean_vcmax = mean(vcmax),
+              mean_jmax = mean(jmax)) %>%
+    mutate(fit_type = "No_TPU")
+all_results2 <- rbind(tpu_results_grp, notpu_results_grp)
+
+all_res_summ <- all_results2 %>%
     group_by(method, fit_type) %>%
     summarise(
-        sd = sd(vcmax),
-        vcmax_mean = mean(vcmax))
+        sd_vcmax = sd(mean_vcmax),
+        vcmax_mean = mean(mean_vcmax),
+        vcmax_median = median(mean_vcmax),
+        sd_jmax = sd(mean_jmax),
+        jmax_mean = mean(mean_jmax),
+        jmax_median = median(mean_jmax))
+all_res_summ
+
+
+#vcmax
+all_res_sum_vcmax <- all_results2 %>%
+    group_by(method, fit_type) %>%
+    summarise(
+        sd = sd(mean_vcmax),
+        vcmax_mean = mean(mean_vcmax),
+        vcmax_median = median(mean_vcmax))
 all_res_sum_vcmax
 
 ggplot(all_res_sum_vcmax, aes(method, vcmax_mean)) +
@@ -322,11 +349,12 @@ ggplot(all_res_sum_vcmax, aes(method, vcmax_mean)) +
           axis.text.y=element_text(size=15, family = "serif"))
 
 #jmax
-all_res_sum_jmax <- all_results %>%
+all_res_sum_jmax <- all_results2 %>%
     group_by(method, fit_type) %>%
     summarise(
         sd = sd(jmax),
-        jmax_mean = mean(jmax))
+        jmax_mean = mean(mean_jmax),
+        jmax_median = median(mean_jmax))
 all_res_sum_jmax
 
 ggplot(all_res_sum_jmax, aes(method, jmax_mean)) +
@@ -344,14 +372,69 @@ ggplot(all_res_sum_jmax, aes(method, jmax_mean)) +
           axis.text.x=element_text(size=15, family = "serif"),
           axis.text.y=element_text(size=15, family = "serif"))
 
+
+#STATS ---------
+
+#vcmax by fit_type, pooled data
+wt3 <- wilcox.test(mean_vcmax ~ fit_type, data = all_results2, conf.int = TRUE, paired = TRUE, exact = FALSE) #Exact = False because can't compute exact confidence interval with zeroes
+wt3
+zval3 <- qnorm(wt3$p.value/2) #z-score applied to a normal distribution
+zval3
+
+set.seed(67)
+wilcoxonPairedRC(x = all_results2$mean_vcmax,
+                 g = all_results2$fit_type,
+                 ci = TRUE,
+                 R = 1000)
+
+
+#jmax by fit_type, pooled data
+wt4 <- wilcox.test(mean_jmax ~ fit_type, data = all_results2, conf.int = TRUE, exact = FALSE, paired = TRUE)
+wt4
+zval4 <- qnorm(wt4$p.value/2) #z-score applied to a normal distribution
+zval4
+set.seed(67)
+wilcoxonPairedRC(x = all_results2$mean_jmax,
+                 g = all_results2$fit_type,
+                 ci = TRUE,
+                 R = 1000)
+
+
+#What about JUST the DAT data with TPU fitting
+dat_all_results <- all_results2 %>% filter(method == "DAT")
+
+wt7 <- wilcox.test(mean_vcmax ~ fit_type, data = dat_all_results, conf.int = TRUE, exact = FALSE, paired = TRUE)
+wt7
+zval7 <- qnorm(wt7$p.value/2) #z-score applied to a normal distribution
+zval7
+set.seed(67)
+wilcoxonPairedRC(x = dat_all_results$mean_vcmax,
+                 g = dat_all_results$fit_type,
+                 ci = TRUE,
+                 R = 1000)
+
+#Not significant
+wt8 <- wilcox.test(mean_jmax ~ fit_type, data = dat_all_results, conf.int = TRUE, exact = FALSE, paired = TRUE)
+wt8
+zval8 <- qnorm(wt8$p.value/2) #z-score applied to a normal distribution
+zval8
+abs(zval8)/sqrt(2*20)
+
+set.seed(67)
+wilcoxonPairedRC(x = dat_all_results$mean_jmax,
+                 g = dat_all_results$fit_type,
+                 ci = TRUE,
+                 R = 1000)
+
+
 #Analysis of variance
 library(AICcmodavg)
 
 #vcmax
-lm_method <- lm(vcmax ~ method, data = all_results)
-lm_fit <- lm(vcmax ~ fit_type, data = all_results)
-lm_both <- lm(vcmax ~ method + fit_type, data = all_results)
-lm_null <- lm(vcmax ~ 1, data = all_results)
+lm_method <- lm(mean_vcmax ~ method, data = all_results2)
+lm_fit <- lm(mean_vcmax ~ fit_type, data = all_results2)
+lm_both <- lm(mean_vcmax ~ method + fit_type, data = all_results2)
+lm_null <- lm(mean_vcmax ~ 1, data = all_results2)
 
 mod_names <- c("Method", "Fit Type", "Method + Fit Type", "Intercept Only")
 
@@ -359,74 +442,19 @@ mod_table <- aictab(list(lm_method, lm_fit, lm_both, lm_null), modnames = mod_na
 mod_table
 summary(lm_null)
 
-#STATS ---------
-
-#vcmax by fit_type, pooled data
-wt3 <- wilcox.test(vcmax ~ fit_type, data = all_results, conf.int = TRUE, paired = TRUE, exact = FALSE) #Exact = False because can't compute exact confidence interval with zeroes
-wt3
-zval3 <- qnorm(wt3$p.value/2) #z-score applied to a normal distribution
-zval3
-
-set.seed(67)
-wilcoxonPairedRC(x = all_results$vcmax,
-                 g = all_results$fit_type,
-                 ci = TRUE,
-                 R = 1000)
-
-
-#jmax by fit_type, pooled data
-wt4 <- wilcox.test(jmax ~ fit_type, data = all_results, conf.int = TRUE, exact = FALSE, paired = TRUE)
-wt4
-zval4 <- qnorm(wt4$p.value/2) #z-score applied to a normal distribution
-zval4
-set.seed(67)
-wilcoxonPairedRC(x = all_results$jmax,
-                 g = all_results$fit_type,
-                 ci = TRUE,
-                 R = 1000)
-
-
-#What about JUST the DAT data with TPU fitting
-dat_all_results <- all_results %>% filter(method == "DAT")
-
-wt7 <- wilcox.test(vcmax ~ fit_type, data = dat_all_results, conf.int = TRUE, exact = FALSE, paired = TRUE)
-wt7
-zval7 <- qnorm(wt7$p.value/2) #z-score applied to a normal distribution
-zval7
-set.seed(67)
-wilcoxonPairedRC(x = dat_all_results$vcmax,
-                 g = dat_all_results$fit_type,
-                 ci = TRUE,
-                 R = 1000)
-
-#Not significant
-wt8 <- wilcox.test(jmax ~ fit_type, data = dat_all_results, conf.int = TRUE, exact = FALSE, paired = TRUE)
-wt8
-zval8 <- qnorm(wt8$p.value/2) #z-score applied to a normal distribution
-zval8
-abs(zval8)/sqrt(2*20)
-
-set.seed(67)
-wilcoxonPairedRC(x = dat_all_results$jmax,
-                 g = dat_all_results$fit_type,
-                 ci = TRUE,
-                 R = 1000)
-
-
-aov_both <- aov(vcmax ~ method + fit_type, data = all_results)
-summary(aov_both)
-
-lm_both <- lm(vcmax ~ method + fit_type, data = all_results)
+lm_both <- lm(mean_vcmax ~ method + fit_type, data = all_results2)
 summary(lm_both)
+lm_fittype <- lm(mean_vcmax ~ fit_type, data = all_results2)
+summary(lm_fittype)
 #So there's an increase in Vcmax with TPU relative to no_TPU
 #and a decrease in Vcmax with Traditional relative to no_TPU
 #This relationship is not significant
 
 #jmax
-lm2_method <- lm(jmax ~ method, data = all_results)
-lm2_fit <- lm(jmax ~ fit_type, data = all_results)
-lm2_both <- lm(jmax ~ method + fit_type, data = all_results)
-lm2_null <- lm(jmax ~ 1, data = all_results)
+lm2_method <- lm(mean_jmax ~ method, data = all_results2)
+lm2_fit <- lm(mean_jmax ~ fit_type, data = all_results2)
+lm2_both <- lm(mean_jmax ~ method + fit_type, data = all_results2)
+lm2_null <- lm(mean_jmax ~ 1, data = all_results2)
 
 mod2_names <- c("Method", "Fit Type", "Method + Fit Type", "Intercept Only")
 
@@ -435,10 +463,7 @@ mod2_table
 summary(lm2_method)
 
 
-aov_jmax_both <- aov(jmax ~ method + fit_type, data = all_results)
-summary(aov_jmax_both)
-
-lm_jmax_both <- lm(jmax ~ method + fit_type, data = all_results)
+lm_jmax_both <- lm(mean_jmax ~ method + fit_type, data = all_results2)
 summary(lm_jmax_both)
 #So there's an increase in Jmax with TPU relative to no_TPU
 #and an in Jmax with Traditional relative to no_TPU

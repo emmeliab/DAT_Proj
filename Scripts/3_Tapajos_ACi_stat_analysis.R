@@ -445,6 +445,10 @@ grp_pho_nd_all <- rbind(grp_pho_nd_dat, grp_pho_nd_trad)
 grp_pho_nd_all %>% filter(method == "DAT") %>% summary()
 grp_pho_nd_all %>% filter(method == "Traditional") %>% summary()
 
+ci.mean(grp_pho_nd_all$mean_vcmax, data = grp_pho_nd_all)
+ci <- ci.mean(grp_pho_nd_all$mean_vcmax, data = grp_pho_nd_all)
+ci.mean(mean_jmax ~ method, data = grp_pho_nd_all)
+
 wt3 <- wilcox.test(mean_vcmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired = TRUE)
 wt3
 zval3 <- qnorm(wt3$p.value/2) #z-score applied to a normal distribution
@@ -466,6 +470,8 @@ wilcoxonPairedRC(x = grp_pho_nd_all$mean_jmax,
                  g = grp_pho_nd_all$method,
                  ci = TRUE,
                  R = 1000)
+
+
 
 nd_vcmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_vcmax)) +
     geom_boxplot()+
