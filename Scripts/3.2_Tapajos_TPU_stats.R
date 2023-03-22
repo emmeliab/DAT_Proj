@@ -333,20 +333,46 @@ all_res_sum_vcmax <- all_results2 %>%
         vcmax_median = median(mean_vcmax))
 all_res_sum_vcmax
 
-ggplot(all_res_sum_vcmax, aes(method, vcmax_mean)) +
-    geom_errorbar(
-        aes(ymin = vcmax_mean - sd, ymax = vcmax_mean + sd, color = fit_type),
-        position = position_dodge(0.3), width = 0.2
-    )+
-    geom_point(aes(color = fit_type), position = position_dodge(0.3)) +
-    scale_color_manual(values = c("#00AFBB", "#E7B800"))+
-    scale_y_continuous(limits = c(1, 75))+
+#Grouped Boxplots
+
+ggplot(all_results2, aes(x = fit_type, y = mean_vcmax, fill = method)) +
+    geom_boxplot()+
+    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), values = c("#00AFBB", "#E7B800"))+
+    scale_x_discrete(labels = c("No TPU", "TPU")) +
     theme_classic()+
-    labs(x="Method", y = "Vcmax")+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"))
+    labs(x="Fit Type",
+         y = expression(Vc[max]*(mu*mol~m^{-2}~s^{-1})))+
+    theme(axis.title.x=element_text(size=16, family = "serif"),
+          axis.title.y=element_text(size=16, family = "serif"),
+          axis.text.x=element_text(size=13, family = "serif"),
+          axis.text.y=element_text(size=13, family = "serif"))
+
+ggplot(all_results2, aes(x = fit_type, y = mean_jmax, fill = method)) +
+    geom_boxplot()+
+    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), values = c("#00AFBB", "#E7B800"))+
+    scale_x_discrete(labels = c("No TPU", "TPU"))+
+    theme_classic()+
+    labs(x="Fit Type",
+         y = expression(J[max]*(mu*mol~m^{-2}~s^{-1})))+
+    theme(axis.title.x=element_text(size=16, family = "serif"),
+          axis.title.y=element_text(size=16, family = "serif"),
+          axis.text.x=element_text(size=13, family = "serif"),
+          axis.text.y=element_text(size=13, family = "serif"))
+
+# ggplot(all_res_sum_vcmax, aes(method, vcmax_mean)) +
+#     geom_errorbar(
+#         aes(ymin = vcmax_mean - sd, ymax = vcmax_mean + sd, color = fit_type),
+#         position = position_dodge(0.3), width = 0.2
+#     )+
+#     geom_point(aes(color = fit_type), position = position_dodge(0.3)) +
+#     scale_color_manual(values = c("#00AFBB", "#E7B800"))+
+#     scale_y_continuous(limits = c(1, 75))+
+#     theme_classic()+
+#     labs(x="Method", y = "Vcmax")+
+#     theme(axis.title.x=element_text(size=18, family = "serif"),
+#           axis.title.y=element_text(size=18, family = "serif"),
+#           axis.text.x=element_text(size=15, family = "serif"),
+#           axis.text.y=element_text(size=15, family = "serif"))
 
 #jmax
 all_res_sum_jmax <- all_results2 %>%
@@ -478,7 +504,30 @@ pho_trad_tpu <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct
 
 pho_dat_nd_tpu <- pho_dat_tpu %>% subset(ID != "K6707L2" & ID != "K6707L2-2" & ID != "K6707L1" & ID != "K6707L1-1" & ID != "K6709L6" & ID != "K6714L2" & ID != "K6714L1" & ID != "K6702L1" & ID != "K6706L2" & ID != "K6706L1" & ID != "K6709L2")
 
-pho_nd_both <- rbind(pho_trad_tpu, pho_dat_nd_tpu)
+
+#Data wit TPU fit = FALSE
+params_photo <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"), sep = ",", 
+                         header = TRUE, na.strings = 1000)
+photo_trad <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"), sep = ",", header = TRUE, na.strings = 1000)
+
+pho_nd <- params_photo %>% subset(ID != "K6707L2" & ID != "K6707L2-2" & ID != "K6707L1" & ID != "K6707L1-1" & ID != "K6709L6" & ID != "K6714L2" & ID != "K6714L1" & ID != "K6702L1" & ID != "K6706L2" & ID != "K6706L1" & ID != "K6709L2")
+
+#binding columns (tpu)
+pho_nd_both_tpu <- rbind(pho_trad_tpu, pho_dat_nd_tpu)
+pho_nd_leaf_tpu <- pho_nd_both_tpu %>%
+    mutate(leaf_unique = substring(ID, 1, 7),
+           DAT = Data_point,
+           leaf_id = ID)
+pho_nd_stat_tpu <- select(pho_nd_leaf_tpu, 'DAT', 'Best_Vcmax_25C', 'Best_Jmax_25C', 'leaf_id', 'leaf_unique')
+pho_nd_stat_tpu$DAT[pho_nd_stat_tpu$DAT == "Before_DAT"] <- "DAT"
+pho_nd_stat_tpu <- rename(pho_nd_stat_tpu,
+                          method = DAT,
+                          vcmax = Best_Vcmax_25C,
+                          jmax = Best_Jmax_25C) %>% mutate(fit_type = "tpu")
+pho_nd_stat_tpu$method <- factor(pho_nd_stat_tpu$method)
+
+#binding columns (no tpu)
+pho_nd_both <- rbind(photo_trad, pho_nd)
 pho_nd_leaf <- pho_nd_both %>%
     mutate(leaf_unique = substring(ID, 1, 7),
            DAT = Data_point,
@@ -488,15 +537,76 @@ pho_nd_stat$DAT[pho_nd_stat$DAT == "Before_DAT"] <- "DAT"
 pho_nd_stat <- rename(pho_nd_stat,
                       method = DAT,
                       vcmax = Best_Vcmax_25C,
-                      jmax = Best_Jmax_25C)
+                      jmax = Best_Jmax_25C) %>% mutate(fit_type = "no_tpu")
 pho_nd_stat$method <- factor(pho_nd_stat$method)
 
+#grouping columns: TPU = TRUE
+grp_pho_nd_dat_tpu <- pho_nd_stat_tpu %>%
+    filter(method == "DAT") %>%
+    group_by(leaf_unique) %>%
+    summarise(mean_vcmax = mean(vcmax),
+              mean_jmax = mean(jmax)) %>% 
+    mutate(method = "DAT",
+           fit_type = "tpu")
+
+sd(grp_pho_nd_dat_tpu$mean_vcmax)
+sd(grp_pho_nd_dat_tpu$mean_jmax)
+
+grp_pho_nd_trad_tpu <- pho_nd_stat_tpu %>%
+    filter(method == "Traditional") %>% 
+    group_by(leaf_unique) %>% 
+    subset(leaf_unique != "K6702L1"
+           & leaf_unique != "K6706L1"
+           & leaf_unique != "K6706L2"
+           & leaf_unique != "K6707L1"
+           & leaf_unique != "K6707L2"
+           & leaf_unique != "K6709L6"
+           & leaf_unique != "K6714L1"
+           & leaf_unique != "K6714L2") %>%
+    summarise(mean_vcmax = mean(vcmax),
+              mean_jmax = mean(jmax)) %>% 
+    mutate(method = "Traditional",
+           fit_type = "tpu")
+
+sd(grp_pho_nd_trad_tpu$mean_vcmax)
+sd(grp_pho_nd_trad_tpu$mean_jmax)
+
+grp_pho_nd_all_tpu <- rbind(grp_pho_nd_dat_tpu, grp_pho_nd_trad_tpu)
+
+grp_pho_nd_all_tpu %>% filter(method == "DAT") %>% summary()
+grp_pho_nd_all_tpu %>% filter(method == "Traditional") %>% summary()
+
+wt9 <- wilcox.test(mean_vcmax ~ method, data = grp_pho_nd_all_tpu, conf.int = TRUE, paired = TRUE)
+wt9
+zval9 <- qnorm(wt9$p.value/2) #z-score applied to a normal distribution
+zval9
+
+set.seed(67)
+wilcoxonPairedRC(x = grp_pho_nd_all_tpu$mean_vcmax,
+                 g = grp_pho_nd_all_tpu$method,
+                 ci = TRUE,
+                 R = 1000)
+
+wt10 <- wilcox.test(mean_jmax ~ method, data = grp_pho_nd_all_tpu, conf.int = TRUE, paired = TRUE)
+wt10
+zval10 <- qnorm(wt4$p.value/2) #z-score applied to a normal distribution
+zval10
+
+set.seed(67)
+wilcoxonPairedRC(x = grp_pho_nd_all_tpu$mean_jmax,
+                 g = grp_pho_nd_all_tpu$method,
+                 ci = TRUE,
+                 R = 1000)
+
+
+#Grouping columns TPU = FALSE
 grp_pho_nd_dat <- pho_nd_stat %>%
     filter(method == "DAT") %>%
     group_by(leaf_unique) %>%
     summarise(mean_vcmax = mean(vcmax),
               mean_jmax = mean(jmax)) %>% 
-    mutate(method = "DAT")
+    mutate(method = "DAT",
+           fit_type = "no_tpu")
 
 sd(grp_pho_nd_dat$mean_vcmax)
 sd(grp_pho_nd_dat$mean_jmax)
@@ -514,38 +624,40 @@ grp_pho_nd_trad <- pho_nd_stat %>%
            & leaf_unique != "K6714L2") %>%
     summarise(mean_vcmax = mean(vcmax),
               mean_jmax = mean(jmax)) %>% 
-    mutate(method = "Traditional")
+    mutate(method = "Traditional",
+           fit_type = "no_tpu")
 
 sd(grp_pho_nd_trad$mean_vcmax)
 sd(grp_pho_nd_trad$mean_jmax)
 
 grp_pho_nd_all <- rbind(grp_pho_nd_dat, grp_pho_nd_trad)
 
-grp_pho_nd_all %>% filter(method == "DAT") %>% summary()
-grp_pho_nd_all %>% filter(method == "Traditional") %>% summary()
+nd_complete <- rbind(grp_pho_nd_all, grp_pho_nd_all_tpu)
 
-wt9 <- wilcox.test(mean_vcmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired = TRUE)
-wt9
-zval9 <- qnorm(wt9$p.value/2) #z-score applied to a normal distribution
-zval9
+#for paired boxplots
+ggplot(nd_complete, aes(x = fit_type, y = mean_vcmax, fill = method)) +
+    geom_boxplot()+
+    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), values = c("#00AFBB", "#E7B800"))+
+    scale_x_discrete(labels = c("No TPU", "TPU")) +
+    theme_classic()+
+    labs(x="Fit Type",
+         y = expression(Vc[max]*(mu*mol~m^{-2}~s^{-1})))+
+    theme(axis.title.x=element_text(size=16, family = "serif"),
+          axis.title.y=element_text(size=16, family = "serif"),
+          axis.text.x=element_text(size=13, family = "serif"),
+          axis.text.y=element_text(size=13, family = "serif"))
 
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_nd_all$mean_vcmax,
-                 g = grp_pho_nd_all$method,
-                 ci = TRUE,
-                 R = 1000)
-
-wt10 <- wilcox.test(mean_jmax ~ method, data = grp_pho_nd_all, conf.int = TRUE, paired = TRUE)
-wt10
-zval10 <- qnorm(wt4$p.value/2) #z-score applied to a normal distribution
-zval10
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_nd_all$mean_jmax,
-                 g = grp_pho_nd_all$method,
-                 ci = TRUE,
-                 R = 1000)
-
+ggplot(nd_complete, aes(x = fit_type, y = mean_jmax, fill = method)) +
+    geom_boxplot()+
+    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), values = c("#00AFBB", "#E7B800"))+
+    scale_x_discrete(labels = c("No TPU", "TPU")) +
+    theme_classic()+
+    labs(x="Fit Type",
+         y = expression(J[max]*(mu*mol~m^{-2}~s^{-1})))+
+    theme(axis.title.x=element_text(size=16, family = "serif"),
+          axis.title.y=element_text(size=16, family = "serif"),
+          axis.text.x=element_text(size=13, family = "serif"),
+          axis.text.y=element_text(size=13, family = "serif"))
 
 # 
 # leveragePlots(lm2_method)

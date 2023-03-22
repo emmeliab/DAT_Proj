@@ -472,6 +472,35 @@ wilcoxonPairedRC(x = grp_pho_nd_all$mean_jmax,
                  R = 1000)
 
 
+# Visualization of DAT vs Traditional in Photosynthesis package -----
+
+lab_DATTrad <- c('DAT', 'Traditional')
+b4 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Vcmax_25C)) +
+    geom_boxplot()+
+    labs(x="Method", y = expression("Vcmax "*(mu*mol~m^{-2}~s^{-1})))+
+    theme_classic()+
+    theme(axis.title.x=element_text(size=18, family = "serif"),
+          axis.title.y=element_text(size=18, family = "serif"),
+          axis.text.x=element_text(size=15, family = "serif"),
+          axis.text.y=element_text(size=15, family = "serif"),
+          legend.position="none")+
+    scale_x_discrete(labels=lab_DATTrad)
+b4
+ggsave("Figures/photo_box_datvtrad_vcmax.pdf")
+
+b5 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Jmax_25C)) +
+    geom_boxplot()+
+    labs(x="Method", y = "Jmax")+
+    theme_classic()+
+    theme(axis.title.x=element_text(size=18, family = "serif"),
+          axis.title.y=element_text(size=18, family = "serif"),
+          axis.text.x=element_text(size=15, family = "serif"),
+          axis.text.y=element_text(size=15, family = "serif"),
+          legend.position="none")+
+    scale_x_discrete(labels=lab_DATTrad)
+b5
+ggsave("Figures/photo_box_datvtrad_jmax.pdf")
+
 
 nd_vcmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_vcmax)) +
     geom_boxplot()+
@@ -496,36 +525,6 @@ nd_jmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_jmax)) +
           legend.position="none")
 nd_jmax_box
 ggsave("Figures/photo_box_nodip_datvtrad_jmax.pdf")
-
-# Visualization of DAT vs Traditional in Photosynthesis package -----
-
-lab_DATTrad <- c('DAT', 'Traditional')
-b4 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Vcmax_25C)) +
-    geom_boxplot()+
-    labs(x="Method", y = "Vcmax")+
-    theme_classic()+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"),
-          legend.position="none")+
-    scale_x_discrete(labels=lab_DATTrad)
-b4
-ggsave("Figures/photo_box_datvtrad_vcmax.pdf")
-
-b5 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Jmax_25C)) +
-    geom_boxplot()+
-    labs(x="Method", y = "Jmax")+
-    theme_classic()+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"),
-          legend.position="none")+
-    scale_x_discrete(labels=lab_DATTrad)
-b5
-ggsave("Figures/photo_box_datvtrad_jmax.pdf")
-
 # # Stacked scatters for photosynthesis package
 # filt_par_dummy <- mutate(.data = grp_pho_leaf,# makes a dummy variable to plot
 #                          dummy = if_else(grp_pho_leaf$DAT == "Before_DAT", 0,1))
