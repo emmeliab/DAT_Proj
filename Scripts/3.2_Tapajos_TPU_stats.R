@@ -634,6 +634,68 @@ grp_pho_nd_all <- rbind(grp_pho_nd_dat, grp_pho_nd_trad)
 
 nd_complete <- rbind(grp_pho_nd_all, grp_pho_nd_all_tpu)
 
+
+
+
+#NEW APPROACH FOR MODEL COMPARISONS!!!
+nd_complete2 <- nd_complete %>% 
+    mutate(curv_meth = method)
+
+nd_complete2 %>%
+    group_by(fit_type) %>%
+    wilcox_test(data =., mean_vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    adjust_pvalue(method = "bonferroni") %>%
+    add_significance("p.adj")
+
+nd_complete2 %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., mean_vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    adjust_pvalue(method = "bonferroni") %>%
+    add_significance("p.adj")
+
+nd_complete2 %>%
+    group_by(fit_type) %>%
+    wilcox_test(data =., mean_jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    adjust_pvalue(method = "bonferroni") %>%
+    add_significance("p.adj")
+
+nd_complete2 %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., mean_jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    adjust_pvalue(method = "bonferroni") %>%
+    add_significance("p.adj")
+
+#all results
+all_results3 <- all_results2 %>% 
+    mutate(curv_meth = method)
+
+all_results3 %>%
+    group_by(fit_type) %>%
+    wilcox_test(data =., mean_vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    adjust_pvalue(method = "bonferroni") %>%
+    add_significance("p.adj")
+
+all_results3 %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., mean_vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    adjust_pvalue(method = "bonferroni") %>%
+    add_significance("p.adj")
+
+all_results3 %>%
+    group_by(fit_type) %>%
+    wilcox_test(data =., mean_jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    adjust_pvalue(method = "bonferroni") %>%
+    add_significance("p.adj")
+
+all_results3 %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., mean_jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    adjust_pvalue(method = "bonferroni") %>%
+    add_significance("p.adj")
+
+
+
+
 #for paired boxplots
 ggplot(nd_complete, aes(x = fit_type, y = mean_vcmax, fill = method)) +
     geom_boxplot()+
