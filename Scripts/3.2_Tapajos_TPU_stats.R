@@ -290,7 +290,7 @@ photo_leaf_tpu <- ggplot(data = leaf_wide_tpu, mapping = aes(x = tpu_Trad,
     scale_y_continuous(limits = c(1, 15))
 photo_leaf_tpu
 
-### comparing photosynthesis with and without TPU using ANOVA? -----------------
+### comparing photosynthesis with and without TPU -----------------
 
 tpu_results <- pho_stat_tpu %>%
     mutate(fit_type = "TPU")
@@ -453,47 +453,47 @@ wilcoxonPairedRC(x = dat_all_results$mean_jmax,
                  R = 1000)
 
 
-#Analysis of variance
-library(AICcmodavg)
-
-#vcmax
-lm_method <- lm(mean_vcmax ~ method, data = all_results2)
-lm_fit <- lm(mean_vcmax ~ fit_type, data = all_results2)
-lm_both <- lm(mean_vcmax ~ method + fit_type, data = all_results2)
-lm_null <- lm(mean_vcmax ~ 1, data = all_results2)
-
-mod_names <- c("Method", "Fit Type", "Method + Fit Type", "Intercept Only")
-
-mod_table <- aictab(list(lm_method, lm_fit, lm_both, lm_null), modnames = mod_names)
-mod_table
-summary(lm_null)
-
-lm_both <- lm(mean_vcmax ~ method + fit_type, data = all_results2)
-summary(lm_both)
-lm_fittype <- lm(mean_vcmax ~ fit_type, data = all_results2)
-summary(lm_fittype)
-#So there's an increase in Vcmax with TPU relative to no_TPU
-#and a decrease in Vcmax with Traditional relative to no_TPU
-#This relationship is not significant
-
-#jmax
-lm2_method <- lm(mean_jmax ~ method, data = all_results2)
-lm2_fit <- lm(mean_jmax ~ fit_type, data = all_results2)
-lm2_both <- lm(mean_jmax ~ method + fit_type, data = all_results2)
-lm2_null <- lm(mean_jmax ~ 1, data = all_results2)
-
-mod2_names <- c("Method", "Fit Type", "Method + Fit Type", "Intercept Only")
-
-mod2_table <- aictab(list(lm2_method, lm2_fit, lm2_both, lm2_null), modnames = mod_names)
-mod2_table
-summary(lm2_method)
-
-
-lm_jmax_both <- lm(mean_jmax ~ method + fit_type, data = all_results2)
-summary(lm_jmax_both)
-#So there's an increase in Jmax with TPU relative to no_TPU
-#and an in Jmax with Traditional relative to no_TPU
-#This relationship is not significant
+# #Analysis of variance
+# library(AICcmodavg)
+# 
+# #vcmax
+# lm_method <- lm(mean_vcmax ~ method, data = all_results2)
+# lm_fit <- lm(mean_vcmax ~ fit_type, data = all_results2)
+# lm_both <- lm(mean_vcmax ~ method + fit_type, data = all_results2)
+# lm_null <- lm(mean_vcmax ~ 1, data = all_results2)
+# 
+# mod_names <- c("Method", "Fit Type", "Method + Fit Type", "Intercept Only")
+# 
+# mod_table <- aictab(list(lm_method, lm_fit, lm_both, lm_null), modnames = mod_names)
+# mod_table
+# summary(lm_null)
+# 
+# lm_both <- lm(mean_vcmax ~ method + fit_type, data = all_results2)
+# summary(lm_both)
+# lm_fittype <- lm(mean_vcmax ~ fit_type, data = all_results2)
+# summary(lm_fittype)
+# #So there's an increase in Vcmax with TPU relative to no_TPU
+# #and a decrease in Vcmax with Traditional relative to no_TPU
+# #This relationship is not significant
+# 
+# #jmax
+# lm2_method <- lm(mean_jmax ~ method, data = all_results2)
+# lm2_fit <- lm(mean_jmax ~ fit_type, data = all_results2)
+# lm2_both <- lm(mean_jmax ~ method + fit_type, data = all_results2)
+# lm2_null <- lm(mean_jmax ~ 1, data = all_results2)
+# 
+# mod2_names <- c("Method", "Fit Type", "Method + Fit Type", "Intercept Only")
+# 
+# mod2_table <- aictab(list(lm2_method, lm2_fit, lm2_both, lm2_null), modnames = mod_names)
+# mod2_table
+# summary(lm2_method)
+# 
+# 
+# lm_jmax_both <- lm(mean_jmax ~ method + fit_type, data = all_results2)
+# summary(lm_jmax_both)
+# #So there's an increase in Jmax with TPU relative to no_TPU
+# #and an in Jmax with Traditional relative to no_TPU
+# #This relationship is not significant
 
 
 # Quick look at TPU fit = TRUE with No overshoot ------
@@ -745,48 +745,48 @@ ggplot(nd_complete, aes(x = fit_type, y = mean_jmax, fill = method)) +
 # summary(new_lm2_method) #Now compare original model to the new model
 # 
 
-
-all_res_flip_vcmax <- all_results %>%
-    group_by(fit_type, method) %>%
-    summarise(
-        sd = sd(vcmax),
-        vcmax_mean = mean(vcmax))
-all_res_flip_vcmax
-
-ggplot(all_res_flip_vcmax, aes(fit_type, vcmax_mean)) +
-    geom_errorbar(
-        aes(ymin = vcmax_mean - sd, ymax = vcmax_mean + sd, color = method),
-        position = position_dodge(0.3), width = 0.2
-    )+
-    geom_point(aes(color = method), position = position_dodge(0.3)) +
-    scale_color_manual(values = c("#00AFBB", "#E7B800"))+
-    scale_y_continuous(limits = c(1, 75))+
-    theme_classic()+
-    labs(x="Fitting Type", y = "Vcmax")+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"))
-
-
-all_res_flip_jmax <- all_results %>%
-    group_by(fit_type, method) %>%
-    summarise(
-        sd = sd(jmax),
-        jmax_mean = mean(jmax))
-all_res_flip_jmax
-
-ggplot(all_res_flip_jmax, aes(fit_type, jmax_mean)) +
-    geom_errorbar(
-        aes(ymin = jmax_mean - sd, ymax = jmax_mean + sd, color = method),
-        position = position_dodge(0.3), width = 0.2
-    )+
-    geom_point(aes(color = method), position = position_dodge(0.3)) +
-    scale_color_manual(values = c("#00AFBB", "#E7B800"))+
-    scale_y_continuous(limits = c(1, 100))+
-    theme_classic()+
-    labs(x="Fitting Type", y = "Jmax")+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"))
+# 
+# all_res_flip_vcmax <- all_results %>%
+#     group_by(fit_type, method) %>%
+#     summarise(
+#         sd = sd(vcmax),
+#         vcmax_mean = mean(vcmax))
+# all_res_flip_vcmax
+# 
+# ggplot(all_res_flip_vcmax, aes(fit_type, vcmax_mean)) +
+#     geom_errorbar(
+#         aes(ymin = vcmax_mean - sd, ymax = vcmax_mean + sd, color = method),
+#         position = position_dodge(0.3), width = 0.2
+#     )+
+#     geom_point(aes(color = method), position = position_dodge(0.3)) +
+#     scale_color_manual(values = c("#00AFBB", "#E7B800"))+
+#     scale_y_continuous(limits = c(1, 75))+
+#     theme_classic()+
+#     labs(x="Fitting Type", y = "Vcmax")+
+#     theme(axis.title.x=element_text(size=18, family = "serif"),
+#           axis.title.y=element_text(size=18, family = "serif"),
+#           axis.text.x=element_text(size=15, family = "serif"),
+#           axis.text.y=element_text(size=15, family = "serif"))
+# 
+# 
+# all_res_flip_jmax <- all_results %>%
+#     group_by(fit_type, method) %>%
+#     summarise(
+#         sd = sd(jmax),
+#         jmax_mean = mean(jmax))
+# all_res_flip_jmax
+# 
+# ggplot(all_res_flip_jmax, aes(fit_type, jmax_mean)) +
+#     geom_errorbar(
+#         aes(ymin = jmax_mean - sd, ymax = jmax_mean + sd, color = method),
+#         position = position_dodge(0.3), width = 0.2
+#     )+
+#     geom_point(aes(color = method), position = position_dodge(0.3)) +
+#     scale_color_manual(values = c("#00AFBB", "#E7B800"))+
+#     scale_y_continuous(limits = c(1, 100))+
+#     theme_classic()+
+#     labs(x="Fitting Type", y = "Jmax")+
+#     theme(axis.title.x=element_text(size=18, family = "serif"),
+#           axis.title.y=element_text(size=18, family = "serif"),
+#           axis.text.x=element_text(size=15, family = "serif"),
+#           axis.text.y=element_text(size=15, family = "serif"))
