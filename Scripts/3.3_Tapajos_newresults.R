@@ -10,7 +10,6 @@ library(Publish)
 library(moments) 
 library(vcd)
 library(car)
-library(rcompanion) #For the point biserial effect size
 library(rstatix) #For wilcox_effsize function
 
 wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
@@ -124,7 +123,7 @@ notpu_results_grp <- pho_stat %>%
     mutate(fit_type = "no_tpu")
 
 all_results2 <- rbind(tpu_results_grp, notpu_results_grp)
-
+all_results2$fit_type <- factor(all_results2$fit_type)
 
 #No-overshoot data, no TPU
 grp_pho_nd_dat <- pho_nd_stat %>%
@@ -183,7 +182,8 @@ grp_pho_nd_all_tpu <- rbind(grp_pho_nd_dat_tpu, grp_pho_nd_trad_tpu)
 
 
 nd_complete <- rbind(grp_pho_nd_all, grp_pho_nd_all_tpu)
-
+nd_complete$curv_meth <- factor(nd_complete$curv_meth)
+nd_complete$fit_type <- factor(nd_complete$fit_type)
 
 #Just for the TPU analysis
 
@@ -208,45 +208,27 @@ grp_tpu_6dat <- grp_narm_pho_tpu %>%
               curv_meth = "DAT")
 
 tpu_just6_all <- rbind(grp_tpu_6trad, grp_tpu_6dat)
-
-
+tpu_just6_all$curv_meth <- factor(tpu_just6_all$curv_meth)
 
 
 #Summary statistics ----------------------
 
 all_res_summ <- all_results2 %>%
-    group_by(curv_meth, fit_type) %>%
+    group_by(fit_type, curv_meth) %>%
     summarise(
-        vcmax_sd = sd(vcmax),
         vcmax_mean = mean(vcmax),
         vcmax_median = median(vcmax),
+        vcmax_sd = sd(vcmax),
         vcmax_min = min(vcmax),
         vcmax_max = max(vcmax),
-        jmax_sd = sd(jmax),
         jmax_mean = mean(jmax),
         jmax_median = median(jmax),
+        jmax_sd = sd(jmax),
         jmax_min = min(jmax),
         jmax_max = max(jmax))
 all_res_summ
 
 #No TPU
-
-grp_pho_dat <- pho_stat %>%
-    filter(curv_meth == "DAT") %>% 
-    group_by(leaf_unique) %>% 
-    summarise(vcmax = mean(vcmax),
-              jmax = mean(jmax)) %>% 
-    mutate(curv_meth = "DAT")
-
-grp_pho_trad <- pho_stat %>%
-    filter(curv_meth == "Traditional") %>% 
-    group_by(leaf_unique) %>% 
-    summarise(vcmax = mean(vcmax),
-              jmax = mean(jmax)) %>% 
-    mutate(curv_meth = "Traditional")
-
-grp_pho_all <- rbind(grp_pho_dat, grp_pho_trad)
-
 
 all_results2 %>% filter(fit_type == "no_tpu") %>%
 ggplot(aes(x=vcmax)) + 
@@ -255,6 +237,9 @@ ggplot(aes(x=vcmax)) +
 all_results2 %>% filter(fit_type == "no_tpu") %>%
 ggplot(aes(x=jmax)) + 
     geom_histogram()
+
+library(reshape2)
+
 
 #Levene's for homogeneity of variance
 all_results2 %>% filter(fit_type == "no_tpu") %>% leveneTest(vcmax ~ curv_meth, data = .)
@@ -269,25 +254,9 @@ all_results2 %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(vcmax[cur
 all_results2 %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(jmax))
 all_results2 %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(jmax[curv_meth == "DAT"]))
 all_results2 %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(jmax[curv_meth == "Traditional"]))
-#Most deviate from normal
+#All but one deviates from normal
 
 # Yes TPU
-grp_pho_dat_tpu <- pho_stat_tpu %>%
-    filter(curv_meth == "DAT") %>% 
-    group_by(leaf_unique) %>% 
-    summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
-    mutate(curv_meth = "DAT")
-
-grp_pho_trad_tpu <- pho_stat %>%
-    filter(method == "Traditional") %>% 
-    group_by(leaf_unique) %>% 
-    summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
-    mutate(curv_meth = "Traditional")
-
-grp_pho_all_tpu <- rbind(grp_pho_dat_tpu, grp_pho_trad_tpu)
-
 
 all_results2 %>% filter(fit_type == "tpu") %>%
     ggplot(aes(x=vcmax)) + 
@@ -315,16 +284,16 @@ all_results2 %>% filter(fit_type == "tpu") %>% with(., shapiro.test(jmax[curv_me
 
 #No overshoot, No TPU
 nd_complete_summ <- nd_complete %>%
-    group_by(curv_meth, fit_type) %>%
+    group_by(fit_type, curv_meth) %>%
     summarise(
-        vcmax_sd = sd(vcmax),
         vcmax_mean = mean(vcmax),
         vcmax_median = median(vcmax),
+        vcmax_sd = sd(vcmax),
         vcmax_min = min(vcmax),
         vcmax_max = max(vcmax),
-        jmax_sd = sd(jmax),
         jmax_mean = mean(jmax),
         jmax_median = median(jmax),
+        jmax_sd = sd(jmax),
         jmax_min = min(jmax),
         jmax_max = max(jmax))
 nd_complete_summ
@@ -364,18 +333,74 @@ tpu_just6_all %>% group_by(curv_meth)%>% summarize(median = median(tpu),
                                                 sd = sd(tpu))
 
 
-wt2 <- wilcox.test(tpu ~ curv_meth, data = tpu_just6_all, conf.int = TRUE, paired = TRUE)
-wt2
-zval2 <- qnorm(wt2$p.value/2) #z-score applied to a normal distribution
-zval2
+#Checking the symmetric distribution of Wilcoxon -----------------------------------------
 
+#To use wilcoxon paired, we assume the differences between paired samples are distributed symmetrically about the median
+
+#Vcmax
+all_res_wide_vcmax <- all_results2 %>%
+    dcast(., leaf_unique + fit_type ~ curv_meth, value.var="vcmax") %>%
+    mutate(differences = Traditional - DAT)
+
+all_res_wide_vcmax %>% filter(fit_type == "no_tpu") %>% 
+    gghistogram(x = "differences", bins = 10, add_density = TRUE)
+#That should be fine
+
+all_res_wide_vcmax %>% filter(fit_type == "tpu") %>% 
+    gghistogram(x = "differences", bins = 10, add_density = TRUE)
+#okay
+
+#Jmax
+all_res_wide_jmax <- all_results2 %>%
+    dcast(., leaf_unique + fit_type ~ curv_meth, value.var="jmax") %>%
+    mutate(differences = Traditional - DAT)
+
+all_res_wide_jmax %>% filter(fit_type == "no_tpu") %>%
+    gghistogram(x = "differences", bins = 10, add_density = TRUE)
+#This is a little rough, but the high value is real data... Perhaps we run both the sign test and the Wilcoxon?
+
+all_res_wide_jmax %>% filter(fit_type == "tpu") %>%
+    gghistogram(x = "differences", bins = 10, add_density = TRUE)
+#This is also a little rough, but the high value is real data... Perhaps we run both the sign test and the Wilcoxon?
+
+
+# No Overshoot data
+#Vcmax
+nd_comp_wide_vcmax <- nd_complete %>%
+    dcast(., leaf_unique + fit_type ~ curv_meth, value.var="vcmax") %>%
+    mutate(differences = Traditional - DAT)
+
+nd_comp_wide_vcmax %>% filter(fit_type == "no_tpu") %>% 
+    gghistogram(x = "differences", bins = 10, add_density = TRUE)
+#That should be fine
+
+nd_comp_wide_vcmax %>% filter(fit_type == "tpu") %>% 
+    gghistogram(x = "differences", bins = 10, add_density = TRUE)
+#okay
+
+#Jmax
+nd_comp_wide_jmax <- nd_complete %>%
+    dcast(., leaf_unique + fit_type ~ curv_meth, value.var="jmax") %>%
+    mutate(differences = Traditional - DAT)
+
+nd_comp_wide_jmax %>% filter(fit_type == "no_tpu") %>%
+    gghistogram(x = "differences", bins = 10, add_density = TRUE)
+#This is fine
+
+nd_comp_wide_jmax %>% filter(fit_type == "tpu") %>%
+    gghistogram(x = "differences", bins = 10, add_density = TRUE)
+#This is fine
+
+
+#So it's just the Jmax where we don't totally meet the Wilcoxon assumptions. We will run both Sign and Wilcoxon for both of these, and make a note of this.
 
 
 
 #Stat analysis, clean ------------------------------------------
 
+#When we compared based on fit_type, is this paired data???
 
-#all results, Wilcoxon
+#all results, Wilcoxon signed rank test on paired samples (and a few sign tests)
 
 #Vcmax
 all_results2 %>%
@@ -386,6 +411,7 @@ all_results2 %>%
 all_results2 %>%
     group_by(fit_type) %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
 
+
 all_results2 %>%
     group_by(curv_meth) %>%
     wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
@@ -394,18 +420,33 @@ all_results2 %>%
 all_results2 %>%
     group_by(curv_meth) %>% wilcox_effsize(data = ., vcmax ~ fit_type, paired = TRUE)
 
+
+
 #Jmax
 all_results2 %>%
     group_by(fit_type) %>%
     wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
     add_significance()
 
+#Note we're running ths sign test here in addition!
+all_results2 %>%
+    group_by(fit_type) %>%
+    sign_test(data =., jmax ~ curv_meth, detailed = TRUE) %>%
+    add_significance()
+
 all_results2 %>%
     group_by(fit_type) %>% wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+
 
 all_results2 %>%
     group_by(curv_meth) %>%
     wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+#Sign test here. Note we have a different result.
+all_results2 %>%
+    group_by(curv_meth) %>%
+    sign_test(data =., jmax ~ fit_type, detailed = TRUE) %>%
     add_significance()
 
 all_results2 %>%
@@ -447,64 +488,15 @@ nd_complete %>%
 nd_complete %>%
     group_by(curv_meth) %>% wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
 
-#Effect sizes -- MAYBE DELETE THESE
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_all$vcmax,
-                 g = grp_pho_all$curv_meth,
-                 ci = TRUE,
-                 R = 1000) # see King B. M., Rosopa P. J., Minium E. W. (2011) Statistical reasoning in the behavioral sciences (6th ed.). Hoboken, NJ: John Wiley. This is the matched-pairs rank biserial correlation coefficient (rc).
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_all$jmax,
-                 g = grp_pho_all$curv_meth,
-                 ci = TRUE,
-                 R = 1000)
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_all_tpu$vcmax,
-                 g = grp_pho_all_tpu$curv_meth,
-                 ci = TRUE,
-                 R = 1000)
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_all_tpu$jmax,
-                 g = grp_pho_all_tpu$curv_meth,
-                 ci = TRUE,
-                 R = 1000)
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_nd_all$vcmax,
-                 g = grp_pho_nd_all$curv_meth,
-                 ci = TRUE,
-                 R = 1000)
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_nd_all$jmax,
-                 g = grp_pho_nd_all$curv_meth,
-                 ci = TRUE,
-                 R = 1000)
-
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_nd_all_tpu$vcmax,
-                 g = grp_pho_nd_all_tpu$curv_meth,
-                 ci = TRUE,
-                 R = 1000)
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_nd_all_tpu$jmax,
-                 g = grp_pho_nd_all_tpu$curv_meth,
-                 ci = TRUE,
-                 R = 1000)
 
 #TPU comparison
-wilcox.test(tpu ~ method, data = tpu_just6_all, conf.int = TRUE, paired = TRUE)
-set.seed(67)
-wilcoxonPairedRC(x = tpu_just6_all$tpu,
-                 g = tpu_just6_all$curv_meth,
-                 ci = TRUE,
-                 R = 1000)
+
+tpu_just6_all %>% 
+    wilcox_test(data = ., tpu ~ curv_meth, paired = TRUE, detailed = TRUE) %>% 
+    add_significance()
+
+tpu_just6_all %>% 
+    wilcox_effsize(data = ., tpu ~ curv_meth, paired = TRUE)
 
 
 #Boxplots ------------------------------------------------------------------
@@ -692,7 +684,6 @@ pho_1to1_tpu_tpu <- ggplot(data = leaf_wide_tpu, mapping = aes(x = tpu_Trad,
     scale_y_continuous(limits = c(1, 15)) +
     annotate(geom = "text", label = paste0("r = ", cor5), x = 100, y = 30)
 pho_1to1_tpu_tpu
-
 ggsave("Figures/pho_1to1_datvtrad_tpu_tpu.png")
 
 
