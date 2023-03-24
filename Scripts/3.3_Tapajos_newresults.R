@@ -11,11 +11,12 @@ library(moments)
 library(vcd)
 library(car)
 library(rcompanion) #For the point biserial effect size
+library(rstatix) #For wilcox_effsize function
 
 wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
-#Read in Datasets -------------------------------------------
+##Read in Datasets -------------------------------------------
 
 pho_dat <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"), sep = ",", 
                     header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
@@ -112,27 +113,27 @@ pho_nd_stat_tpu$curv_meth <- factor(pho_nd_stat_tpu$curv_meth)
 #Merge no-TPU with TPU
 tpu_results_grp <- pho_stat_tpu %>%
     group_by(curv_meth, leaf_unique) %>% 
-    summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
+    summarise(vcmax = mean(vcmax),
+              jmax = mean(jmax)) %>% 
     mutate(fit_type = "tpu")
 
 notpu_results_grp <- pho_stat %>%
-    group_by(DAT, leaf_unique) %>% 
-    summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>%
+    group_by(curv_meth, leaf_unique) %>% 
+    summarise(vcmax = mean(vcmax),
+              jmax = mean(jmax)) %>%
     mutate(fit_type = "no_tpu")
 
-all_results2 <- rbind(tpu_results_grp, notpu_results_grp) %>%
-    rename(curv_meth = method)
+all_results2 <- rbind(tpu_results_grp, notpu_results_grp)
 
 
 #No-overshoot data, no TPU
 grp_pho_nd_dat <- pho_nd_stat %>%
     filter(curv_meth == "DAT") %>%
     group_by(leaf_unique) %>%
-    summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
-    mutate(curv_meth = "DAT")
+    summarise(vcmax = mean(vcmax),
+              jmax = mean(jmax)) %>% 
+    mutate(curv_meth = "DAT",
+           fit_type = "no_tpu")
 
 grp_pho_nd_trad <- pho_nd_stat %>%
     filter(curv_meth == "Traditional") %>% 
@@ -145,9 +146,10 @@ grp_pho_nd_trad <- pho_nd_stat %>%
            & leaf_unique != "K6709L6"
            & leaf_unique != "K6714L1"
            & leaf_unique != "K6714L2") %>%
-    summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
-    mutate(curv_meth = "Traditional")
+    summarise(vcmax = mean(vcmax),
+              jmax = mean(jmax)) %>% 
+    mutate(curv_meth = "Traditional",
+           fit_type = "no_tpu")
 
 grp_pho_nd_all <- rbind(grp_pho_nd_dat, grp_pho_nd_trad)
 
@@ -156,8 +158,8 @@ grp_pho_nd_all <- rbind(grp_pho_nd_dat, grp_pho_nd_trad)
 grp_pho_nd_dat_tpu <- pho_nd_stat_tpu %>%
     filter(curv_meth == "DAT") %>%
     group_by(leaf_unique) %>%
-    summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
+    summarise(vcmax = mean(vcmax),
+              jmax = mean(jmax)) %>% 
     mutate(curv_meth = "DAT",
            fit_type = "tpu")
 
@@ -172,16 +174,15 @@ grp_pho_nd_trad_tpu <- pho_nd_stat_tpu %>%
            & leaf_unique != "K6709L6"
            & leaf_unique != "K6714L1"
            & leaf_unique != "K6714L2") %>%
-    summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
+    summarise(vcmax = mean(vcmax),
+              jmax = mean(jmax)) %>% 
     mutate(curv_meth = "Traditional",
            fit_type = "tpu")
 
 grp_pho_nd_all_tpu <- rbind(grp_pho_nd_dat_tpu, grp_pho_nd_trad_tpu)
 
 
-nd_complete <- rbind(grp_pho_nd_all, grp_pho_nd_all_tpu) %>%
-    rename(curv_meth = method)
+nd_complete <- rbind(grp_pho_nd_all, grp_pho_nd_all_tpu)
 
 
 #Just for the TPU analysis
@@ -209,117 +210,68 @@ grp_tpu_6dat <- grp_narm_pho_tpu %>%
 tpu_just6_all <- rbind(grp_tpu_6trad, grp_tpu_6dat)
 
 
-#photo stat analysis for vcmax -------------------------------------------------------------
-#displays grouped summary
-pho_summary <- pho_stat %>%
-    group_by(curv_meth) %>%
-    summarise(n_vcmax = length(vcmax),
-              mean_vcmax = round(mean(vcmax),3),
-              sd_vcmax = round(sd(vcmax)))
-print(pho_summary)
-
-wt <- wilcox.test(mean_vcmax ~ curv_meth, data = grp_pho_all, conf.int = TRUE, paired = TRUE)
-wt
-zval <- qnorm(wt$p.value/2) #z-score applied to a normal distribution
-zval
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_all$mean_vcmax,
-                 g = grp_pho_all$curv_meth,
-                 ci = TRUE,
-                 R = 1000)
-
-#photo stat analysis for jmax -------------------------------
 
 
-wt2 <- wilcox.test(mean_jmax ~ curv_meth, data = grp_pho_jmax_all, conf.int = TRUE, paired = TRUE)
-wt2
-zval2 <- qnorm(wt2$p.value/2) #z-score applied to a normal distribution
-zval2
-
-set.seed(67)
-wilcoxonPairedRC(x = grp_pho_jmax_all$mean_jmax,
-                 g = grp_pho_jmax_all$curv_meth,
-                 ci = TRUE,
-                 R = 1000)
-
-# Quick analysis of methods WITHOUT THE OVERSHOOT CURVES --------------------------------------
-
-
-#Summary statistics
+#Summary statistics ----------------------
 
 all_res_summ <- all_results2 %>%
     group_by(curv_meth, fit_type) %>%
     summarise(
-        sd_vcmax = sd(mean_vcmax),
-        vcmax_mean = mean(mean_vcmax),
-        vcmax_median = median(mean_vcmax),
-        sd_jmax = sd(mean_jmax),
-        jmax_mean = mean(mean_jmax),
-        jmax_median = median(mean_jmax))
+        vcmax_sd = sd(vcmax),
+        vcmax_mean = mean(vcmax),
+        vcmax_median = median(vcmax),
+        vcmax_min = min(vcmax),
+        vcmax_max = max(vcmax),
+        jmax_sd = sd(jmax),
+        jmax_mean = mean(jmax),
+        jmax_median = median(jmax),
+        jmax_min = min(jmax),
+        jmax_max = max(jmax))
 all_res_summ
 
 #No TPU
 
-ci.mean(vcmax ~ curv_meth, data = pho_stat)
-ci.mean(jmax ~ curv_meth, data = pho_stat)
-
-ggplot(pho_stat, aes(x=vcmax)) + 
-    geom_histogram(color="black", fill="white")
-
-ggplot(pho_stat, aes(x=jmax)) + 
-    geom_histogram(color="black", fill="white")
-
 grp_pho_dat <- pho_stat %>%
     filter(curv_meth == "DAT") %>% 
     group_by(leaf_unique) %>% 
-    summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
+    summarise(vcmax = mean(vcmax),
+              jmax = mean(jmax)) %>% 
     mutate(curv_meth = "DAT")
 
 grp_pho_trad <- pho_stat %>%
     filter(curv_meth == "Traditional") %>% 
     group_by(leaf_unique) %>% 
-    summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
+    summarise(vcmax = mean(vcmax),
+              jmax = mean(jmax)) %>% 
     mutate(curv_meth = "Traditional")
 
 grp_pho_all <- rbind(grp_pho_dat, grp_pho_trad)
 
-grp_pho_all %>% group_by(curv_meth) %>% summarize(mean_vcmax = mean(mean_vcmax),
-                                               med_vcmax = median(mean_vcmax),
-                                               sd_vcmax = sd(mean_vcmax),
-                                               min_vcmax = min(mean_vcmax),
-                                               max_vcmax = max(mean_vcmax),
-                                               mean_jmax = mean(mean_jmax),
-                                               med_jmax = median(mean_jmax),
-                                               sd_jmax = sd(mean_jmax),
-                                               min_jmax = min(mean_jmax),
-                                               max_jmax = max(mean_jmax))
 
-grp_pho_all %>% filter(curv_meth == "DAT") %>% summary()
-grp_pho_all %>% filter(curv_meth == "Traditional") %>% summary()
+all_results2 %>% filter(fit_type == "no_tpu") %>%
+ggplot(aes(x=vcmax)) + 
+    geom_histogram()
 
-with(grp_pho_all, shapiro.test(mean_vcmax))
-with(grp_pho_all, shapiro.test(mean_vcmax[curv_meth == "DAT"]))
-with(grp_pho_all, shapiro.test(mean_vcmax[curv_meth == "Traditional"])) 
+all_results2 %>% filter(fit_type == "no_tpu") %>%
+ggplot(aes(x=jmax)) + 
+    geom_histogram()
 
-with(grp_pho_all, shapiro.test(mean_jmax))
-with(grp_pho_all, shapiro.test(mean_jmax[curv_meth == "DAT"]))
-with(grp_pho_all, shapiro.test(mean_jmax[curv_meth == "Traditional"]))
+#Levene's for homogeneity of variance
+all_results2 %>% filter(fit_type == "no_tpu") %>% leveneTest(vcmax ~ curv_meth, data = .)
+all_results2 %>% filter(fit_type == "no_tpu") %>% leveneTest(jmax ~ curv_meth, data = .)
+# Both non-significant. The variances are not significantly different from one another. Therefore we have met the assumption of equal variances
 
+#Shapiro-Wilk test for normality
+all_results2 %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(vcmax))
+all_results2 %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(vcmax[curv_meth == "DAT"]))
+all_results2 %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(vcmax[curv_meth == "Traditional"]))
+
+all_results2 %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(jmax))
+all_results2 %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(jmax[curv_meth == "DAT"]))
+all_results2 %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(jmax[curv_meth == "Traditional"]))
+#Most deviate from normal
 
 # Yes TPU
-
-ci.mean(vcmax ~ curv_meth, data = pho_stat_tpu)
-ci.mean(jmax ~ curv_meth, data = pho_stat_tpu)
-
-ggplot(pho_stat_tpu, aes(x=vcmax)) + 
-    geom_histogram(color="black", fill="white")
-
-ggplot(pho_stat_tpu, aes(x=jmax)) + 
-    geom_histogram(color="black", fill="white")
-
 grp_pho_dat_tpu <- pho_stat_tpu %>%
     filter(curv_meth == "DAT") %>% 
     group_by(leaf_unique) %>% 
@@ -336,62 +288,71 @@ grp_pho_trad_tpu <- pho_stat %>%
 
 grp_pho_all_tpu <- rbind(grp_pho_dat_tpu, grp_pho_trad_tpu)
 
-grp_pho_all_tpu %>% group_by(curv_meth) %>% summarize(mean_vcmax = mean(mean_vcmax),
-                                               med_vcmax = median(mean_vcmax),
-                                               sd_vcmax = sd(mean_vcmax),
-                                               min_vcmax = min(mean_vcmax),
-                                               max_vcmax = max(mean_vcmax),
-                                               mean_jmax = mean(mean_jmax),
-                                               med_jmax = median(mean_jmax),
-                                               sd_jmax = sd(mean_jmax),
-                                               min_jmax = min(mean_jmax),
-                                               max_jmax = max(mean_jmax))
 
-grp_pho_all_tpu %>% filter(curv_meth == "DAT") %>% summary()
-grp_pho_all_tpu %>% filter(curv_meth == "Traditional") %>% summary()
+all_results2 %>% filter(fit_type == "tpu") %>%
+    ggplot(aes(x=vcmax)) + 
+    geom_histogram()
 
-with(grp_pho_all_tpu, shapiro.test(mean_vcmax))
-with(grp_pho_all_tpu, shapiro.test(mean_vcmax[curv_meth == "DAT"]))
-with(grp_pho_all_tpu, shapiro.test(mean_vcmax[curv_meth == "Traditional"])) 
+all_results2 %>% filter(fit_type == "tpu") %>%
+    ggplot(aes(x=jmax)) + 
+    geom_histogram()
 
-with(grp_pho_all_tpu, shapiro.test(mean_jmax))
-with(grp_pho_all_tpu, shapiro.test(mean_jmax[curv_meth == "DAT"]))
-with(grp_pho_all_tpu, shapiro.test(mean_jmax[curv_meth == "Traditional"]))
+#Levene's for homogeneity of variance
+all_results2 %>% filter(fit_type == "tpu") %>% leveneTest(vcmax ~ curv_meth, data = .)
+all_results2 %>% filter(fit_type == "tpu") %>% leveneTest(jmax ~ curv_meth, data = .)
+# Both non-significant. The variances are not significantly different from one another. Therefore we have met the assumption of equal variances
 
+#Shapiro-Wilk test for normality
+all_results2 %>% filter(fit_type == "tpu") %>% with(., shapiro.test(vcmax))
+all_results2 %>% filter(fit_type == "tpu") %>% with(., shapiro.test(vcmax[curv_meth == "DAT"]))
+all_results2 %>% filter(fit_type == "tpu") %>% with(., shapiro.test(vcmax[curv_meth == "Traditional"]))
+
+all_results2 %>% filter(fit_type == "tpu") %>% with(., shapiro.test(jmax))
+all_results2 %>% filter(fit_type == "tpu") %>% with(., shapiro.test(jmax[curv_meth == "DAT"]))
+all_results2 %>% filter(fit_type == "tpu") %>% with(., shapiro.test(jmax[curv_meth == "Traditional"]))
+#Most deviate from normal
 
 
 #No overshoot, No TPU
-sd(grp_pho_nd_dat$mean_vcmax)
-sd(grp_pho_nd_dat$mean_jmax)
+nd_complete_summ <- nd_complete %>%
+    group_by(curv_meth, fit_type) %>%
+    summarise(
+        vcmax_sd = sd(vcmax),
+        vcmax_mean = mean(vcmax),
+        vcmax_median = median(vcmax),
+        vcmax_min = min(vcmax),
+        vcmax_max = max(vcmax),
+        jmax_sd = sd(jmax),
+        jmax_mean = mean(jmax),
+        jmax_median = median(jmax),
+        jmax_min = min(jmax),
+        jmax_max = max(jmax))
+nd_complete_summ
 
-sd(grp_pho_nd_trad$mean_vcmax)
-sd(grp_pho_nd_trad$mean_jmax)
+#Levene's test
+nd_complete %>% filter(fit_type == "tpu") %>% leveneTest(vcmax ~ curv_meth, data = .)
+nd_complete %>% filter(fit_type == "tpu") %>% leveneTest(jmax ~ curv_meth, data = .)
+nd_complete %>% filter(fit_type == "no_tpu") %>% leveneTest(vcmax ~ curv_meth, data = .)
+nd_complete %>% filter(fit_type == "no_tpu") %>% leveneTest(jmax ~ curv_meth, data = .)
+#Met assumption of homogeneity of variances
 
-grp_pho_nd_all %>% filter(curv_meth == "DAT") %>% summary()
-grp_pho_nd_all %>% filter(curv_meth == "Traditional") %>% summary()
+#Shapiro Wilk Test
+nd_complete %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(vcmax))
+nd_complete %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(vcmax[curv_meth == "DAT"]))
+nd_complete %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(vcmax[curv_meth == "Traditional"]))
 
-ci.mean(grp_pho_nd_all$mean_vcmax, data = grp_pho_nd_all)
-ci.mean(mean_vcmax ~ curv_meth, data = grp_pho_nd_all)
+nd_complete %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(jmax))
+nd_complete %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(jmax[curv_meth == "DAT"]))
+nd_complete %>% filter(fit_type == "no_tpu") %>% with(., shapiro.test(jmax[curv_meth == "Traditional"]))
 
-ci.mean(grp_pho_nd_all$mean_jmax, data = grp_pho_nd_all)
-ci.mean(mean_jmax ~ curv_meth, data = grp_pho_nd_all)
+nd_complete %>% filter(fit_type == "tpu") %>% with(., shapiro.test(vcmax))
+nd_complete %>% filter(fit_type == "tpu") %>% with(., shapiro.test(vcmax[curv_meth == "DAT"]))
+nd_complete %>% filter(fit_type == "tpu") %>% with(., shapiro.test(vcmax[curv_meth == "Traditional"]))
 
-
-#No overshoot, WITH TPU
-sd(grp_pho_nd_dat_tpu$mean_vcmax)
-sd(grp_pho_nd_dat_tpu$mean_jmax)
-
-sd(grp_pho_nd_trad_tpu$mean_vcmax)
-sd(grp_pho_nd_trad_tpu$mean_jmax)
-
-grp_pho_nd_all_tpu %>% filter(curv_meth == "DAT") %>% summary()
-grp_pho_nd_all_tpu %>% filter(curv_meth == "Traditional") %>% summary()
-
-ci.mean(grp_pho_nd_all_tpu$mean_vcmax, data = grp_pho_nd_all_tpu)
-ci.mean(mean_vcmax ~ curv_meth, data = grp_pho_nd_all_tpu)
-
-ci.mean(grp_pho_nd_all_tpu$mean_jmax, data = grp_pho_nd_all)
-ci.mean(mean_jmax ~ curv_meth, data = grp_pho_nd_all_tpu)
+nd_complete %>% filter(fit_type == "tpu") %>% with(., shapiro.test(jmax))
+nd_complete %>% filter(fit_type == "tpu") %>% with(., shapiro.test(jmax[curv_meth == "DAT"]))
+nd_complete %>% filter(fit_type == "tpu") %>% with(., shapiro.test(jmax[curv_meth == "Traditional"]))
+#They all deviate from normal.
 
 
 #JUST THE TPU
@@ -413,105 +374,126 @@ zval2
 
 #Stat analysis, clean ------------------------------------------
 
+
 #all results, Wilcoxon
 
+#Vcmax
 all_results2 %>%
     group_by(fit_type) %>%
-    wilcox_test(data =., mean_vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
-    adjust_pvalue(method = "bonferroni") %>%
-    add_significance("p.adj")
+    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+all_results2 %>%
+    group_by(fit_type) %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
 
 all_results2 %>%
     group_by(curv_meth) %>%
-    wilcox_test(data =., mean_vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
-    adjust_pvalue(method = "bonferroni") %>%
-    add_significance("p.adj")
+    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
+    add_significance()
 
 all_results2 %>%
+    group_by(curv_meth) %>% wilcox_effsize(data = ., vcmax ~ fit_type, paired = TRUE)
+
+#Jmax
+all_results2 %>%
     group_by(fit_type) %>%
-    wilcox_test(data =., mean_jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
-    adjust_pvalue(method = "bonferroni") %>%
-    add_significance("p.adj")
+    wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+all_results2 %>%
+    group_by(fit_type) %>% wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
 
 all_results2 %>%
     group_by(curv_meth) %>%
-    wilcox_test(data =., mean_jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
-    adjust_pvalue(method = "bonferroni") %>%
-    add_significance("p.adj")
+    wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+all_results2 %>%
+    group_by(curv_meth) %>% wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
 
 #no overshoot, Wilcoxon
 
+#Vcmax
 nd_complete %>%
     group_by(fit_type) %>%
-    wilcox_test(data =., mean_vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
-    adjust_pvalue(method = "bonferroni") %>%
-    add_significance("p.adj")
+    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+nd_complete %>%
+    group_by(fit_type) %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
 
 nd_complete %>%
     group_by(curv_meth) %>%
-    wilcox_test(data =., mean_vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
-    adjust_pvalue(method = "bonferroni") %>%
-    add_significance("p.adj")
+    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
 
 nd_complete %>%
+    group_by(curv_meth) %>% wilcox_effsize(data = ., vcmax ~ fit_type, paired = TRUE)
+
+#Jmax
+nd_complete %>%
     group_by(fit_type) %>%
-    wilcox_test(data =., mean_jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
-    adjust_pvalue(method = "bonferroni") %>%
-    add_significance("p.adj")
+    wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+nd_complete %>%
+    group_by(fit_type) %>% wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
 
 nd_complete %>%
     group_by(curv_meth) %>%
-    wilcox_test(data =., mean_jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
-    adjust_pvalue(method = "bonferroni") %>%
-    add_significance("p.adj")
+    wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
 
-#Effect sizes
+nd_complete %>%
+    group_by(curv_meth) %>% wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
+
+#Effect sizes -- MAYBE DELETE THESE
 
 set.seed(67)
-wilcoxonPairedRC(x = grp_pho_all$mean_vcmax,
+wilcoxonPairedRC(x = grp_pho_all$vcmax,
                  g = grp_pho_all$curv_meth,
                  ci = TRUE,
                  R = 1000) # see King B. M., Rosopa P. J., Minium E. W. (2011) Statistical reasoning in the behavioral sciences (6th ed.). Hoboken, NJ: John Wiley. This is the matched-pairs rank biserial correlation coefficient (rc).
 
 set.seed(67)
-wilcoxonPairedRC(x = grp_pho_jmax_all$mean_jmax,
-                 g = grp_pho_jmax_all$curv_meth,
+wilcoxonPairedRC(x = grp_pho_all$jmax,
+                 g = grp_pho_all$curv_meth,
                  ci = TRUE,
                  R = 1000)
 
 set.seed(67)
-wilcoxonPairedRC(x = grp_pho_all_tpu$mean_vcmax,
+wilcoxonPairedRC(x = grp_pho_all_tpu$vcmax,
                  g = grp_pho_all_tpu$curv_meth,
                  ci = TRUE,
                  R = 1000)
 
 set.seed(67)
-wilcoxonPairedRC(x = grp_pho_jmax_all_tpu$mean_jmax,
-                 g = grp_pho_jmax_all_tpu$curv_meth,
+wilcoxonPairedRC(x = grp_pho_all_tpu$jmax,
+                 g = grp_pho_all_tpu$curv_meth,
                  ci = TRUE,
                  R = 1000)
 
 set.seed(67)
-wilcoxonPairedRC(x = grp_pho_nd_all$mean_vcmax,
+wilcoxonPairedRC(x = grp_pho_nd_all$vcmax,
                  g = grp_pho_nd_all$curv_meth,
                  ci = TRUE,
                  R = 1000)
 
 set.seed(67)
-wilcoxonPairedRC(x = grp_pho_nd_all$mean_jmax,
+wilcoxonPairedRC(x = grp_pho_nd_all$jmax,
                  g = grp_pho_nd_all$curv_meth,
                  ci = TRUE,
                  R = 1000)
 
 
 set.seed(67)
-wilcoxonPairedRC(x = grp_pho_nd_all_tpu$mean_vcmax,
+wilcoxonPairedRC(x = grp_pho_nd_all_tpu$vcmax,
                  g = grp_pho_nd_all_tpu$curv_meth,
                  ci = TRUE,
                  R = 1000)
 
 set.seed(67)
-wilcoxonPairedRC(x = grp_pho_nd_all_tpu$mean_jmax,
+wilcoxonPairedRC(x = grp_pho_nd_all_tpu$jmax,
                  g = grp_pho_nd_all_tpu$curv_meth,
                  ci = TRUE,
                  R = 1000)
@@ -528,7 +510,7 @@ wilcoxonPairedRC(x = tpu_just6_all$tpu,
 #Boxplots ------------------------------------------------------------------
 
 #Full data
-ggplot(all_results2, aes(x = fit_type, y = mean_vcmax, fill = curv_meth)) +
+ggplot(all_results2, aes(x = fit_type, y = vcmax, fill = curv_meth)) +
     geom_boxplot()+
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), values = c("#00AFBB", "#E7B800"))+
     scale_x_discrete(labels = c("No TPU", "TPU")) +
@@ -542,7 +524,7 @@ ggplot(all_results2, aes(x = fit_type, y = mean_vcmax, fill = curv_meth)) +
 ggsave("Figures/box_vcmax_fulldata.png")
 
 
-ggplot(all_results2, aes(x = fit_type, y = mean_jmax, fill = curv_meth)) +
+ggplot(all_results2, aes(x = fit_type, y = jmax, fill = curv_meth)) +
     geom_boxplot()+
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), values = c("#00AFBB", "#E7B800"))+
     scale_x_discrete(labels = c("No TPU", "TPU"))+
@@ -557,7 +539,7 @@ ggsave("Figures/box_jmax_fulldata.png")
 
 
 #No Overshoot
-ggplot(nd_complete, aes(x = fit_type, y = mean_vcmax, fill = curv_meth)) +
+ggplot(nd_complete, aes(x = fit_type, y = vcmax, fill = curv_meth)) +
     geom_boxplot()+
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), values = c("#00AFBB", "#E7B800"))+
     scale_x_discrete(labels = c("No TPU", "TPU")) +
@@ -570,7 +552,7 @@ ggplot(nd_complete, aes(x = fit_type, y = mean_vcmax, fill = curv_meth)) +
           axis.text.y=element_text(size=13, family = "serif"))
 ggsave("Figures/box_vcmax_nd.png")
 
-ggplot(nd_complete, aes(x = fit_type, y = mean_jmax, fill = curv_meth)) +
+ggplot(nd_complete, aes(x = fit_type, y = jmax, fill = curv_meth)) +
     geom_boxplot()+
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), values = c("#00AFBB", "#E7B800"))+
     scale_x_discrete(labels = c("No TPU", "TPU")) +
