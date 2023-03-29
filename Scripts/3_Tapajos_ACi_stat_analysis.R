@@ -11,17 +11,19 @@ library(vcd)
 library(car)
 library(rcompanion) #For the point biserial effect size
 
-wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
+wd <- "C://Users/emmel/Desktop/DAT_proj/"
 setwd(wd)
 
 ## Read in the datasets
 params_ecophys <- read.csv(file = paste0(wd, "Results/params_ecophys_no_TPU.csv"), sep = ",", 
                            header = TRUE) %>% 
   filter(method == "dat")
+
 params_photo <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"), sep = ",", 
                          header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
 params_photo_tpu <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_with_TPU.csv"), sep = ",", 
                          header = TRUE, na.strings = 1000)
+photo_trad <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"), sep = ",", header = TRUE, na.strings = 1000)
 
 init_mg <- read.csv(file = paste0(wd, "Results/MG_fixed_aci_fits_230213.csv"), sep = ",",
                       header = TRUE)
@@ -29,7 +31,7 @@ params_mg <- init_mg %>%
     select(-c(X)) %>% 
     filter(DAT == "Before_DAT") #filters out traditional
 
-photo_trad <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"), sep = ",", header = TRUE, na.strings = 1000)
+
 
 
 # Photosynthesis results visualization ------------------------------------
@@ -288,57 +290,66 @@ wilcoxonPairedRC(x = grp_pho_nd_all$mean_jmax,
 
 # Visualization of DAT vs Traditional in Photosynthesis package -----
 
-lab_DATTrad <- c('DAT', 'Traditional')
+lab_DATTrad <- c('DAT', 'Steady-State')
 b4 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Vcmax_25C)) +
-    geom_boxplot()+
-    labs(x="Method", y = expression("Vcmax "*(mu*mol~m^{-2}~s^{-1})))+
+    geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
+    labs(x="Method", y = expression("Vcmax "*(mu*mol~m^{-2}~s^{-1} *"")))+
     theme_classic()+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
+    theme(aspect.ratio = 1,
+          axis.title.x=element_text(size=18, family = "serif"),
           axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"),
+          axis.text.x=element_text(size=14, family = "serif", colour = "grey10"),
+          axis.text.y=element_text(size = 12, family = "serif", colour = "grey10"),
           legend.position="none")+
     scale_x_discrete(labels=lab_DATTrad)
 b4
-ggsave("Figures/photo_box_datvtrad_vcmax.pdf")
+ggsave(plot = b4, "Figures/photo_box_datvtrad_vcmax.png")
 
-b5 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Jmax_25C)) +
-    geom_boxplot()+
-    labs(x="Method", y = "Jmax")+
+b5 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Jmax_25C, fill = DAT)) +
+    geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
+    labs(x="Method", y = expression("Jmax "*(mu*mol~m^{-2}~s^{-1} *"")))+
     theme_classic()+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
+    theme(aspect.ratio = 1,
+          axis.title.x=element_text(size=18, family = "serif"),
           axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"),
+          axis.text.x=element_text(size=14, family = "serif", colour = "grey10"),
+          axis.text.y=element_text(size = 12, family = "serif", colour = "grey10"),
           legend.position="none")+
     scale_x_discrete(labels=lab_DATTrad)
 b5
-ggsave("Figures/photo_box_datvtrad_jmax.pdf")
+ggsave(plot = b5, "Figures/photo_box_datvtrad_jmax.png")
 
 
-nd_vcmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_vcmax)) +
-    geom_boxplot()+
-    labs(x="Method", y = "Vcmax")+
+nd_vcmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_vcmax, fill = method)) +
+    geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
+    labs(x="Method", y = expression("Vcmax "*(mu*mol~m^{-2}~s^{-1} *"")))+
     theme_classic()+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
+    theme(aspect.ratio = 1,
+          axis.title.x=element_text(size=18, family = "serif"),
           axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"),
-          legend.position="none")
+          axis.text.x=element_text(size=14, family = "serif", colour = "grey10"),
+          axis.text.y=element_text(size = 12, family = "serif", colour = "grey10"),
+          legend.position="none")+
+    scale_x_discrete(labels=lab_DATTrad)
 nd_vcmax_box
-ggsave("Figures/photo_box_nodip_datvtrad_vcmax.pdf")
+ggsave(plot = nd_vcmax_box, "Figures/photo_box_nodip_datvtrad_vcmax.png")
 
-nd_jmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_jmax)) +
-    geom_boxplot()+
-    labs(x="Method", y = "Jmax")+
+nd_jmax_box <- ggplot(grp_pho_nd_all, aes(x=method, y=mean_jmax, fill = method)) +
+    geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
+    labs(x="Method", y = expression("Jmax "*(mu*mol~m^{-2}~s^{-1} *"")))+
     theme_classic()+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
+    theme(aspect.ratio = 1,
+          axis.title.x=element_text(size=18, family = "serif"),
           axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"),
-          legend.position="none")
+          axis.text.x=element_text(size=14, family = "serif", colour = "grey10"),
+          axis.text.y=element_text(size = 12, family = "serif", colour = "grey10"),
+          legend.position="none")+
+    scale_x_discrete(labels=lab_DATTrad)
 nd_jmax_box
-ggsave("Figures/photo_box_nodip_datvtrad_jmax.pdf")
+ggsave(plot = nd_jmax_box, "Figures/photo_box_nodip_datvtrad_jmax.png")
+
+
+
 
 ## 1:1 plots DAT vs Trad
 # By leaf
@@ -354,40 +365,49 @@ photo_leaf_vcmax <- ggplot(data = leaf_wide_vcmax, mapping = aes(x = vcmax_Trad,
     geom_point()+
     geom_abline(intercept = 0, slope = 1)+
     theme_classic()+
-    labs(x="Traditional Vcmax", y="DAT Vcmax", col = "Unique Leaf")+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"),
-          legend.text=element_text(size=7, family = "serif"),
-          legend.title=element_text(size=11, family = "serif"))+
+    labs(x = expression("Steady-State Vcmax "*(mu*mol~m^{-2}~s^{-1} *"")),
+         y = expression("DAT Vcmax "*(mu*mol~m^{-2}~s^{-1} *"")),
+         col = "Unique Leaf")+
+    theme(aspect.ratio = 1,
+          axis.title.x=element_text(size=14, family = "serif"),
+          axis.title.y=element_text(size=14, family = "serif"),
+          axis.text.x=element_text(size=8, family = "serif", color = "gray10"),
+          axis.text.y=element_text(size=8, family = "serif", color = "gray10"),
+          #legend.text=element_text(size=7, family = "serif"),
+          #legend.title=element_text(size=11, family = "serif"),
+          legend.position = "none") +
     scale_x_continuous(limits = c(1, 100)) + 
     scale_y_continuous(limits = c(1, 100)) +
-    annotate(geom = "text", label = paste0("r = ", cor1), x = 75, y = 25)
+    annotate(geom = "text", label = paste0("r = ", cor1), x = 25, y = 75)
 photo_leaf_vcmax
-ggsave("Figures/photo_1to1_datvtrad_vcmax.pdf")
+ggsave(plot = photo_leaf_vcmax, "Figures/photo_1to1_datvtrad_vcmax_all.png")
+
+
 
 #Jmax
 leaf_sub_jmax <- select(grp_pho_leaf, mean_jmax, DAT, leaf_unique)
 leaf_wide_jmax <- reshape(leaf_sub_jmax, idvar = "leaf_unique", timevar = "DAT", direction = "wide")
 names(leaf_wide_jmax)[2:3]=c("jmax_DAT", "jmax_Trad")
-cor1 <- round(cor(leaf_wide_jmax$jmax_DAT, leaf_wide_jmax$jmax_Trad), 3)
+cor2 <- round(cor(leaf_wide_jmax$jmax_DAT, leaf_wide_jmax$jmax_Trad), 3)
 photo_leaf_jmax <- ggplot(data = leaf_wide_jmax, mapping = aes(x = jmax_Trad,
                                                              y = jmax_DAT,
                                                              color = leaf_unique))+
     geom_point()+
     geom_abline(intercept = 0, slope = 1)+
     theme_classic()+
-    labs(x="Traditional Jmax", y="DAT Jmax", col = "Unique Leaf")+
-    theme(axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=15, family = "serif"),
-          axis.text.y=element_text(size=15, family = "serif"),
-          legend.text=element_text(size=7, family = "serif"),
-          legend.title=element_text(size=11, family = "serif"))+
+    labs(x = expression("Steady-State Jmax "*(mu*mol~m^{-2}~s^{-1} *"")),
+         y = expression("DAT Jmax "*(mu*mol~m^{-2}~s^{-1} *"")), col = "Unique Leaf") +
+    theme(aspect.ratio = 1,
+          axis.title.x=element_text(size=14, family = "serif"),
+          axis.title.y=element_text(size=14, family = "serif"),
+          axis.text.x=element_text(size=8, family = "serif"),
+          axis.text.y=element_text(size=8, family = "serif"),
+          #legend.text=element_text(size=7, family = "serif"),
+          #legend.title=element_text(size=11, family = "serif"),
+          legend.position = "none") +
     scale_x_continuous(limits = c(1, 130)) + 
     scale_y_continuous(limits = c(1, 130)) +
-    annotate(geom = "text", label = paste0("r = ", cor1), x = 100, y = 30)
+    annotate(geom = "text", label = paste0("r = ", cor2), x = 30, y = 100)
 photo_leaf_jmax
-ggsave("Figures/photo_1to1_datvtrad_jmax.pdf")
+ggsave(plot = photo_leaf_jmax, "Figures/photo_1to1_datvtrad_jmax_all.png")
 

@@ -6,7 +6,7 @@ library(ggpubr)
 
 
 # Set working directory to DAT_proj
-wd <- "C://Users/emmel/Desktop/DAT_proj"
+wd <- "C://Users/emmel/Desktop/DAT_proj/"
 setwd(wd)
 
 
@@ -84,15 +84,16 @@ ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = unique)) +
 
 # Make and save plots fot each leaf
 for (id in unique(cmplt.grp$unique)) {
-  df1 <- cmplt.grp %>% filter(unique == id)
-  gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, color = Data_point)) +
-    geom_point() +
-    theme_classic() +
-    scale_color_viridis_d() +
-    ggtitle(id)
-  plot(gg1)
-  filename1 <- paste0("plot_", id, ".png")
-  ggsave(filename1, gg1, path = paste0(getwd(), "/Figures/"))
+    df1 <- cmplt.grp %>% filter(unique == id)
+    gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, shape = Data_point, color = Data_point)) +
+        geom_point(size = 3) +
+        theme_classic() +
+        scale_shape_manual(name = "Method", labels = c("DAT", "Steady-State"), values = c(19, 17)) +
+        scale_color_viridis_d(begin = 0.3, name = "Method", labels = c("DAT", "Steady-State")) +
+        ggtitle(id)
+    plot(gg1)
+    filename1 <- paste0("plot_", id, ".png")
+    ggsave(filename1, gg1, path = paste0(getwd(), "/Figures/"))
 }
 
 
@@ -215,7 +216,7 @@ write.csv(x = par_join, file = paste0(wd, "/Results/params_ecophys_no_TPU.csv"),
 # Fitting A/Ci curves with photosynthesis ----------------------------------
 
 library(photosynthesis)
-library(rpmodel)
+#library(rpmodel)
 
 cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
 cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT")
@@ -268,7 +269,7 @@ write.csv(x = dat_fits_photo_pars_noTPU, file = paste0(wd, "Results/dat_fits_pho
 
 #Write PDF of outputs
 
-pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_no_TPU.pdf"), height = 10, width = 20)
+pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_no_TPU.pdf"))
 plot.new()
 for (curve in 1:nrow(trad_fits_photo_pars_noTPU)){
     plot(trad_fits_photo_graphs_noTPU[[curve]])
@@ -276,7 +277,7 @@ for (curve in 1:nrow(trad_fits_photo_pars_noTPU)){
 dev.off()
 
 
-pdf(file = paste0(wd,"Figures/dat_fits_photo_figs_filt_no_TPU.pdf"), height=10, width=20)
+pdf(file = paste0(wd,"Figures/dat_fits_photo_figs_filt_no_TPU.pdf"))
 plot.new()
 for (curve in 1:nrow(dat_fits_photo_pars_noTPU)){
     plot(dat_fits_photo_graphs_noTPU[[curve]])
@@ -318,14 +319,14 @@ write.csv(x = dat_fits_photo_pars, file = paste0(wd, "Results/dat_fit_ex_photo_p
 
 #Write PDF of outputs
 
-pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_with_TPU.pdf"), height = 10, width = 20)
+pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_with_TPU.pdf"))
 plot.new()
 for (curve in 1:nrow(trad_fits_photo_pars)){
     plot(trad_fits_photo_graphs[[curve]])
 }
 dev.off()
 
-pdf(file = paste0(wd,"Figures/dat_fits_photo_figs_filt_with_TPU.pdf"), height=10, width=20)
+pdf(file = paste0(wd,"Figures/dat_fits_photo_figs_filt_with_TPU.pdf"))
 plot.new()
 for (curve in 1:nrow(dat_fits_photo_pars)){ 
     plot(dat_fits_photo_graphs[[curve]])
