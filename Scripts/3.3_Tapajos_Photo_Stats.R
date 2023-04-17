@@ -12,7 +12,7 @@ library(vcd)
 library(car)
 library(rstatix) #For wilcox_effsize function
 
-wd <- "C://Users/emmel/Desktop/DAT_proj/"
+wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
 ##Read in Datasets -------------------------------------------
@@ -124,6 +124,105 @@ notpu_results_grp <- pho_stat %>%
 
 all_results2 <- rbind(tpu_results_grp, notpu_results_grp)
 all_results2$fit_type <- factor(all_results2$fit_type)
+
+
+#Creating a table with Vcmax and Jmax differences by species ----------------------------
+substring(all_results2$leaf_unique, "K67", 1)
+treename <- as.numeric(substring(all_results2$leaf_unique, 4, 5))
+
+all_results2$treename <- treename
+
+all_res_dat_tpu <- all_results2 %>% filter(curv_meth == "DAT") %>% filter(fit_type == "tpu")
+all_res_trad_tpu <- all_results2 %>% filter(curv_meth == "Traditional") %>% filter(fit_type == "tpu")
+
+all_res_dat_tpu_summ <- all_res_dat_tpu %>% group_by(treename) %>%
+    summarize(dat_vcmax = mean(vcmax),
+              dat_vc_sd = sd(vcmax),
+              dat_jmax = mean(jmax),
+              dat_j_sd = sd(jmax))
+
+all_res_trad_tpu_summ <- all_res_trad_tpu %>% group_by(treename) %>%
+    summarize(trad_vcmax = mean(vcmax),
+              trad_vc_sd = sd(vcmax),
+              trad_jmax = mean(jmax),
+              trad_j_sd = sd(jmax))
+
+
+species_summ <- cbind(all_res_dat_tpu_summ, all_res_trad_tpu_summ)
+species_summ$vc_diff <- species_summ$trad_vcmax - species_summ$dat_vcmax
+species_summ$j_diff <- species_summ$trad_jmax - species_summ$dat_jmax
+species_summ2 <- species_summ[,-6]
+
+species_summ2$treename <- as.character(species_summ2$treename)
+
+rel_can_pos <- c(11, 5.1, 6, 4, 2, 3, 1, 10, 12, 8, 7, 9, 5.2)
+species_summ2$rel_can_pos <- rel_can_pos
+
+species_summ2 <- species_summ2[order(species_summ2$rel_can_pos, decreasing = TRUE),]
+species_summ2$rel_can_pos <- as.character(species_summ2$rel_can_pos)
+
+ggplot(data = species_summ2, aes(x = treename, y = vc_diff)) +
+    geom_bar(stat="identity", fill = "steelblue") +
+    labs(x = "Tree Identifier",
+         y = "Vcmax Differences (steady-state - DAT)")+
+    theme_classic() +
+    geom_hline(yintercept=0, linetype="solid", color="red", size=1.2) +
+    ylim(-18, 18)
+
+ggplot(data = species_summ2, aes(x = treename, y = j_diff)) +
+    geom_bar(stat="identity", fill = "steelblue") +
+    labs(x = "Tree Identifier",
+         y = "Jmax Differences (steady-state - DAT)")+
+    theme_classic() +
+    geom_hline(yintercept=0, linetype="solid", color="red", size=1.2) +
+    ylim(-5, 18)
+
+write.csv(species_summ2, "Results/param_diffs_tpufit.csv")
+
+#understanding mean differences --------------------------
+all_res_dat_tpu <- all_results2 %>%
+    filter(curv_meth == "DAT") %>%
+    filter(fit_type == "tpu") %>%
+    mutate(dat_vcmax = vcmax,
+           dat_jmax = jmax) %>%
+    select(-c(vcmax, jmax))
+all_res_trad_tpu <- all_results2 %>%
+    filter(curv_meth == "Traditional") %>%
+    filter(fit_type == "tpu") %>%
+    mutate(trad_vcmax = vcmax,
+           trad_jmax = jmax) %>%
+    select(-c(vcmax, jmax))
+
+res_tpu_summ <- cbind(all_res_dat_tpu, all_res_trad_tpu)
+
+res_tpu_summ$vc_diff <- res_tpu_summ$trad_vcmax - res_tpu_summ$dat_vcmax
+res_tpu_summ$j_diff <- res_tpu_summ$trad_jmax - res_tpu_summ$dat_jmax
+
+mean(res_tpu_summ$vc_diff)
+mean(res_tpu_summ$j_diff)
+
+#no tpu
+all_res_dat_notpu <- all_results2 %>%
+    filter(curv_meth == "DAT") %>%
+    filter(fit_type == "no_tpu") %>%
+    mutate(dat_vcmax = vcmax,
+           dat_jmax = jmax) %>%
+    select(-c(vcmax, jmax))
+all_res_trad_notpu <- all_results2 %>%
+    filter(curv_meth == "Traditional") %>%
+    filter(fit_type == "no_tpu") %>%
+    mutate(trad_vcmax = vcmax,
+           trad_jmax = jmax) %>%
+    select(-c(vcmax, jmax))
+
+res_notpu_summ <- cbind(all_res_dat_notpu, all_res_trad_notpu)
+
+res_notpu_summ$vc_diff <- res_notpu_summ$trad_vcmax - res_notpu_summ$dat_vcmax
+res_notpu_summ$j_diff <- res_notpu_summ$trad_jmax - res_notpu_summ$dat_jmax
+
+mean(res_notpu_summ$vc_diff)
+mean(res_notpu_summ$j_diff)
+
 
 #No-overshoot data, no TPU
 grp_pho_nd_dat <- pho_nd_stat %>%
