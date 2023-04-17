@@ -41,10 +41,15 @@ cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT") %>%
   select(-contains(greeks("Delta"))) # removes the columns with deltas
 head(cmplt_DAT)
 
+write.csv(x = cmplt_DAT, file = paste0(wd, "/Inputs/all_DAT_data_no_out.csv"), row.names = FALSE)
+
+
 cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional") %>% 
   select(-contains(greeks("Delta")))
 cmplt_trad <- as.data.frame(cmplt_trad)
 head(cmplt_trad)
+
+write.csv(x = cmplt_trad, file = paste0(wd, "/Inputs/all_trad_data_no_out.csv"), row.names = FALSE)
 
 
 # Make a function to remove backwards points ------------------------------

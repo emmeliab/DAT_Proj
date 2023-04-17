@@ -592,6 +592,22 @@ ggsave(plot = test_vcmax_all_TPUvNoTPU, "Figures/test_box_vcmax_all_TPUvNoTPU.pn
 
 
 
+test_jmax_all_TPUvNoTPU <- ggplot(all_results2, aes(x = curv_meth, y = jmax, fill = fit_type)) +
+    geom_boxplot(outlier.shape = 17, outlier.size = 2)+
+    scale_fill_manual(name = "Fit Method", labels = c("Without TPU", "With TPU"), 
+                      values = c("skyblue", "red"))+
+    scale_x_discrete(labels = c("DAT", "Steady-State")) +
+    theme_classic()+
+    labs(x="Curve Method",
+         y = expression(J[max]*(mu*mol~m^{-2}~s^{-1})))+
+    theme(axis.title.x=element_text(size=16, family = "serif"),
+          axis.title.y=element_text(size=16, family = "serif"),
+          axis.text.x=element_text(size=13, family = "serif", color = "gray10"),
+          axis.text.y=element_text(size=13, family = "serif", colour = "gray10")) 
+test_jmax_all_TPUvNoTPU
+ggsave(plot = test_jmax_all_TPUvNoTPU, "Figures/test_box_jmax_all_TPUvNoTPU.png")
+
+
 
 
 
