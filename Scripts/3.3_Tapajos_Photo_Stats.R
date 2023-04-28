@@ -11,6 +11,7 @@ library(moments)
 library(vcd)
 library(car)
 library(rstatix) #For wilcox_effsize function
+library(gridExtra)
 
 wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
@@ -151,6 +152,8 @@ all_res_trad_tpu_summ <- all_res_trad_tpu %>% group_by(treename) %>%
 species_summ <- cbind(all_res_dat_tpu_summ, all_res_trad_tpu_summ)
 species_summ$vc_diff <- species_summ$trad_vcmax - species_summ$dat_vcmax
 species_summ$j_diff <- species_summ$trad_jmax - species_summ$dat_jmax
+species_summ$vc_diff_se <- (abs(species_summ$trad_vc_sd) + abs(species_summ$dat_vc_sd))/2
+species_summ$j_diff_se <- (abs(species_summ$trad_j_sd) + abs(species_summ$dat_j_sd))/2
 species_summ2 <- species_summ[,-6]
 
 species_summ2$treename <- as.character(species_summ2$treename)
@@ -159,25 +162,117 @@ rel_can_pos <- c(11, 5.1, 6, 4, 2, 3, 1, 10, 12, 8, 7, 9, 5.2)
 species_summ2$rel_can_pos <- rel_can_pos
 
 species_summ2 <- species_summ2[order(species_summ2$rel_can_pos, decreasing = TRUE),]
-species_summ2$rel_can_pos <- as.character(species_summ2$rel_can_pos)
 
-ggplot(data = species_summ2, aes(x = treename, y = vc_diff)) +
-    geom_bar(stat="identity", fill = "steelblue") +
-    labs(x = "Tree Identifier",
-         y = "Vcmax Differences (steady-state - DAT)")+
-    theme_classic() +
-    geom_hline(yintercept=0, linetype="solid", color="red", size=1.2) +
-    ylim(-18, 18)
+codebook <- read.csv("Results/id_codebook.csv") %>% arrange(desc(rel_can_pos)) %>% select(-c(overshoot, treeid, rel_can_pos))
 
-ggplot(data = species_summ2, aes(x = treename, y = j_diff)) +
-    geom_bar(stat="identity", fill = "steelblue") +
-    labs(x = "Tree Identifier",
-         y = "Jmax Differences (steady-state - DAT)")+
-    theme_classic() +
-    geom_hline(yintercept=0, linetype="solid", color="red", size=1.2) +
-    ylim(-5, 18)
+species_summ3 <- cbind(species_summ2, codebook) %>% select(-15)
 
-write.csv(species_summ2, "Results/param_diffs_tpufit.csv")
+#Note that error bars represent the mean of the absolute error for the differences
+vc_diff_hist <- ggplot(data = species_summ3, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = vc_diff)) +
+    geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
+    labs(x = NULL,
+         y = "TPU-enabled Vcmax Differences (steady-state - DAT)")+
+    geom_errorbar(aes(x=gen_spec_id, ymin=vc_diff-vc_diff_se, ymax=vc_diff+vc_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
+    theme_classic(base_family = "serif") +
+    geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
+    ylim(-20, 50)+
+    theme(axis.text.y = element_text(face = "italic"))+
+    coord_flip()
+vc_diff_hist
+ggsave(plot = vc_diff_hist, "Figures/vc_diff_hist.png")
+
+j_diff_hist <- ggplot(data = species_summ3, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = j_diff)) +
+    geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
+    labs(x = NULL,
+         y = "TPU-enabled Jmax Differences (steady-state - DAT)")+
+    geom_errorbar(aes(x=gen_spec_id, ymin=j_diff-j_diff_se, ymax=j_diff+j_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
+    theme_classic(base_family = "serif") +
+    geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
+    ylim(-20, 50) +
+    theme(axis.text.y = element_text(face = "italic"))+
+    coord_flip()
+j_diff_hist
+ggsave(plot = j_diff_hist, "Figures/j_diff_hist.png")
+
+
+plot_arranged <- grid.arrange(vc_diff_hist, j_diff_hist)
+ggsave(plot = plot_arranged, "Figures/diff_histos.png", width = 4.3, height = 7)
+
+write.csv(species_summ3, "Results/param_diffs_tpufit.csv")
+
+
+#Now for non-TPU fit curves
+all_res_dat_notpu <- all_results2 %>% filter(curv_meth == "DAT") %>% filter(fit_type == "no_tpu")
+all_res_trad_notpu <- all_results2 %>% filter(curv_meth == "Traditional") %>% filter(fit_type == "no_tpu")
+
+all_res_dat_notpu_summ <- all_res_dat_notpu %>% group_by(treename) %>%
+    summarize(dat_vcmax = mean(vcmax),
+              dat_vc_sd = sd(vcmax),
+              dat_jmax = mean(jmax),
+              dat_j_sd = sd(jmax))
+
+all_res_trad_notpu_summ <- all_res_trad_notpu %>% group_by(treename) %>%
+    summarize(trad_vcmax = mean(vcmax),
+              trad_vc_sd = sd(vcmax),
+              trad_jmax = mean(jmax),
+              trad_j_sd = sd(jmax))
+
+
+species_summ_notpu <- cbind(all_res_dat_notpu_summ, all_res_trad_notpu_summ)
+species_summ_notpu$vc_diff <- species_summ_notpu$trad_vcmax - species_summ_notpu$dat_vcmax
+species_summ_notpu$j_diff <- species_summ_notpu$trad_jmax - species_summ_notpu$dat_jmax
+species_summ_notpu$vc_diff_se <- (abs(species_summ_notpu$trad_vc_sd) + abs(species_summ_notpu$dat_vc_sd))/2
+species_summ_notpu$j_diff_se <- (abs(species_summ_notpu$trad_j_sd) + abs(species_summ_notpu$dat_j_sd))/2
+species_summ2_notpu <- species_summ_notpu[,-6]
+
+species_summ2_notpu$treename <- as.character(species_summ2_notpu$treename)
+
+rel_can_pos <- c(11, 5.1, 6, 4, 2, 3, 1, 10, 12, 8, 7, 9, 5.2)
+species_summ2_notpu$rel_can_pos <- rel_can_pos
+
+species_summ2_notpu <- species_summ2_notpu[order(species_summ2_notpu$rel_can_pos, decreasing = TRUE),]
+
+codebook <- read.csv("Results/id_codebook.csv") %>% arrange(desc(rel_can_pos)) %>% select(-c(overshoot, treeid, rel_can_pos))
+
+species_summ3_notpu <- cbind(species_summ2_notpu, codebook) %>% select(-15)
+
+vc_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = vc_diff)) +
+    geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
+    labs(x = NULL,
+         y = "No TPU Vcmax Differences (steady-state - DAT)")+
+    geom_errorbar(aes(x=gen_spec_id, ymin=vc_diff-vc_diff_se, ymax=vc_diff+vc_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
+    theme_classic(base_family = "serif") +
+    geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
+    ylim(-20, 50)+
+    theme(axis.text.y = element_text(face = "italic"))+
+    coord_flip()
+vc_diff_hist_notpu
+ggsave(plot = vc_diff_hist_notpu, "Figures/vc_diff_hist.png")
+
+j_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = j_diff)) +
+    geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
+    labs(x = NULL,
+         y = "No TPU Jmax Differences (steady-state - DAT)")+
+    geom_errorbar(aes(x=gen_spec_id, ymin=j_diff-j_diff_se, ymax=j_diff+j_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
+    theme_classic(base_family = "serif") +
+    geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
+    ylim(-20, 50) +
+    theme(axis.text.y = element_text(face = "italic"))+
+    coord_flip()
+j_diff_hist_notpu
+ggsave(plot = j_diff_hist_notpu, "Figures/j_diff_hist.png")
+
+plot_arranged2 <- grid.arrange(vc_diff_hist_notpu, j_diff_hist_notpu)
+ggsave(plot = plot_arranged2, "Figures/diff_histos_notpu.png", width = 4.3, height = 7)
+
+gA <- ggplotGrob(vc_diff_hist_notpu)
+gB <- ggplotGrob(vc_diff_hist + rremove("y.text"))
+gC <- ggplotGrob(j_diff_hist_notpu)
+gD <- ggplotGrob(j_diff_hist + rremove("y.text"))
+
+plot_arranged3 <- grid.arrange(arrangeGrob(cbind(gA, gB), arrangeGrob(cbind(gC, gD))))
+ggsave(plot = plot_arranged3, "Figures/diff_full_fig.png", width = 8.3, height = 5)
+
 
 #understanding mean differences --------------------------
 all_res_dat_tpu <- all_results2 %>%
