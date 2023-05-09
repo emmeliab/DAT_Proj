@@ -12,6 +12,7 @@ library(vcd)
 library(car)
 library(rstatix) #For wilcox_effsize function
 library(gridExtra)
+library(reshape2)
 
 wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
@@ -274,11 +275,6 @@ plot_arranged3 <- grid.arrange(arrangeGrob(cbind(gA, gB), arrangeGrob(cbind(gC, 
 ggsave(plot = plot_arranged3, "Figures/diff_full_fig.png", width = 8.3, height = 5)
 
 
-
-hist(species_summ3_notpu$vc_diff)
-
-
-
 #understanding mean differences --------------------------
 all_res_dat_tpu <- all_results2 %>%
     filter(curv_meth == "DAT") %>%
@@ -330,42 +326,13 @@ mean(res_notpu_summ$vc_diff)
 mean(res_notpu_summ$j_diff)
 
 
-#histogram of differences!!
-res_tpu_summ %>% 
-    ggplot(aes(x=vc_diff)) + 
-    stat_function(fun = dnorm, color = "red")+
-    geom_density(linewidth = 1)+
-    scale_x_continuous(name = "Vcmax Difference - TPU-enabled (on leaf basis)") +
-    scale_y_continuous(name = "Density")
-
-res_notpu_summ %>% 
-    ggplot(aes(x=vc_diff)) + 
-    stat_function(fun = dnorm, color = "red")+
-    geom_density(linewidth = 1)+
-    scale_x_continuous(name = "Vcmax Difference - No TPU (on leaf basis)") +
-    scale_y_continuous(name = "Density")
-
-res_tpu_summ %>% 
-    ggplot(aes(x=j_diff)) + 
-    stat_function(fun = dnorm, color = "red")+
-    geom_density(linewidth = 1)+
-    scale_x_continuous(name = "Jmax Difference - TPU-enabled (on leaf basis)") +
-    scale_y_continuous(name = "Density")
-
-res_notpu_summ %>% 
-    ggplot(aes(x=j_diff)) + 
-    stat_function(fun = dnorm, color = "red")+
-    geom_density(linewidth = 1)+
-    scale_x_continuous(name = "Vcmax Difference - No TPU (on leaf basis)") +
-    scale_y_continuous(name = "Density")
-
-
-#On a species basis for Ty
+#Difference histograms on a species basis
 
 sp_diff_hist_vc_notpu <- species_summ3_notpu %>% ggplot(aes(x = vc_diff)) +
     stat_function(fun = dnorm, args = list(0, sd(species_summ3_notpu$vc_diff)), color = "red", linetype = "dashed")+
     geom_density(linewidth = 1)+
-    geom_vline(xintercept = 0, color = "cadetblue")+
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
+    geom_vline(xintercept = mean(species_summ3_notpu$vc_diff), color = "black", alpha = 0.4)+
     xlab("Vcmax Difference: No TPU") +
     ylab("Density")+
     xlim(-10,15)+
@@ -376,7 +343,8 @@ sp_diff_hist_vc_notpu
 sp_diff_hist_vc_tpu <- species_summ3 %>% ggplot(aes(x = vc_diff)) +
     stat_function(fun = dnorm, args = list(0, sd(species_summ3$vc_diff)), color = "red", linetype = "dashed")+
     geom_density(linewidth = 1)+
-    geom_vline(xintercept = 0, color = "cadetblue")+
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
+    geom_vline(xintercept = mean(species_summ3$vc_diff), color = "black", alpha = 0.4)+
     xlab("Vcmax Difference: TPU-enabled") +
     ylab("Density")+
     xlim(-10,15)+
@@ -385,9 +353,10 @@ sp_diff_hist_vc_tpu <- species_summ3 %>% ggplot(aes(x = vc_diff)) +
 sp_diff_hist_vc_tpu
 
 sp_diff_hist_j_notpu <- species_summ3_notpu %>% ggplot(aes(x = j_diff)) +
-    stat_function(fun = dnorm, args = list(0, sd(species_summ3_notpu$j_diff)), color = "red", linetype = "dashed")+
+    stat_function(fun = dnorm, args = list(0, sd(species_summ3_notpu$j_diff)), linetype = "dashed", color = "red")+
     geom_density(linewidth = 1)+
-    geom_vline(xintercept = 0, color = "cadetblue")+
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
+    geom_vline(xintercept = mean(species_summ3_notpu$j_diff), color = "black", alpha = 0.4)+
     xlab("J Difference: No TPU") +
     ylab("Density")+
     xlim(-20,50)+
@@ -398,7 +367,8 @@ sp_diff_hist_j_notpu
 sp_diff_hist_j_tpu <- species_summ3 %>% ggplot(aes(x = j_diff)) +
     stat_function(fun = dnorm, args = list(0, sd(species_summ3$j_diff)), color = "red", linetype = "dashed")+
     geom_density(linewidth = 1)+
-    geom_vline(xintercept = 0, color = "cadetblue")+
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
+    geom_vline(xintercept = mean(species_summ3$j_diff), color = "black", alpha = 0.4)+
     xlab("J Difference: TPU-enabled") +
     ylab("Density")+
     xlim(-20,50)+
@@ -527,8 +497,6 @@ ggplot(aes(x=vcmax)) +
 all_results2 %>% filter(fit_type == "no_tpu") %>%
 ggplot(aes(x=jmax)) + 
     geom_histogram()
-
-library(reshape2)
 
 
 #Levene's for homogeneity of variance
@@ -688,8 +656,6 @@ nd_comp_wide_jmax %>% filter(fit_type == "tpu") %>%
 
 #Stat analysis, clean ------------------------------------------
 
-#When we compared based on fit_type, is this paired data???
-
 #all results, Wilcoxon signed rank test on paired samples (and a few sign tests)
 
 #Vcmax
@@ -701,6 +667,16 @@ all_results2 %>%
 all_results2 %>%
     group_by(fit_type) %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
 
+#try without Tachi to see what changes
+all_results2 %>%
+    group_by(fit_type) %>%
+    filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% 
+    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+all_results2 %>%
+    group_by(fit_type) %>% filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+#Not significant without Tachi!
 
 all_results2 %>%
     group_by(curv_meth) %>%
@@ -711,6 +687,11 @@ all_results2 %>%
     group_by(curv_meth) %>% wilcox_effsize(data = ., vcmax ~ fit_type, paired = TRUE)
 
 
+all_results2 %>%
+    group_by(curv_meth) %>%
+    filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% 
+    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
+    add_significance()
 
 #Jmax
 all_results2 %>%
@@ -718,7 +699,7 @@ all_results2 %>%
     wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
     add_significance()
 
-#Note we're running ths sign test here in addition!
+#Note we're running the sign test here in addition!
 all_results2 %>%
     group_by(fit_type) %>%
     sign_test(data =., jmax ~ curv_meth, detailed = TRUE) %>%
