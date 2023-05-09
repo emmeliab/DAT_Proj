@@ -199,7 +199,7 @@ ggsave(plot = j_diff_hist, "Figures/j_diff_hist.png")
 plot_arranged <- grid.arrange(vc_diff_hist, j_diff_hist)
 ggsave(plot = plot_arranged, "Figures/diff_histos.png", width = 4.3, height = 7)
 
-write.csv(species_summ3, "Results/param_diffs_tpufit.csv")
+write.csv(species_summ3, "Results/species_diffs_summary_tpu.csv")
 
 
 #Now for non-TPU fit curves
@@ -236,6 +236,7 @@ species_summ2_notpu <- species_summ2_notpu[order(species_summ2_notpu$rel_can_pos
 codebook <- read.csv("Results/id_codebook.csv") %>% arrange(desc(rel_can_pos)) %>% select(-c(overshoot, treeid, rel_can_pos))
 
 species_summ3_notpu <- cbind(species_summ2_notpu, codebook) %>% select(-15)
+write.csv(species_summ3_notpu, "Results/species_diffs_summary_notpu.csv")
 
 vc_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = vc_diff)) +
     geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
