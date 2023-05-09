@@ -274,6 +274,11 @@ plot_arranged3 <- grid.arrange(arrangeGrob(cbind(gA, gB), arrangeGrob(cbind(gC, 
 ggsave(plot = plot_arranged3, "Figures/diff_full_fig.png", width = 8.3, height = 5)
 
 
+
+hist(species_summ3_notpu$vc_diff)
+
+
+
 #understanding mean differences --------------------------
 all_res_dat_tpu <- all_results2 %>%
     filter(curv_meth == "DAT") %>%
@@ -288,7 +293,10 @@ all_res_trad_tpu <- all_results2 %>%
            trad_jmax = jmax) %>%
     select(-c(vcmax, jmax))
 
-res_tpu_summ <- cbind(all_res_dat_tpu, all_res_trad_tpu)
+res_tpu_summ <- cbind(all_res_dat_tpu, all_res_trad_tpu) %>% select(-c(1, 7, 8, 9, 10)) %>%
+    rename(leaf_unique = leaf_unique...2,
+           fit_type = fit_type...3,
+           treename = treename...4)
 
 res_tpu_summ$vc_diff <- res_tpu_summ$trad_vcmax - res_tpu_summ$dat_vcmax
 res_tpu_summ$j_diff <- res_tpu_summ$trad_jmax - res_tpu_summ$dat_jmax
@@ -310,7 +318,10 @@ all_res_trad_notpu <- all_results2 %>%
            trad_jmax = jmax) %>%
     select(-c(vcmax, jmax))
 
-res_notpu_summ <- cbind(all_res_dat_notpu, all_res_trad_notpu)
+res_notpu_summ <- cbind(all_res_dat_notpu, all_res_trad_notpu) %>% select(-c(1, 7, 8, 9, 10)) %>%
+    rename(leaf_unique = leaf_unique...2,
+           fit_type = fit_type...3,
+           treename = treename...4)
 
 res_notpu_summ$vc_diff <- res_notpu_summ$trad_vcmax - res_notpu_summ$dat_vcmax
 res_notpu_summ$j_diff <- res_notpu_summ$trad_jmax - res_notpu_summ$dat_jmax
@@ -318,6 +329,87 @@ res_notpu_summ$j_diff <- res_notpu_summ$trad_jmax - res_notpu_summ$dat_jmax
 mean(res_notpu_summ$vc_diff)
 mean(res_notpu_summ$j_diff)
 
+
+#histogram of differences!!
+res_tpu_summ %>% 
+    ggplot(aes(x=vc_diff)) + 
+    stat_function(fun = dnorm, color = "red")+
+    geom_density(linewidth = 1)+
+    scale_x_continuous(name = "Vcmax Difference - TPU-enabled (on leaf basis)") +
+    scale_y_continuous(name = "Density")
+
+res_notpu_summ %>% 
+    ggplot(aes(x=vc_diff)) + 
+    stat_function(fun = dnorm, color = "red")+
+    geom_density(linewidth = 1)+
+    scale_x_continuous(name = "Vcmax Difference - No TPU (on leaf basis)") +
+    scale_y_continuous(name = "Density")
+
+res_tpu_summ %>% 
+    ggplot(aes(x=j_diff)) + 
+    stat_function(fun = dnorm, color = "red")+
+    geom_density(linewidth = 1)+
+    scale_x_continuous(name = "Jmax Difference - TPU-enabled (on leaf basis)") +
+    scale_y_continuous(name = "Density")
+
+res_notpu_summ %>% 
+    ggplot(aes(x=j_diff)) + 
+    stat_function(fun = dnorm, color = "red")+
+    geom_density(linewidth = 1)+
+    scale_x_continuous(name = "Vcmax Difference - No TPU (on leaf basis)") +
+    scale_y_continuous(name = "Density")
+
+
+#On a species basis for Ty
+
+sp_diff_hist_vc_notpu <- species_summ3_notpu %>% ggplot(aes(x = vc_diff)) +
+    stat_function(fun = dnorm, color = "red", linetype = "dashed")+
+    geom_density(linewidth = 1)+
+    geom_vline(xintercept = 0, color = "cadetblue")+
+    xlab("Vcmax Difference: No TPU") +
+    ylab("Density")+
+    xlim(-10,15)+
+    theme_classic()
+sp_diff_hist_vc_notpu
+
+sp_diff_hist_vc_tpu <- species_summ3 %>% ggplot(aes(x = vc_diff)) +
+    stat_function(fun = dnorm, color = "red", linetype = "dashed")+
+    geom_density(linewidth = 1)+
+    geom_vline(xintercept = 0, color = "cadetblue")+
+    xlab("Vcmax Difference: TPU-enabled") +
+    ylab("Density")+
+    xlim(-10,15)+
+    theme_classic()
+sp_diff_hist_vc_tpu
+
+sp_diff_hist_j_notpu <- species_summ3_notpu %>% ggplot(aes(x = j_diff)) +
+    stat_function(fun = dnorm, color = "red", linetype = "dashed")+
+    geom_density(linewidth = 1)+
+    geom_vline(xintercept = 0, color = "cadetblue")+
+    xlab("J Difference: No TPU") +
+    ylab("Density")+
+    xlim(-15,50)+
+    theme_classic()
+sp_diff_hist_j_notpu
+
+sp_diff_hist_j_tpu <- species_summ3 %>% ggplot(aes(x = j_diff)) +
+    stat_function(fun = dnorm, color = "red", linetype = "dashed")+
+    geom_density(linewidth = 1)+
+    geom_vline(xintercept = 0, color = "cadetblue")+
+    xlab("J Difference: TPU-enabled") +
+    ylab("Density")+
+    xlim(-15,50)+
+    theme_classic()
+sp_diff_hist_j_tpu
+
+gW <- ggplotGrob(sp_diff_hist_vc_notpu)
+gX <- ggplotGrob(sp_diff_hist_vc_tpu)
+gY <- ggplotGrob(sp_diff_hist_j_notpu)
+gZ <- ggplotGrob(sp_diff_hist_j_tpu)
+
+diff_arranged <- grid.arrange(arrangeGrob(cbind(gW, gY), arrangeGrob(cbind(gX, gZ))))
+
+ggsave(plot = diff_arranged, "Figures/diff_density_full_fig.png", width = 6.5, height = 5)
 
 #No-overshoot data, no TPU
 grp_pho_nd_dat <- pho_nd_stat %>%
