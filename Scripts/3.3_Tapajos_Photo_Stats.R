@@ -363,42 +363,46 @@ res_notpu_summ %>%
 #On a species basis for Ty
 
 sp_diff_hist_vc_notpu <- species_summ3_notpu %>% ggplot(aes(x = vc_diff)) +
-    stat_function(fun = dnorm, color = "red", linetype = "dashed")+
+    stat_function(fun = dnorm, args = list(0, sd(species_summ3_notpu$vc_diff)), color = "red", linetype = "dashed")+
     geom_density(linewidth = 1)+
     geom_vline(xintercept = 0, color = "cadetblue")+
     xlab("Vcmax Difference: No TPU") +
     ylab("Density")+
     xlim(-10,15)+
+    ylim(0, 0.25)+
     theme_classic()
 sp_diff_hist_vc_notpu
 
 sp_diff_hist_vc_tpu <- species_summ3 %>% ggplot(aes(x = vc_diff)) +
-    stat_function(fun = dnorm, color = "red", linetype = "dashed")+
+    stat_function(fun = dnorm, args = list(0, sd(species_summ3$vc_diff)), color = "red", linetype = "dashed")+
     geom_density(linewidth = 1)+
     geom_vline(xintercept = 0, color = "cadetblue")+
     xlab("Vcmax Difference: TPU-enabled") +
     ylab("Density")+
     xlim(-10,15)+
+    ylim(0, 0.25)+
     theme_classic()
 sp_diff_hist_vc_tpu
 
 sp_diff_hist_j_notpu <- species_summ3_notpu %>% ggplot(aes(x = j_diff)) +
-    stat_function(fun = dnorm, color = "red", linetype = "dashed")+
+    stat_function(fun = dnorm, args = list(0, sd(species_summ3_notpu$j_diff)), color = "red", linetype = "dashed")+
     geom_density(linewidth = 1)+
     geom_vline(xintercept = 0, color = "cadetblue")+
     xlab("J Difference: No TPU") +
     ylab("Density")+
-    xlim(-15,50)+
+    xlim(-20,50)+
+    ylim(0, 0.125)+
     theme_classic()
 sp_diff_hist_j_notpu
 
 sp_diff_hist_j_tpu <- species_summ3 %>% ggplot(aes(x = j_diff)) +
-    stat_function(fun = dnorm, color = "red", linetype = "dashed")+
+    stat_function(fun = dnorm, args = list(0, sd(species_summ3$j_diff)), color = "red", linetype = "dashed")+
     geom_density(linewidth = 1)+
     geom_vline(xintercept = 0, color = "cadetblue")+
     xlab("J Difference: TPU-enabled") +
     ylab("Density")+
-    xlim(-15,50)+
+    xlim(-20,50)+
+    ylim(0, 0.125)+
     theme_classic()
 sp_diff_hist_j_tpu
 
