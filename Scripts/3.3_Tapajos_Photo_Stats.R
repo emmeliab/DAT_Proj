@@ -236,6 +236,7 @@ species_summ2_notpu <- species_summ2_notpu[order(species_summ2_notpu$rel_can_pos
 codebook <- read.csv("Results/id_codebook.csv") %>% arrange(desc(rel_can_pos)) %>% select(-c(overshoot, treeid, rel_can_pos))
 
 species_summ3_notpu <- cbind(species_summ2_notpu, codebook) %>% select(-15)
+
 write.csv(species_summ3_notpu, "Results/species_diffs_summary_notpu.csv")
 
 vc_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = vc_diff)) +
@@ -298,9 +299,6 @@ res_tpu_summ <- cbind(all_res_dat_tpu, all_res_trad_tpu) %>% select(-c(1, 7, 8, 
 res_tpu_summ$vc_diff <- res_tpu_summ$trad_vcmax - res_tpu_summ$dat_vcmax
 res_tpu_summ$j_diff <- res_tpu_summ$trad_jmax - res_tpu_summ$dat_jmax
 
-mean(res_tpu_summ$vc_diff)
-mean(res_tpu_summ$j_diff)
-
 #no tpu
 all_res_dat_notpu <- all_results2 %>%
     filter(curv_meth == "DAT") %>%
@@ -323,9 +321,18 @@ res_notpu_summ <- cbind(all_res_dat_notpu, all_res_trad_notpu) %>% select(-c(1, 
 res_notpu_summ$vc_diff <- res_notpu_summ$trad_vcmax - res_notpu_summ$dat_vcmax
 res_notpu_summ$j_diff <- res_notpu_summ$trad_jmax - res_notpu_summ$dat_jmax
 
+
+#mean differences on leaf basis
+mean(res_tpu_summ$vc_diff)
+mean(res_tpu_summ$j_diff)
 mean(res_notpu_summ$vc_diff)
 mean(res_notpu_summ$j_diff)
 
+#mean differences on individual tree basis
+mean(species_summ3$vc_diff)
+mean(species_summ3$j_diff)
+mean(species_summ3_notpu$vc_diff)
+mean(species_summ3_notpu$j_diff)
 
 #Difference histograms on a species basis
 
