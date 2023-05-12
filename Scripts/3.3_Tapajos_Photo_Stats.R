@@ -242,12 +242,14 @@ write.csv(species_summ3_notpu, "Results/species_diffs_summary_notpu.csv")
 vc_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = vc_diff)) +
     geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
-         y = "No TPU Vcmax Differences (steady-state - DAT)")+
+         y = "No TPU \U0394Vcmax (steady-state - DAT)")+
     geom_errorbar(aes(x=gen_spec_id, ymin=vc_diff-vc_diff_se, ymax=vc_diff+vc_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
     theme_classic(base_family = "serif") +
     geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
-    ylim(-20, 50)+
-    theme(axis.text.y = element_text(face = "italic"))+
+    ylim(-20, 30)+
+    theme(axis.text.y = element_text(face = "italic", size = rel(1.5)),
+          axis.text.x = element_text(size = rel(1.2)),
+          axis.title.x = element_text(size = rel(1.5)))+
     coord_flip()
 vc_diff_hist_notpu
 ggsave(plot = vc_diff_hist_notpu, "Figures/vc_diff_hist.png")
@@ -338,50 +340,58 @@ mean(species_summ3_notpu$j_diff)
 
 sp_diff_hist_vc_notpu <- species_summ3_notpu %>% ggplot(aes(x = vc_diff)) +
     stat_function(fun = dnorm, args = list(0, sd(species_summ3_notpu$vc_diff)), color = "red", linetype = "dashed")+
-    geom_density(linewidth = 1)+
+    geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(species_summ3_notpu$vc_diff), color = "black", alpha = 0.4)+
-    xlab("Vcmax Difference: No TPU") +
+    xlab("\U0394Vcmax: No TPU") +
     ylab("Density")+
-    xlim(-10,15)+
+    xlim(-20,50)+
     ylim(0, 0.25)+
-    theme_classic()
+    theme_classic()+
+    annotate("text", x = 30, y = 0.25, label = paste0("Mean = ", round(mean(species_summ3_notpu$vc_diff), digits = 2)), size = rel(2.7))+
+    annotate("text", x = 30, y = 0.23, label = paste0("SD = ", round(sd(species_summ3_notpu$vc_diff), digits = 2)), size = rel(2.7))
 sp_diff_hist_vc_notpu
 
 sp_diff_hist_vc_tpu <- species_summ3 %>% ggplot(aes(x = vc_diff)) +
     stat_function(fun = dnorm, args = list(0, sd(species_summ3$vc_diff)), color = "red", linetype = "dashed")+
-    geom_density(linewidth = 1)+
+    geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(species_summ3$vc_diff), color = "black", alpha = 0.4)+
-    xlab("Vcmax Difference: TPU-enabled") +
+    xlab("\U0394Vcmax: TPU-enabled") +
     ylab("Density")+
-    xlim(-10,15)+
+    xlim(-20,50)+
     ylim(0, 0.25)+
-    theme_classic()
+    theme_classic()+
+    annotate("text", x = 30, y = 0.25, label = paste0("Mean = ", round(mean(species_summ3$vc_diff), digits = 2)), size = rel(2.7))+
+    annotate("text", x = 30, y = 0.23, label = paste0("SD = ", round(sd(species_summ3$vc_diff), digits = 2)), size = rel(2.7))
 sp_diff_hist_vc_tpu
 
 sp_diff_hist_j_notpu <- species_summ3_notpu %>% ggplot(aes(x = j_diff)) +
     stat_function(fun = dnorm, args = list(0, sd(species_summ3_notpu$j_diff)), linetype = "dashed", color = "red")+
-    geom_density(linewidth = 1)+
+    geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(species_summ3_notpu$j_diff), color = "black", alpha = 0.4)+
-    xlab("J Difference: No TPU") +
+    xlab("\U0394J: No TPU") +
     ylab("Density")+
     xlim(-20,50)+
-    ylim(0, 0.125)+
-    theme_classic()
+    ylim(0, 0.25)+
+    theme_classic()+
+    annotate("text", x = 30, y = 0.25, label = paste0("Mean = ", round(mean(species_summ3_notpu$j_diff), digits = 2)), size = rel(2.7))+
+    annotate("text", x = 30, y = 0.23, label = paste0("SD = ", round(sd(species_summ3_notpu$j_diff), digits = 2)), size = rel(2.7))
 sp_diff_hist_j_notpu
 
 sp_diff_hist_j_tpu <- species_summ3 %>% ggplot(aes(x = j_diff)) +
     stat_function(fun = dnorm, args = list(0, sd(species_summ3$j_diff)), color = "red", linetype = "dashed")+
-    geom_density(linewidth = 1)+
+    geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(species_summ3$j_diff), color = "black", alpha = 0.4)+
-    xlab("J Difference: TPU-enabled") +
+    xlab("\U0394J: TPU-enabled") +
     ylab("Density")+
     xlim(-20,50)+
-    ylim(0, 0.125)+
-    theme_classic()
+    ylim(0, 0.25)+
+    theme_classic()+
+    annotate("text", x = 30, y = 0.25, label = paste0("Mean = ", round(mean(species_summ3_notpu$j_diff), digits = 2)), size = rel(2.7))+
+    annotate("text", x = 30, y = 0.23, label = paste0("SD = ", round(sd(species_summ3$j_diff), digits = 2)), size = rel(2.7))
 sp_diff_hist_j_tpu
 
 gW <- ggplotGrob(sp_diff_hist_vc_notpu)
@@ -389,7 +399,7 @@ gX <- ggplotGrob(sp_diff_hist_vc_tpu)
 gY <- ggplotGrob(sp_diff_hist_j_notpu)
 gZ <- ggplotGrob(sp_diff_hist_j_tpu)
 
-diff_arranged <- grid.arrange(arrangeGrob(cbind(gW, gY), arrangeGrob(cbind(gX, gZ))))
+diff_arranged <- grid.arrange(arrangeGrob(cbind(gW, gX), arrangeGrob(cbind(gY, gZ))))
 
 ggsave(plot = diff_arranged, "Figures/diff_density_full_fig.png", width = 6.5, height = 5)
 
