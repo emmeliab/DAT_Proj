@@ -221,7 +221,6 @@ write.csv(x = par_join, file = paste0(wd, "/Results/params_ecophys_no_TPU.csv"),
 # Fitting A/Ci curves with photosynthesis ----------------------------------
 
 library(photosynthesis)
-#library(rpmodel)
 
 cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
 cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT")

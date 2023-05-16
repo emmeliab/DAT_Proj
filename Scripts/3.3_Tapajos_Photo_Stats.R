@@ -936,19 +936,20 @@ cor5 <- round(cor(leaf_wide_tpu$tpu_DAT, leaf_wide_tpu$tpu_Trad), 3)
 pho_1to1_tpu_tpu <- ggplot(data = leaf_wide_tpu, mapping = aes(x = tpu_Trad,
                                                              y = tpu_DAT,
                                                              color = leaf_unique))+
-    geom_point()+
-    geom_abline(intercept = 0, slope = 1, linetype = 5, cex = 0.6)+
+    geom_point(cex = 2.5)+
+    geom_abline(intercept = 0, slope = 1, linetype = 5, linewidth = 0.6)+
     theme_classic()+
-    labs(x="Steady-State TPU", y="DAT TPU", col = "Unique Leaf")+
+    labs(x = expression("Steady-State TPU "*(mu*mol~m^{-2}~s^{-1})),
+              y = expression("DAT TPU "*(mu*mol~m^{-2}~s^{-1})), col = "Unique Leaf")+
     theme(aspect.ratio = 1,
           axis.title.x=element_text(size=12, family = "serif"),
           axis.title.y=element_text(size=12, family = "serif"),
           axis.text.x=element_text(size=8, family = "serif", color = "grey10"),
           axis.text.y=element_text(size=8, family = "serif", color = "grey10"),
           legend.position = "none") +
-    scale_x_continuous(limits = c(1, 15)) + 
-    scale_y_continuous(limits = c(1, 15)) +
-    annotate(geom = "text", label = paste0("r = ", cor5), x = 4, y = 12)
+    scale_x_continuous(limits = c(1, 12), breaks = c(3,6,9,12)) + 
+    scale_y_continuous(limits = c(1, 12), breaks = c(3,6,9,12)) +
+    annotate(geom = "text", label = paste0("r = ", cor5), x = 4, y = 8)
 pho_1to1_tpu_tpu
 ggsave(plot = pho_1to1_tpu_tpu, "Figures/pho_1to1_datvtrad_tpu.png")
 
