@@ -11,8 +11,10 @@ library(moments)
 library(vcd)
 library(car)
 library(rstatix) #For wilcox_effsize function
+library(gridExtra)
+library(reshape2)
 
-wd <- "C://Users/emmel/Desktop/DAT_proj/"
+wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
 ##Read in Datasets -------------------------------------------
@@ -124,6 +126,282 @@ notpu_results_grp <- pho_stat %>%
 
 all_results2 <- rbind(tpu_results_grp, notpu_results_grp)
 all_results2$fit_type <- factor(all_results2$fit_type)
+
+
+#Creating a table with Vcmax and Jmax differences by species ----------------------------
+substring(all_results2$leaf_unique, "K67", 1)
+treename <- as.numeric(substring(all_results2$leaf_unique, 4, 5))
+
+all_results2$treename <- treename
+
+all_res_dat_tpu <- all_results2 %>% filter(curv_meth == "DAT") %>% filter(fit_type == "tpu")
+all_res_trad_tpu <- all_results2 %>% filter(curv_meth == "Traditional") %>% filter(fit_type == "tpu")
+
+all_res_dat_tpu_summ <- all_res_dat_tpu %>% group_by(treename) %>%
+    summarize(dat_vcmax = mean(vcmax),
+              dat_vc_sd = sd(vcmax),
+              dat_jmax = mean(jmax),
+              dat_j_sd = sd(jmax))
+
+all_res_trad_tpu_summ <- all_res_trad_tpu %>% group_by(treename) %>%
+    summarize(trad_vcmax = mean(vcmax),
+              trad_vc_sd = sd(vcmax),
+              trad_jmax = mean(jmax),
+              trad_j_sd = sd(jmax))
+
+
+species_summ <- cbind(all_res_dat_tpu_summ, all_res_trad_tpu_summ)
+species_summ$vc_diff <- species_summ$trad_vcmax - species_summ$dat_vcmax
+species_summ$j_diff <- species_summ$trad_jmax - species_summ$dat_jmax
+species_summ$vc_diff_se <- (abs(species_summ$trad_vc_sd) + abs(species_summ$dat_vc_sd))/2
+species_summ$j_diff_se <- (abs(species_summ$trad_j_sd) + abs(species_summ$dat_j_sd))/2
+species_summ2 <- species_summ[,-6]
+
+species_summ2$treename <- as.character(species_summ2$treename)
+
+rel_can_pos <- c(11, 5.1, 6, 4, 2, 3, 1, 10, 12, 8, 7, 9, 5.2)
+species_summ2$rel_can_pos <- rel_can_pos
+
+species_summ2 <- species_summ2[order(species_summ2$rel_can_pos, decreasing = TRUE),]
+
+codebook <- read.csv("Results/id_codebook.csv") %>% arrange(desc(rel_can_pos)) %>% select(-c(overshoot, treeid, rel_can_pos))
+
+species_summ3 <- cbind(species_summ2, codebook) %>% select(-15)
+
+#Note that error bars represent the mean of the absolute error for the differences
+vc_diff_hist <- ggplot(data = species_summ3, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = vc_diff)) +
+    geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
+    labs(x = NULL,
+         y = "TPU-enabled Vcmax Differences (steady-state - DAT)")+
+    geom_errorbar(aes(x=gen_spec_id, ymin=vc_diff-vc_diff_se, ymax=vc_diff+vc_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
+    theme_classic(base_family = "serif") +
+    geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
+    ylim(-20, 50)+
+    theme(axis.text.y = element_text(face = "italic"))+
+    coord_flip()
+vc_diff_hist
+ggsave(plot = vc_diff_hist, "Figures/vc_diff_hist.png")
+
+j_diff_hist <- ggplot(data = species_summ3, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = j_diff)) +
+    geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
+    labs(x = NULL,
+         y = "TPU-enabled Jmax Differences (steady-state - DAT)")+
+    geom_errorbar(aes(x=gen_spec_id, ymin=j_diff-j_diff_se, ymax=j_diff+j_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
+    theme_classic(base_family = "serif") +
+    geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
+    ylim(-20, 50) +
+    theme(axis.text.y = element_text(face = "italic"))+
+    coord_flip()
+j_diff_hist
+ggsave(plot = j_diff_hist, "Figures/j_diff_hist.png")
+
+
+plot_arranged <- grid.arrange(vc_diff_hist, j_diff_hist)
+ggsave(plot = plot_arranged, "Figures/diff_histos.png", width = 4.3, height = 7)
+
+write.csv(species_summ3, "Results/species_diffs_summary_tpu.csv")
+
+
+#Now for non-TPU fit curves
+all_res_dat_notpu <- all_results2 %>% filter(curv_meth == "DAT") %>% filter(fit_type == "no_tpu")
+all_res_trad_notpu <- all_results2 %>% filter(curv_meth == "Traditional") %>% filter(fit_type == "no_tpu")
+
+all_res_dat_notpu_summ <- all_res_dat_notpu %>% group_by(treename) %>%
+    summarize(dat_vcmax = mean(vcmax),
+              dat_vc_sd = sd(vcmax),
+              dat_jmax = mean(jmax),
+              dat_j_sd = sd(jmax))
+
+all_res_trad_notpu_summ <- all_res_trad_notpu %>% group_by(treename) %>%
+    summarize(trad_vcmax = mean(vcmax),
+              trad_vc_sd = sd(vcmax),
+              trad_jmax = mean(jmax),
+              trad_j_sd = sd(jmax))
+
+
+species_summ_notpu <- cbind(all_res_dat_notpu_summ, all_res_trad_notpu_summ)
+species_summ_notpu$vc_diff <- species_summ_notpu$trad_vcmax - species_summ_notpu$dat_vcmax
+species_summ_notpu$j_diff <- species_summ_notpu$trad_jmax - species_summ_notpu$dat_jmax
+species_summ_notpu$vc_diff_se <- (abs(species_summ_notpu$trad_vc_sd) + abs(species_summ_notpu$dat_vc_sd))/2
+species_summ_notpu$j_diff_se <- (abs(species_summ_notpu$trad_j_sd) + abs(species_summ_notpu$dat_j_sd))/2
+species_summ2_notpu <- species_summ_notpu[,-6]
+
+species_summ2_notpu$treename <- as.character(species_summ2_notpu$treename)
+
+rel_can_pos <- c(11, 5.1, 6, 4, 2, 3, 1, 10, 12, 8, 7, 9, 5.2)
+species_summ2_notpu$rel_can_pos <- rel_can_pos
+
+species_summ2_notpu <- species_summ2_notpu[order(species_summ2_notpu$rel_can_pos, decreasing = TRUE),]
+
+codebook <- read.csv("Results/id_codebook.csv") %>% arrange(desc(rel_can_pos)) %>% select(-c(overshoot, treeid, rel_can_pos))
+
+species_summ3_notpu <- cbind(species_summ2_notpu, codebook) %>% select(-15)
+
+write.csv(species_summ3_notpu, "Results/species_diffs_summary_notpu.csv")
+
+vc_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = vc_diff)) +
+    geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
+    labs(x = NULL,
+         y = "No TPU \U0394Vcmax (steady-state - DAT)")+
+    geom_errorbar(aes(x=gen_spec_id, ymin=vc_diff-vc_diff_se, ymax=vc_diff+vc_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
+    theme_classic(base_family = "serif") +
+    geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
+    ylim(-20, 30)+
+    theme(axis.text.y = element_text(face = "italic", size = rel(1.5)),
+          axis.text.x = element_text(size = rel(1.2)),
+          axis.title.x = element_text(size = rel(1.5)))+
+    coord_flip()
+vc_diff_hist_notpu
+ggsave(plot = vc_diff_hist_notpu, "Figures/vc_diff_hist.png")
+
+j_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = j_diff)) +
+    geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
+    labs(x = NULL,
+         y = "No TPU Jmax Differences (steady-state - DAT)")+
+    geom_errorbar(aes(x=gen_spec_id, ymin=j_diff-j_diff_se, ymax=j_diff+j_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
+    theme_classic(base_family = "serif") +
+    geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
+    ylim(-20, 50) +
+    theme(axis.text.y = element_text(face = "italic"))+
+    coord_flip()
+j_diff_hist_notpu
+ggsave(plot = j_diff_hist_notpu, "Figures/j_diff_hist.png")
+
+plot_arranged2 <- grid.arrange(vc_diff_hist_notpu, j_diff_hist_notpu)
+ggsave(plot = plot_arranged2, "Figures/diff_histos_notpu.png", width = 4.3, height = 7)
+
+gA <- ggplotGrob(vc_diff_hist_notpu)
+gB <- ggplotGrob(vc_diff_hist + rremove("y.text"))
+gC <- ggplotGrob(j_diff_hist_notpu)
+gD <- ggplotGrob(j_diff_hist + rremove("y.text"))
+
+plot_arranged3 <- grid.arrange(arrangeGrob(cbind(gA, gB), arrangeGrob(cbind(gC, gD))))
+ggsave(plot = plot_arranged3, "Figures/diff_full_fig.png", width = 8.3, height = 5)
+
+
+#understanding mean differences --------------------------
+all_res_dat_tpu <- all_results2 %>%
+    filter(curv_meth == "DAT") %>%
+    filter(fit_type == "tpu") %>%
+    mutate(dat_vcmax = vcmax,
+           dat_jmax = jmax) %>%
+    select(-c(vcmax, jmax))
+all_res_trad_tpu <- all_results2 %>%
+    filter(curv_meth == "Traditional") %>%
+    filter(fit_type == "tpu") %>%
+    mutate(trad_vcmax = vcmax,
+           trad_jmax = jmax) %>%
+    select(-c(vcmax, jmax))
+
+res_tpu_summ <- cbind(all_res_dat_tpu, all_res_trad_tpu) %>% select(-c(1, 7, 8, 9, 10)) %>%
+    rename(leaf_unique = leaf_unique...2,
+           fit_type = fit_type...3,
+           treename = treename...4)
+
+res_tpu_summ$vc_diff <- res_tpu_summ$trad_vcmax - res_tpu_summ$dat_vcmax
+res_tpu_summ$j_diff <- res_tpu_summ$trad_jmax - res_tpu_summ$dat_jmax
+
+#no tpu
+all_res_dat_notpu <- all_results2 %>%
+    filter(curv_meth == "DAT") %>%
+    filter(fit_type == "no_tpu") %>%
+    mutate(dat_vcmax = vcmax,
+           dat_jmax = jmax) %>%
+    select(-c(vcmax, jmax))
+all_res_trad_notpu <- all_results2 %>%
+    filter(curv_meth == "Traditional") %>%
+    filter(fit_type == "no_tpu") %>%
+    mutate(trad_vcmax = vcmax,
+           trad_jmax = jmax) %>%
+    select(-c(vcmax, jmax))
+
+res_notpu_summ <- cbind(all_res_dat_notpu, all_res_trad_notpu) %>% select(-c(1, 7, 8, 9, 10)) %>%
+    rename(leaf_unique = leaf_unique...2,
+           fit_type = fit_type...3,
+           treename = treename...4)
+
+res_notpu_summ$vc_diff <- res_notpu_summ$trad_vcmax - res_notpu_summ$dat_vcmax
+res_notpu_summ$j_diff <- res_notpu_summ$trad_jmax - res_notpu_summ$dat_jmax
+
+
+#mean differences on leaf basis
+mean(res_tpu_summ$vc_diff)
+mean(res_tpu_summ$j_diff)
+mean(res_notpu_summ$vc_diff)
+mean(res_notpu_summ$j_diff)
+
+#mean differences on individual tree basis
+mean(species_summ3$vc_diff)
+mean(species_summ3$j_diff)
+mean(species_summ3_notpu$vc_diff)
+mean(species_summ3_notpu$j_diff)
+
+#Difference histograms on a species basis
+
+sp_diff_hist_vc_notpu <- species_summ3_notpu %>% ggplot(aes(x = vc_diff)) +
+    stat_function(fun = dnorm, args = list(0, sd(species_summ3_notpu$vc_diff)), color = "red", linetype = "dashed")+
+    geom_density(linewidth = 0.8)+
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
+    geom_vline(xintercept = mean(species_summ3_notpu$vc_diff), color = "black", alpha = 0.4)+
+    xlab("\U0394Vcmax: No TPU") +
+    ylab("Density")+
+    xlim(-20,50)+
+    ylim(0, 0.25)+
+    theme_classic()+
+    annotate("text", x = 30, y = 0.25, label = paste0("Mean = ", round(mean(species_summ3_notpu$vc_diff), digits = 2)), size = rel(2.7))+
+    annotate("text", x = 30, y = 0.23, label = paste0("SD = ", round(sd(species_summ3_notpu$vc_diff), digits = 2)), size = rel(2.7))
+sp_diff_hist_vc_notpu
+
+sp_diff_hist_vc_tpu <- species_summ3 %>% ggplot(aes(x = vc_diff)) +
+    stat_function(fun = dnorm, args = list(0, sd(species_summ3$vc_diff)), color = "red", linetype = "dashed")+
+    geom_density(linewidth = 0.8)+
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
+    geom_vline(xintercept = mean(species_summ3$vc_diff), color = "black", alpha = 0.4)+
+    xlab("\U0394Vcmax: TPU-enabled") +
+    ylab("Density")+
+    xlim(-20,50)+
+    ylim(0, 0.25)+
+    theme_classic()+
+    annotate("text", x = 30, y = 0.25, label = paste0("Mean = ", round(mean(species_summ3$vc_diff), digits = 2)), size = rel(2.7))+
+    annotate("text", x = 30, y = 0.23, label = paste0("SD = ", round(sd(species_summ3$vc_diff), digits = 2)), size = rel(2.7))
+sp_diff_hist_vc_tpu
+
+sp_diff_hist_j_notpu <- species_summ3_notpu %>% ggplot(aes(x = j_diff)) +
+    stat_function(fun = dnorm, args = list(0, sd(species_summ3_notpu$j_diff)), linetype = "dashed", color = "red")+
+    geom_density(linewidth = 0.8)+
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
+    geom_vline(xintercept = mean(species_summ3_notpu$j_diff), color = "black", alpha = 0.4)+
+    xlab("\U0394J: No TPU") +
+    ylab("Density")+
+    xlim(-20,50)+
+    ylim(0, 0.25)+
+    theme_classic()+
+    annotate("text", x = 30, y = 0.25, label = paste0("Mean = ", round(mean(species_summ3_notpu$j_diff), digits = 2)), size = rel(2.7))+
+    annotate("text", x = 30, y = 0.23, label = paste0("SD = ", round(sd(species_summ3_notpu$j_diff), digits = 2)), size = rel(2.7))
+sp_diff_hist_j_notpu
+
+sp_diff_hist_j_tpu <- species_summ3 %>% ggplot(aes(x = j_diff)) +
+    stat_function(fun = dnorm, args = list(0, sd(species_summ3$j_diff)), color = "red", linetype = "dashed")+
+    geom_density(linewidth = 0.8)+
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
+    geom_vline(xintercept = mean(species_summ3$j_diff), color = "black", alpha = 0.4)+
+    xlab("\U0394J: TPU-enabled") +
+    ylab("Density")+
+    xlim(-20,50)+
+    ylim(0, 0.25)+
+    theme_classic()+
+    annotate("text", x = 30, y = 0.25, label = paste0("Mean = ", round(mean(species_summ3_notpu$j_diff), digits = 2)), size = rel(2.7))+
+    annotate("text", x = 30, y = 0.23, label = paste0("SD = ", round(sd(species_summ3$j_diff), digits = 2)), size = rel(2.7))
+sp_diff_hist_j_tpu
+
+gW <- ggplotGrob(sp_diff_hist_vc_notpu)
+gX <- ggplotGrob(sp_diff_hist_vc_tpu)
+gY <- ggplotGrob(sp_diff_hist_j_notpu)
+gZ <- ggplotGrob(sp_diff_hist_j_tpu)
+
+diff_arranged <- grid.arrange(arrangeGrob(cbind(gW, gX), arrangeGrob(cbind(gY, gZ))))
+
+ggsave(plot = diff_arranged, "Figures/diff_density_full_fig.png", width = 6.5, height = 5)
 
 #No-overshoot data, no TPU
 grp_pho_nd_dat <- pho_nd_stat %>%
@@ -237,8 +515,6 @@ ggplot(aes(x=vcmax)) +
 all_results2 %>% filter(fit_type == "no_tpu") %>%
 ggplot(aes(x=jmax)) + 
     geom_histogram()
-
-library(reshape2)
 
 
 #Levene's for homogeneity of variance
@@ -398,8 +674,6 @@ nd_comp_wide_jmax %>% filter(fit_type == "tpu") %>%
 
 #Stat analysis, clean ------------------------------------------
 
-#When we compared based on fit_type, is this paired data???
-
 #all results, Wilcoxon signed rank test on paired samples (and a few sign tests)
 
 #Vcmax
@@ -411,6 +685,16 @@ all_results2 %>%
 all_results2 %>%
     group_by(fit_type) %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
 
+#try without Tachi to see what changes
+all_results2 %>%
+    group_by(fit_type) %>%
+    filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% 
+    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+all_results2 %>%
+    group_by(fit_type) %>% filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+#Not significant without Tachi!
 
 all_results2 %>%
     group_by(curv_meth) %>%
@@ -421,6 +705,11 @@ all_results2 %>%
     group_by(curv_meth) %>% wilcox_effsize(data = ., vcmax ~ fit_type, paired = TRUE)
 
 
+all_results2 %>%
+    group_by(curv_meth) %>%
+    filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% 
+    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
+    add_significance()
 
 #Jmax
 all_results2 %>%
@@ -428,7 +717,7 @@ all_results2 %>%
     wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
     add_significance()
 
-#Note we're running ths sign test here in addition!
+#Note we're running the sign test here in addition!
 all_results2 %>%
     group_by(fit_type) %>%
     sign_test(data =., jmax ~ curv_meth, detailed = TRUE) %>%
