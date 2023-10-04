@@ -938,7 +938,7 @@ all_results2 %>%
     wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
     add_significance()
 
-#Sign test here. Note we have a different result.
+#Sign test here, too. Note we have a different result.
 all_results2 %>%
     group_by(curv_meth) %>%
     sign_test(data =., jmax ~ fit_type, detailed = TRUE) %>%
