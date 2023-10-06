@@ -185,7 +185,8 @@ vc_diff_hist <- ggplot(data = species_summ3, aes(x = reorder(gen_spec_id, desc(r
     theme(axis.text.y = element_text(face = "italic"))+
     coord_flip()
 vc_diff_hist
-ggsave(plot = vc_diff_hist, "Figures/vc_diff_hist.png")
+
+#ggsave(plot = vc_diff_hist, "Figures/vc_diff_hist.png")
 
 j_diff_hist <- ggplot(data = species_summ3, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = j_diff)) +
     geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
@@ -198,13 +199,15 @@ j_diff_hist <- ggplot(data = species_summ3, aes(x = reorder(gen_spec_id, desc(re
     theme(axis.text.y = element_text(face = "italic"))+
     coord_flip()
 j_diff_hist
-ggsave(plot = j_diff_hist, "Figures/j_diff_hist.png")
+
+#ggsave(plot = j_diff_hist, "Figures/j_diff_hist.png")
 
 
 plot_arranged <- grid.arrange(vc_diff_hist, j_diff_hist)
-ggsave(plot = plot_arranged, "Figures/diff_histos.png", width = 4.3, height = 7)
 
-write.csv(species_summ3, "Results/species_diffs_summary_tpu.csv")
+#ggsave(plot = plot_arranged, "Figures/diff_histos.png", width = 4.3, height = 7)
+
+#write.csv(species_summ3, "Results/species_diffs_summary_tpu.csv")
 
 
 #Now for non-TPU fit curves
@@ -242,7 +245,7 @@ codebook <- read_csv("Results/id_codebook.csv") %>% arrange(desc(rel_can_pos)) %
 
 species_summ3_notpu <- cbind(species_summ2_notpu, codebook) %>% select(-15)
 
-write.csv(species_summ3_notpu, "Results/species_diffs_summary_notpu.csv")
+#write.csv(species_summ3_notpu, "Results/species_diffs_summary_notpu.csv")
 
 vc_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = vc_diff)) +
     geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
@@ -255,7 +258,8 @@ vc_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spe
     theme(axis.text.y = element_text(face = "italic", size = rel(1.5)))+
     coord_flip()
 vc_diff_hist_notpu
-ggsave(plot = vc_diff_hist_notpu, "Figures/vc_diff_hist.png")
+
+#ggsave(plot = vc_diff_hist_notpu, "Figures/vc_diff_hist.png")
 
 j_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = j_diff)) +
     geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
@@ -268,10 +272,11 @@ j_diff_hist_notpu <- ggplot(data = species_summ3_notpu, aes(x = reorder(gen_spec
     theme(axis.text.y = element_text(face = "italic", size = rel(1.5)))+
     coord_flip()
 j_diff_hist_notpu
-ggsave(plot = j_diff_hist_notpu, "Figures/j_diff_hist.png")
+
+#ggsave(plot = j_diff_hist_notpu, "Figures/j_diff_hist.png")
 
 plot_arranged2 <- grid.arrange(vc_diff_hist_notpu, j_diff_hist_notpu)
-ggsave(plot = plot_arranged2, "Figures/diff_histos_notpu.png", width = 4.3, height = 7)
+#ggsave(plot = plot_arranged2, "Figures/diff_histos_notpu.png", width = 4.3, height = 7)
 
 gA <- ggplotGrob(vc_diff_hist_notpu)
 gB <- ggplotGrob(vc_diff_hist + rremove("y.text"))
@@ -279,7 +284,8 @@ gC <- ggplotGrob(j_diff_hist_notpu)
 gD <- ggplotGrob(j_diff_hist + rremove("y.text"))
 
 plot_arranged3 <- grid.arrange(arrangeGrob(cbind(gA, gB), arrangeGrob(cbind(gC, gD))))
-ggsave(plot = plot_arranged3, "Figures/diff_full_fig.png", width = 8.3, height = 5)
+
+#ggsave(plot = plot_arranged3, "Figures/diff_full_fig.png", width = 8.3, height = 5)
 
 
 
