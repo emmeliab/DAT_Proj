@@ -266,7 +266,9 @@ b6 <- ggplot(pho_leaf_tpu, aes(x=method, y=V_TPU)) +
 b6
 
 
-## 1:1 plots DAT vs Trad
+
+
+#### 1:1 plots DAT vs Trad
 # By leaf
 
 #Vcmax
@@ -279,13 +281,12 @@ photo_leaf_tpu <- ggplot(data = leaf_wide_tpu, mapping = aes(x = tpu_Trad,
     geom_point()+
     geom_abline(intercept = 0, slope = 1)+
     theme_classic()+
-    labs(x="Traditional TPU", y="DAT TPU", col = "Unique Leaf")+
+    labs(x ="Traditional TPU", y="DAT TPU", col = "Unique Leaf")+
     theme(axis.title.x=element_text(size=18, family = "serif"),
           axis.title.y=element_text(size=18, family = "serif"),
           axis.text.x=element_text(size=15, family = "serif"),
           axis.text.y=element_text(size=15, family = "serif"),
-          legend.text=element_text(size=7, family = "serif"),
-          legend.title=element_text(size=11, family = "serif"))+
+          legend.position = "none") +
     scale_x_continuous(limits = c(1, 15)) + 
     scale_y_continuous(limits = c(1, 15))
 photo_leaf_tpu

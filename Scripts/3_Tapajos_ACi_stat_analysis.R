@@ -25,6 +25,7 @@ params_photo_tpu <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt
                          header = TRUE, na.strings = 1000)
 photo_trad <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"), sep = ",", header = TRUE, na.strings = 1000)
 
+### Do we still need this?
 init_mg <- read.csv(file = paste0(wd, "Results/MG_fixed_aci_fits_230213.csv"), sep = ",",
                       header = TRUE)
 params_mg <- init_mg %>%
@@ -290,6 +291,7 @@ wilcoxonPairedRC(x = grp_pho_nd_all$mean_jmax,
 
 # Visualization of DAT vs Traditional in Photosynthesis package -----
 
+## Boxplots
 lab_DATTrad <- c('DAT', 'Steady-State')
 b4 <- ggplot(photo_leaf, aes(x=DAT, y=Best_Vcmax_25C)) +
     geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
@@ -351,7 +353,7 @@ ggsave(plot = nd_jmax_box, "Figures/photo_box_nodip_datvtrad_jmax.png")
 
 
 
-## 1:1 plots DAT vs Trad
+#### 1:1 plots DAT vs Trad
 # By leaf
 
 #Vcmax
@@ -365,16 +367,14 @@ photo_leaf_vcmax <- ggplot(data = leaf_wide_vcmax, mapping = aes(x = vcmax_Trad,
     geom_point()+
     geom_abline(intercept = 0, slope = 1)+
     theme_classic()+
-    labs(x = expression("Steady-State Vcmax "*(mu*mol~m^{-2}~s^{-1} *"")),
-         y = expression("DAT Vcmax "*(mu*mol~m^{-2}~s^{-1} *"")),
+    labs(x = expression(italic("V")[italic("cmax-SS")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
+         y = expression(italic("V")[italic("cmax-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
          col = "Unique Leaf")+
     theme(aspect.ratio = 1,
           axis.title.x=element_text(size=14, family = "serif"),
           axis.title.y=element_text(size=14, family = "serif"),
           axis.text.x=element_text(size=8, family = "serif", color = "gray10"),
           axis.text.y=element_text(size=8, family = "serif", color = "gray10"),
-          #legend.text=element_text(size=7, family = "serif"),
-          #legend.title=element_text(size=11, family = "serif"),
           legend.position = "none") +
     scale_x_continuous(limits = c(1, 100)) + 
     scale_y_continuous(limits = c(1, 100)) +
@@ -395,15 +395,13 @@ photo_leaf_jmax <- ggplot(data = leaf_wide_jmax, mapping = aes(x = jmax_Trad,
     geom_point()+
     geom_abline(intercept = 0, slope = 1)+
     theme_classic()+
-    labs(x = expression("Steady-State Jmax "*(mu*mol~m^{-2}~s^{-1} *"")),
-         y = expression("DAT Jmax "*(mu*mol~m^{-2}~s^{-1} *"")), col = "Unique Leaf") +
+    labs(x = expression(italic("J")[italic("max-SS")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
+         y = expression(italic("J")[italic("max-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")), col = "Unique Leaf") +
     theme(aspect.ratio = 1,
           axis.title.x=element_text(size=14, family = "serif"),
           axis.title.y=element_text(size=14, family = "serif"),
           axis.text.x=element_text(size=8, family = "serif"),
           axis.text.y=element_text(size=8, family = "serif"),
-          #legend.text=element_text(size=7, family = "serif"),
-          #legend.title=element_text(size=11, family = "serif"),
           legend.position = "none") +
     scale_x_continuous(limits = c(1, 130)) + 
     scale_y_continuous(limits = c(1, 130)) +

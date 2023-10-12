@@ -81,18 +81,20 @@ exclude_backwardsCi <- function(data, givedf){
 cmplt.grp <- group_by(cmplt.rm_out, k67.id)
 
 
-## Plot all ACi curves on one graph by Species
+## Plot all ACi curves on one graph by tree
 ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = unique)) +
   geom_point(mapping = aes(pch = Data_point)) +
   theme_classic()
 
 
-# Make and save plots fot each leaf
+# Make and save plots for each leaf
 for (id in unique(cmplt.grp$unique)) {
     df1 <- cmplt.grp %>% filter(unique == id)
     gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, shape = Data_point, color = Data_point)) +
         geom_point(size = 3) +
         theme_classic() +
+        labs(y = expression("A"[net]*" ??mol "*m^{-2}*" "*s^{-1}), 
+             x = expression("C"[i]*" ??mol "* mol^{-1})) +
         scale_shape_manual(name = "Method", labels = c("DAT", "Steady-State"), values = c(19, 17)) +
         scale_color_viridis_d(begin = 0.3, name = "Method", labels = c("DAT", "Steady-State")) +
         ggtitle(id)

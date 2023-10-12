@@ -19,19 +19,26 @@ setwd(wd)
 
 ##Read in Datasets -------------------------------------------
 
+### Excluding K6709L3 as the SS curve was not a matched pair with the DAT curve
 pho_dat <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"), sep = ",", 
-                    header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
+                    header = TRUE, na.strings = 1000) %>% ## TPU values at 1000 are coded as NA
+    subset(ID != "K6709L3")
 pho_trad <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"), sep = ",", 
-                     header = TRUE, na.strings = 1000)
+                     header = TRUE, na.strings = 1000) %>% 
+    subset(ID != "K6709L3")
 
 
 pho_dat_tpu <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_with_TPU.csv"), sep = ",", 
-                        header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
+                        header = TRUE, na.strings = 1000) %>%  ## TPU values at 1000 are coded as NA
+    subset(ID != "K6709L3")
 pho_trad_tpu <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_with_TPU.csv"), sep = ",", 
-                         header = TRUE, na.strings = 1000)
+                         header = TRUE, na.strings = 1000) %>% 
+    subset(ID != "K6709L3")
+
 
 pho_both <- rbind(pho_dat, pho_trad)
 pho_both_tpu <- rbind(pho_dat_tpu, pho_trad_tpu)
+
 
 #No overshoot data
 
@@ -360,7 +367,7 @@ mean(species_summ3_notpu$j_diff)
 
 
 
-# Density Distributions of differences on a species basis ----------------
+# Density Distributions of differences on a leaf basis ----------------
 
 # ### Aggregating with TPU params by each leaf (n = 28)
 # all_res_dat_tpu_summ_lf <- all_res_dat_tpu %>% group_by(leaf_unique) %>%
@@ -414,7 +421,7 @@ sp_diff_hist_vc_notpu <- all_diff_notpu2 %>% ggplot(aes(x = vc_diff)) +
     geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(all_diff_notpu2$vc_diff), color = "black", alpha = 0.4)+
-    xlab("\U0394Vcmax: TPU-enabled") +
+    xlab("\U0394Vcmax: No TPU") +
     ylab("Density")+
     xlim(-30,50)+
     ylim(0, 0.25)+
@@ -905,6 +912,7 @@ all_results2 %>%
     filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% 
     wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
     add_significance()
+
 
 all_results2 %>%
     group_by(fit_type) %>% filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
