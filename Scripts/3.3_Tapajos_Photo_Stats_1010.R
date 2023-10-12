@@ -14,7 +14,7 @@ library(rstatix) #For wilcox_effsize function
 library(gridExtra)
 library(reshape2)
 
-wd <- "C://Users/emmel/Desktop/DAT_proj/"
+wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
 ##Read in Datasets -------------------------------------------
@@ -225,10 +225,6 @@ ggsave(plot = plot_arranged, "Figures/diff_histos.png", width = 4.3, height = 7)
 write.csv(species_summ3, "Results/species_diffs_summary_tpu.csv")
 
 
-
-
-
-
 ### Filter for no-TPU data
 all_res_notpu <- all_results2 %>% filter(fit_type == "no_tpu")
 
@@ -359,7 +355,7 @@ mean(res_tpu_summ$j_diff)
 mean(res_notpu_summ$vc_diff)
 mean(res_notpu_summ$j_diff)
 
-#mean differences on individual tree basis
+#mean differences on individual tree basis CHECK THIS LATER
 mean(species_summ3$vc_diff)
 mean(species_summ3$j_diff)
 mean(species_summ3_notpu$vc_diff)
