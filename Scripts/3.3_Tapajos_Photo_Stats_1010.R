@@ -14,6 +14,7 @@ library(rstatix) #For wilcox_effsize function
 library(gridExtra)
 library(reshape2)
 
+
 wd <- "C://Users/emmel/Desktop/DAT_proj/"
 setwd(wd)
 
@@ -23,6 +24,7 @@ setwd(wd)
 pho_dat <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"), sep = ",", 
                     header = TRUE, na.strings = 1000) %>% ## TPU values at 1000 are coded as NA
     subset(ID != "K6709L3")
+
 pho_trad <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"), sep = ",", 
                      header = TRUE, na.strings = 1000) %>% 
     subset(ID != "K6709L3")
@@ -31,6 +33,7 @@ pho_trad <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_
 pho_dat_tpu <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_with_TPU.csv"), sep = ",", 
                         header = TRUE, na.strings = 1000) %>%  ## TPU values at 1000 are coded as NA
     subset(ID != "K6709L3")
+
 pho_trad_tpu <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_with_TPU.csv"), sep = ",", 
                          header = TRUE, na.strings = 1000) %>% 
     subset(ID != "K6709L3")
@@ -222,10 +225,8 @@ ggsave(plot = j_diff_hist, "Figures/j_diff_hist.png")
 plot_arranged <- grid.arrange(vc_diff_hist, j_diff_hist)
 ggsave(plot = plot_arranged, "Figures/diff_histos.png", width = 4.3, height = 7)
 
-write.csv(species_summ3, "Results/species_diffs_summary_tpu.csv")
 
-
-
+write.csv(all_diff_tpu_codes, "Results/species_diffs_summary_tpu.csv")
 
 
 
@@ -354,16 +355,16 @@ res_notpu_summ$j_diff <- res_notpu_summ$trad_jmax - res_notpu_summ$dat_jmax
 
 
 #mean differences on leaf basis
-mean(res_tpu_summ$vc_diff)
-mean(res_tpu_summ$j_diff)
-mean(res_notpu_summ$vc_diff)
-mean(res_notpu_summ$j_diff)
+mean(all_diff_tpu2$vc_diff)
+mean(all_diff_tpu2$j_diff)
+mean(all_diff_notpu2$vc_diff)
+mean(all_diff_notpu2$j_diff)
 
-#mean differences on individual tree basis
-mean(species_summ3$vc_diff)
-mean(species_summ3$j_diff)
-mean(species_summ3_notpu$vc_diff)
-mean(species_summ3_notpu$j_diff)
+#mean differences on tree basis
+mean(all_diff_tpu_codes$vc_diff)
+mean(all_diff_tpu_codes$j_diff)
+mean(all_diff_notpu_codes$vc_diff)
+mean(all_diff_notpu_codes$j_diff)
 
 
 
@@ -407,7 +408,7 @@ sp_diff_hist_vc_tpu <- all_diff_tpu2 %>% ggplot(aes(x = vc_diff)) +
     geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(all_diff_tpu2$vc_diff), color = "black", alpha = 0.4)+
-    xlab("\U0394Vcmax: With TPU") +
+    xlab("\U0394Vcmax: TPU-enabled") +
     ylab("Density")+
     xlim(-30,50)+
     ylim(0, 0.25)+
@@ -727,6 +728,10 @@ all_res_summ <- all_results2 %>%
         jmax_max = max(jmax))
 all_res_summ
 
+
+all_results2 %>% group_by(fit_type, curv_meth) %>% get_summary_stats(vcmax, jmax, show = c("mean", "median", "sd", "min", "max"))
+
+
 #No TPU
 
 all_results2 %>% filter(fit_type == "no_tpu") %>%
@@ -794,6 +799,10 @@ nd_complete_summ <- nd_complete %>%
         jmax_min = min(jmax),
         jmax_max = max(jmax))
 nd_complete_summ
+
+
+nd_complete %>% group_by(fit_type, curv_meth) %>% get_summary_stats(vcmax, jmax, show = c("mean", "median", "sd", "min", "max"))
+
 
 #Levene's test
 nd_complete %>% filter(fit_type == "tpu") %>% leveneTest(vcmax ~ curv_meth, data = .)
@@ -906,17 +915,19 @@ all_results2 %>%
 all_results2 %>%
     group_by(fit_type) %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
 
-#try without Tachi to see what changes
-all_results2 %>%
-    group_by(fit_type) %>%
-    filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% 
-    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
-    add_significance()
 
+# #try without Tachi to see what changes
+# all_results2 %>%
+#     group_by(fit_type) %>%
+#     filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% 
+#     wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+#     add_significance()
+# 
+# 
+# all_results2 %>%
+#     group_by(fit_type) %>% filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+# #Not significant without Tachi!
 
-all_results2 %>%
-    group_by(fit_type) %>% filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
-#Not significant without Tachi!
 
 all_results2 %>%
     group_by(curv_meth) %>%
@@ -932,6 +943,10 @@ all_results2 %>%
     filter(leaf_unique != "K6707L1" & leaf_unique != "K6707L2") %>% 
     wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
     add_significance()
+
+
+
+
 
 #Jmax
 all_results2 %>%
