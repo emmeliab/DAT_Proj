@@ -11,28 +11,34 @@ library(vcd)
 library(car)
 library(rcompanion) #For the point biserial effect size
 
-wd <- "C://Users/emmel/Desktop/DAT_proj/"
+wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
 ## Read in the datasets
-params_ecophys <- read.csv(file = paste0(wd, "Results/params_ecophys_no_TPU.csv"), sep = ",", 
-                           header = TRUE) %>% 
-  filter(method == "dat")
+
+#params_ecophys <- read.csv(file = paste0(wd, "Results/params_ecophys_no_TPU.csv"), sep = ",", 
+#                           header = TRUE) %>% 
+#  filter(method == "dat")
+
+canopy_pos <- read.csv(file = paste0(wd, "Inputs/rel_canopy_pos.csv"))
+
 
 params_photo <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"), sep = ",", 
-                         header = TRUE, na.strings = 1000) ## TPU values at 1000 are coded as NA
+                         header = TRUE, na.strings = 1000) %>% ## TPU values at 1000 are coded as NA
+    mutate(tree_id = substr(ID, 1, 5)) %>% 
+    left_join(., canopy_pos, by = "tree_id") %>% 
+    select(-code)
+
 params_photo_tpu <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_with_TPU.csv"), sep = ",", 
-                         header = TRUE, na.strings = 1000)
-photo_trad <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"), sep = ",", header = TRUE, na.strings = 1000)
+                         header = TRUE, na.strings = 1000) %>%
+    mutate(tree_id = substr(ID, 1, 5)) %>% 
+    left_join(., canopy_pos, by = "tree_id") %>% 
+    select(-code)
 
-### Do we still need this?
-init_mg <- read.csv(file = paste0(wd, "Results/MG_fixed_aci_fits_230213.csv"), sep = ",",
-                      header = TRUE)
-params_mg <- init_mg %>%
-    select(-c(X)) %>% 
-    filter(DAT == "Before_DAT") #filters out traditional
-
-
+photo_trad <- read.csv(file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"), sep = ",", header = TRUE, na.strings = 1000) %>%
+    mutate(tree_id = substr(ID, 1, 5)) %>% 
+    left_join(., canopy_pos, by = "tree_id") %>% 
+    select(-code)
 
 
 # Photosynthesis results visualization ------------------------------------
@@ -52,12 +58,13 @@ grp_pho_leaf <- photo_leaf %>% group_by(DAT, leaf_unique) %>%
     summarise(mean_vcmax=mean(Best_Vcmax_25C),
               mean_jmax= mean(Best_Jmax_25C),
               leaf_unique=leaf_unique,
-              leaf_id=leaf_id) %>%
+              leaf_id=leaf_id,
+              rel_can_pos=rel_can_pos) %>%
     as.data.frame()
 summary(grp_pho_leaf)
 
 #Subset variables of interest
-pho_stat <- select(photo_leaf, 'DAT', 'Best_Vcmax_25C', 'Best_Jmax_25C', 'leaf_id', 'leaf_unique')
+pho_stat <- select(photo_leaf, 'DAT', 'Best_Vcmax_25C', 'Best_Jmax_25C', 'leaf_id', 'leaf_unique', 'rel_can_pos')
 pho_stat$DAT[pho_stat$DAT == "Before_DAT"] <- "DAT"
 pho_stat <- rename(pho_stat,
                     method = DAT,
@@ -76,7 +83,7 @@ pho_nd_leaf <- pho_nd_both %>%
     mutate(leaf_unique = substring(ID, 1, 7),
            DAT = Data_point,
            leaf_id = ID)
-pho_nd_stat <- select(pho_nd_leaf, 'DAT', 'Best_Vcmax_25C', 'Best_Jmax_25C', 'leaf_id', 'leaf_unique')
+pho_nd_stat <- select(pho_nd_leaf, 'DAT', 'Best_Vcmax_25C', 'Best_Jmax_25C', 'leaf_id', 'leaf_unique', 'rel_can_pos')
 pho_nd_stat$DAT[pho_nd_stat$DAT == "Before_DAT"] <- "DAT"
 pho_nd_stat <- rename(pho_nd_stat,
                    method = DAT,
@@ -107,19 +114,22 @@ pho_hist<-ggplot(pho_stat, aes(x=vcmax)) +
     geom_vline(aes(xintercept=mean(vcmax)),
                color="red", linetype="dashed", linewidth=0.5)+
     theme_classic()
+pho_hist
 
 grp_pho_dat <- pho_stat %>%
     filter(method == "DAT") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_vcmax = length(vcmax),
-              mean_vcmax = mean(vcmax)) %>% 
+              mean_vcmax = mean(vcmax),
+              rel_can_pos = mean(rel_can_pos)) %>% 
     mutate(method = "DAT")
 
 grp_pho_trad <- pho_stat %>%
     filter(method == "Traditional") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_vcmax = length(vcmax),
-              mean_vcmax = mean(vcmax)) %>% 
+              mean_vcmax = mean(vcmax),
+              rel_can_pos = mean(rel_can_pos)) %>% 
     mutate(method = "Traditional")
 
 grp_pho_all <- rbind(grp_pho_dat, grp_pho_trad)
@@ -183,7 +193,8 @@ grp_pho_jmax_dat <- pho_stat %>%
     filter(method == "DAT") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_jmax = length(jmax),
-              mean_jmax = mean(jmax)) %>% 
+              mean_jmax = mean(jmax),
+              rel_can_pos = mean(rel_can_pos)) %>% 
     mutate(method = "DAT")
 
 max(grp_pho_jmax_dat$mean_jmax)
@@ -192,7 +203,8 @@ grp_pho_jmax_trad <- pho_stat %>%
     filter(method == "Traditional") %>% 
     group_by(leaf_unique) %>% 
     summarise(n_jmax = length(jmax),
-              mean_jmax = mean(jmax)) %>% 
+              mean_jmax = mean(jmax),
+              rel_can_pos = mean(rel_can_pos)) %>% 
     mutate(method = "Traditional")
 
 max(grp_pho_jmax_trad$mean_jmax)
@@ -233,7 +245,8 @@ grp_pho_nd_dat <- pho_nd_stat %>%
     filter(method == "DAT") %>%
     group_by(leaf_unique) %>%
     summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
+              mean_jmax = mean(jmax),
+              rel_can_pos = mean(rel_can_pos)) %>% 
     mutate(method = "DAT")
 
 sd(grp_pho_nd_dat$mean_vcmax)
@@ -251,7 +264,8 @@ grp_pho_nd_trad <- pho_nd_stat %>%
            & leaf_unique != "K6714L1"
            & leaf_unique != "K6714L2") %>%
     summarise(mean_vcmax = mean(vcmax),
-              mean_jmax = mean(jmax)) %>% 
+              mean_jmax = mean(jmax),
+              rel_can_pos = mean(rel_can_pos)) %>% 
     mutate(method = "Traditional")
 
 sd(grp_pho_nd_trad$mean_vcmax)
