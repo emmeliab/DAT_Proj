@@ -422,7 +422,7 @@ sp_diff_hist_vc_notpu <- all_diff_notpu2 %>% ggplot(aes(x = vc_diff)) +
     geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(all_diff_notpu2$vc_diff), color = "black", alpha = 0.4)+
-    xlab("\U0394Vcmax: No TPU") +
+    xlab("\U0394Vcmax: TPU-omitted") +
     ylab("Density")+
     xlim(-30,50)+
     ylim(0, 0.25)+
@@ -436,7 +436,7 @@ sp_diff_hist_j_notpu <- all_diff_notpu2 %>% ggplot(aes(x = j_diff)) +
     geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(all_diff_notpu2$j_diff), color = "black", alpha = 0.4)+
-    xlab("\U0394Jmax: No TPU") +
+    xlab("\U0394Jmax: TPU-omitted") +
     ylab("Density")+
     xlim(-30,50)+
     ylim(0, 0.25)+
@@ -459,10 +459,10 @@ sp_diff_hist_j_tpu <- all_diff_tpu2 %>% ggplot(aes(x = j_diff)) +
     annotate("text", x = 30, y = 0.15, label = paste0("SD = ", round(sd(all_diff_tpu2$j_diff), digits = 2)), size = rel(3))
 sp_diff_hist_j_tpu
 
-gW <- ggplotGrob(sp_diff_hist_vc_notpu)
-gX <- ggplotGrob(sp_diff_hist_vc_tpu)
-gY <- ggplotGrob(sp_diff_hist_j_notpu)
-gZ <- ggplotGrob(sp_diff_hist_j_tpu)
+gW <- ggplotGrob(sp_diff_hist_vc_tpu)
+gX <- ggplotGrob(sp_diff_hist_vc_notpu)
+gY <- ggplotGrob(sp_diff_hist_j_tpu)
+gZ <- ggplotGrob(sp_diff_hist_j_notpu)
 
 diff_arranged <- grid.arrange(arrangeGrob(cbind(gW, gX), arrangeGrob(cbind(gY, gZ))))
 
@@ -488,10 +488,10 @@ hist_vc_se_notpu <- ggplot(mapping = aes(x = V_cmax_se)) +
     geom_density(data = pho_trad, linewidth = 0.8, color = "#FDE725FF")+
     geom_vline(xintercept = mean(pho_trad$V_cmax_se), color = "#FDE725FF", alpha = 0.5)+
     annotate("text", x = 5.5, y = 1.8, label = "DAT", size = rel(2.7), color = "#31688EFF")+
-    annotate("text", x = 9, y = 1.8, label = "Steady-State", size = rel(2.7), color = "#FFBF00")+
-    annotate("text", x = 3, y = 1.6, label = "Mean", size = rel(2.7))+
-    annotate("text", x = 3, y = 1.4, label = "SD", size = rel(2.7)) +
-    annotate("text", x = 3, y = 1.2, label = "Range", size = rel(2.7)) +
+    annotate("text", x = 9, y = 1.8, label = "SS", size = rel(2.7), color = "#FFBF00")+
+    annotate("text", x = 3, y = 1.6, label = "Mean SE", size = rel(2.7))+
+    annotate("text", x = 3, y = 1.4, label = "SD SE", size = rel(2.7)) +
+    annotate("text", x = 3, y = 1.2, label = "Range SE", size = rel(2.7)) +
     annotate("text", x = 5.5, y = 1.6, label = round(mean(pho_dat$V_cmax_se, na.rm = TRUE), digits = 2), 
              size = rel(2.7))+
     annotate("text", x = 5.5, y = 1.4, label = round(sd(pho_dat$V_cmax_se, na.rm = TRUE), digits = 2), 
@@ -506,7 +506,7 @@ hist_vc_se_notpu <- ggplot(mapping = aes(x = V_cmax_se)) +
     annotate("text", x = 9, y = 1.2, 
              label = paste0(round(min(pho_trad$V_cmax_se), digits = 2), ", ", round(max(pho_trad$V_cmax_se), digits = 2)), 
              size = rel(2.7)) +
-    xlab("Vcmax SE: No TPU") +
+    xlab(expression(italic("V")[italic("cmax")]* " SE TPU-omitted " *(mu*mol~m^{-2}~s^{-1} *""))) +
     ylab("Density")+
     xlim(-3,10)+
     ylim(0, 2)+
@@ -523,10 +523,10 @@ hist_vc_se_tpu <- ggplot(mapping = aes(x = V_cmax_se)) +
     geom_density(data = pho_trad_tpu, linewidth = 0.8, color = "#FDE725FF")+
     geom_vline(xintercept = mean(pho_trad_tpu$V_cmax_se), color = "#FDE725FF", alpha = 0.5)+
     annotate("text", x = 5.5, y = 1.8, label = "DAT", size = rel(2.7), color = "#31688EFF")+
-    annotate("text", x = 9, y = 1.8, label = "Steady-State", size = rel(2.7), color = "#FFBF00")+
-    annotate("text", x = 3, y = 1.6, label = "Mean", size = rel(2.7))+
-    annotate("text", x = 3, y = 1.4, label = "SD", size = rel(2.7)) +
-    annotate("text", x = 3, y = 1.2, label = "Range", size = rel(2.7)) +
+    annotate("text", x = 9, y = 1.8, label = "SS", size = rel(2.7), color = "#FFBF00")+
+    annotate("text", x = 3, y = 1.6, label = "Mean SE", size = rel(2.7))+
+    annotate("text", x = 3, y = 1.4, label = "SD SE", size = rel(2.7)) +
+    annotate("text", x = 3, y = 1.2, label = "Range SE", size = rel(2.7)) +
     annotate("text", x = 5.5, y = 1.6, label = round(mean(pho_dat_tpu$V_cmax_se, na.rm = TRUE), digits = 2), 
              size = rel(2.7))+
     annotate("text", x = 5.5, y = 1.4, label = round(sd(pho_dat_tpu$V_cmax_se, na.rm = TRUE), digits = 2), 
@@ -539,7 +539,7 @@ hist_vc_se_tpu <- ggplot(mapping = aes(x = V_cmax_se)) +
              size = rel(2.7))+
     annotate("text", x = 9, y = 1.2, label = paste0(round(min(pho_trad_tpu$V_cmax_se), digits = 2), ", ", round(max(pho_trad_tpu$V_cmax_se), digits = 2)), 
              size = rel(2.7)) +
-    xlab("Vcmax SE: TPU") +
+    xlab(expression(italic("V")[italic("cmax")]* " SE TPU-enabled " *(mu*mol~m^{-2}~s^{-1} *""))) +
     ylab("Density")+
     xlim(-3,10)+
     ylim(0, 2)+
@@ -557,10 +557,10 @@ hist_j_se_notpu <- ggplot(mapping = aes(x = J_se)) +
     geom_vline(xintercept = mean(pho_trad$J_se), color = "#FDE725FF", alpha = 0.5)+
     geom_density(data = pho_trad, linewidth = 0.8, color = "#FDE725FF")+
     annotate("text", x = 1.0, y = 18, label = "DAT", size = rel(2.7), color = "#31688EFF")+
-    annotate("text", x = 1.7, y = 18, label = "Steady-State", size = rel(2.7), color = "#FFBF00")+
-    annotate("text", x = 0.4, y = 16, label = "Mean", size = rel(2.7))+
-    annotate("text", x = 0.4, y = 14, label = "SD", size = rel(2.7)) +
-    annotate("text", x = 0.4, y = 12, label = "Range", size = rel(2.7)) +
+    annotate("text", x = 1.7, y = 18, label = "SS", size = rel(2.7), color = "#FFBF00")+
+    annotate("text", x = 0.4, y = 16, label = "Mean SE", size = rel(2.7))+
+    annotate("text", x = 0.4, y = 14, label = "SD SE", size = rel(2.7)) +
+    annotate("text", x = 0.4, y = 12, label = "Range SE", size = rel(2.7)) +
     annotate("text", x = 1.0, y = 16, label = round(mean(pho_dat$J_se, na.rm = TRUE), digits = 2), 
              size = rel(2.7))+
     annotate("text", x = 1.0, y = 14, label = round(sd(pho_dat$J_se, na.rm = TRUE), digits = 2), 
@@ -573,7 +573,7 @@ hist_j_se_notpu <- ggplot(mapping = aes(x = J_se)) +
              size = rel(2.7))+
     annotate("text", x = 1.7, y = 12, label = paste0(round(min(pho_trad$J_se), digits = 2), ", ", round(max(pho_trad$J_se), digits = 2)), 
              size = rel(2.7)) +
-    xlab("Jmax SE: No TPU") +
+    xlab(expression(italic("J")[italic("max")]* " SE TPU-omitted " *(mu*mol~m^{-2}~s^{-1} *""))) +
     ylab("Density")+
     xlim(-1,2)+
     ylim(0, 20)+
@@ -590,10 +590,10 @@ hist_j_se_tpu <- ggplot(mapping = aes(x = J_se)) +
     geom_density(data = pho_trad_tpu, linewidth = 0.8, color = "#FDE725FF")+
     geom_vline(xintercept = mean(pho_trad_tpu$J_se), color = "#FDE725FF", alpha = 0.5)+
     annotate("text", x = 1.0, y = 18, label = "DAT", size = rel(2.7), color = "#31688EFF")+
-    annotate("text", x = 1.7, y = 18, label = "Steady-State", size = rel(2.7), color = "#FFBF00")+
-    annotate("text", x = 0.4, y = 16, label = "Mean", size = rel(2.7))+
-    annotate("text", x = 0.4, y = 14, label = "SD", size = rel(2.7)) +
-    annotate("text", x = 0.4, y = 12, label = "Range", size = rel(2.7)) +
+    annotate("text", x = 1.7, y = 18, label = "SS", size = rel(2.7), color = "#FFBF00")+
+    annotate("text", x = 0.4, y = 16, label = "Mean SE", size = rel(2.7))+
+    annotate("text", x = 0.4, y = 14, label = "SD SE", size = rel(2.7)) +
+    annotate("text", x = 0.4, y = 12, label = "Range SE", size = rel(2.7)) +
     annotate("text", x = 1.0, y = 16, label = round(mean(pho_dat_tpu$J_se, na.rm = TRUE), digits = 2), 
              size = rel(2.7))+
     annotate("text", x = 1.0, y = 14, label = round(sd(pho_dat_tpu$J_se, na.rm = TRUE), digits = 2), 
@@ -606,7 +606,7 @@ hist_j_se_tpu <- ggplot(mapping = aes(x = J_se)) +
              size = rel(2.7))+
     annotate("text", x = 1.7, y = 12, label = paste0(round(min(pho_trad_tpu$J_se), digits = 2), ", ", round(max(pho_trad_tpu$J_se), digits = 2)), 
              size = rel(2.7)) +
-    xlab("Jmax SE: TPU") +
+    xlab(expression(italic("J")[italic("max")]* " SE TPU-enabled " *(mu*mol~m^{-2}~s^{-1} *""))) +
     ylab("Density")+
     xlim(-1,2)+
     ylim(0, 20)+
@@ -614,9 +614,9 @@ hist_j_se_tpu <- ggplot(mapping = aes(x = J_se)) +
 hist_j_se_tpu
 
 gM <- ggplotGrob(hist_vc_se_notpu)
-gN <- ggplotGrob(hist_vc_se_tpu)
+gN <- ggplotGrob(hist_vc_se_tpu + rremove("ylab"))
 gO <- ggplotGrob(hist_j_se_notpu)
-gP <- ggplotGrob(hist_j_se_tpu)
+gP <- ggplotGrob(hist_j_se_tpu + rremove("ylab"))
 
 se_arranged <- grid.arrange(arrangeGrob(cbind(gM, gN), arrangeGrob(cbind(gO, gP))))
 
@@ -1030,14 +1030,14 @@ tpu_just6_all %>%
 
 ## TPU v No TPU
 #Full data
-vcmax_all_TPUvNoTPU <- ggplot(all_results2, aes(x = fit_type, y = vcmax, fill = curv_meth)) +
+vcmax_all_TPUvNoTPU <- ggplot(all_results2, aes(x = factor(fit_type, levels = c("tpu", "no_tpu")), y = vcmax, fill = curv_meth)) +
     geom_boxplot(outlier.shape = 17, outlier.size = 2)+
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), 
                       values = c("#31688EFF", "#FDE725FF"))+
-    scale_x_discrete(labels = c("No TPU", "TPU")) +
+    scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
     theme_classic()+
     labs(x="Fit Type",
-         y = expression(V[cmax]*(mu*mol~m^{-2}~s^{-1})))+
+         y = expression(italic(V[cmax])* " " *(mu*mol~m^{-2}~s^{-1})))+
     theme(axis.title.x=element_text(size=16, family = "serif"),
           axis.title.y=element_text(size=16, family = "serif"),
           axis.text.x=element_text(size=13, family = "serif", color = "gray10"),
@@ -1046,15 +1046,15 @@ vcmax_all_TPUvNoTPU
 ggsave(plot = vcmax_all_TPUvNoTPU, "Figures/box_vcmax_all_TPUvNoTPU.png")
 
 
-jmax_all_TPUvNoTPU <- ggplot(all_results2, aes(x = fit_type, y = jmax, 
+jmax_all_TPUvNoTPU <- ggplot(all_results2, aes(x = factor(fit_type, levels = c("tpu", "no_tpu")), y = jmax, 
                                                fill = curv_meth)) +
     geom_boxplot(outlier.shape = 17, outlier.size = 2)+
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
                       values = c("#31688EFF", "#FDE725FF"))+
-    scale_x_discrete(labels = c("No TPU", "TPU"))+
+    scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted"))+
     theme_classic()+
     labs(x="Fit Type",
-         y = expression(J[max]*(mu*mol~m^{-2}~s^{-1})))+
+         y = expression(italic(J[max])* " " *(mu*mol~m^{-2}~s^{-1})))+
     theme(axis.title.x=element_text(size=16, family = "serif"),
           axis.title.y=element_text(size=16, family = "serif"),
           axis.text.x=element_text(size=13, family = "serif", color = "grey10"),
@@ -1064,15 +1064,15 @@ ggsave(plot = jmax_all_TPUvNoTPU, "Figures/box_jmax_all_TPUvNoTPU.png")
 
 
 #No Overshoot
-vcmax_nOS_TPUvNoTPU <- ggplot(nd_complete, aes(x = fit_type, y = vcmax,
+vcmax_nOS_TPUvNoTPU <- ggplot(nd_complete, aes(x = factor(fit_type, levels = c("tpu", "no_tpu")), y = vcmax,
                                                fill = curv_meth)) +
     geom_boxplot(outlier.shape = 17, outlier.size = 2)+
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
                       values = c("#31688EFF", "#FDE725FF"))+
-    scale_x_discrete(labels = c("No TPU", "TPU")) +
+    scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
     theme_classic()+
     labs(x="Fit Type",
-         y = expression(V[cmax]*(mu*mol~m^{-2}~s^{-1})))+
+         y = expression(italic(V[cmax])*" "*(mu*mol~m^{-2}~s^{-1})))+
     theme(axis.title.x=element_text(size=16, family = "serif"),
           axis.title.y=element_text(size=16, family = "serif"),
           axis.text.x=element_text(size=13, family = "serif", color = "grey10"),
@@ -1080,15 +1080,15 @@ vcmax_nOS_TPUvNoTPU <- ggplot(nd_complete, aes(x = fit_type, y = vcmax,
 vcmax_nOS_TPUvNoTPU
 ggsave(plot = vcmax_nOS_TPUvNoTPU, "Figures/box_vcmax_nOS_TPUvNoTPU.png")
 
-jmax_nOS_TPUvNoTPU <- ggplot(nd_complete, aes(x = fit_type, y = jmax,
+jmax_nOS_TPUvNoTPU <- ggplot(nd_complete, aes(x = factor(fit_type, levels = c("tpu", "no_tpu")), y = jmax,
                                               fill = curv_meth)) +
     geom_boxplot(outlier.shape = 17, outlier.size = 2)+
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
                       values = c("#31688EFF", "#FDE725FF"))+
-    scale_x_discrete(labels = c("No TPU", "TPU")) +
+    scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
     theme_classic()+
     labs(x="Fit Type",
-         y = expression(J[max]*(mu*mol~m^{-2}~s^{-1})))+
+         y = expression(italic(J[max])*" "*(mu*mol~m^{-2}~s^{-1})))+
     theme(axis.title.x=element_text(size=16, family = "serif"),
           axis.title.y=element_text(size=16, family = "serif"),
           axis.text.x=element_text(size=13, family = "serif", color = "grey10"),
@@ -1099,51 +1099,13 @@ ggsave(plot = jmax_nOS_TPUvNoTPU, "Figures/box_jmax_nOS_TPUvNoTPU.png")
 
 
 
-### Test TPU v No TPU plot
-test_vcmax_all_TPUvNoTPU <- ggplot(all_results2, aes(x = curv_meth, y = vcmax, fill = fit_type)) +
-    geom_boxplot(outlier.shape = 17, outlier.size = 2)+
-    scale_fill_manual(name = "Fit Method", labels = c("Without TPU", "With TPU"), 
-      values = c("skyblue", "red"))+
-    scale_x_discrete(labels = c("DAT", "Steady-State")) +
-    theme_classic()+
-    labs(x="Curve Method",
-         y = expression(V[cmax]*(mu*mol~m^{-2}~s^{-1})))+
-    theme(axis.title.x=element_text(size=16, family = "serif"),
-          axis.title.y=element_text(size=16, family = "serif"),
-          axis.text.x=element_text(size=13, family = "serif", color = "gray10"),
-          axis.text.y=element_text(size=13, family = "serif", colour = "gray10"))
-test_vcmax_all_TPUvNoTPU
-ggsave(plot = test_vcmax_all_TPUvNoTPU, "Figures/test_box_vcmax_all_TPUvNoTPU.png")
-
-
-
-
-test_jmax_all_TPUvNoTPU <- ggplot(all_results2, aes(x = curv_meth, y = jmax, fill = fit_type)) +
-    geom_boxplot(outlier.shape = 17, outlier.size = 2)+
-    scale_fill_manual(name = "Fit Method", labels = c("Without TPU", "With TPU"), 
-                      values = c("skyblue", "red"))+
-    scale_x_discrete(labels = c("DAT", "Steady-State")) +
-    theme_classic()+
-    labs(x="Curve Method",
-         y = expression(J[max]*(mu*mol~m^{-2}~s^{-1})))+
-    theme(axis.title.x=element_text(size=16, family = "serif"),
-          axis.title.y=element_text(size=16, family = "serif"),
-          axis.text.x=element_text(size=13, family = "serif", color = "gray10"),
-          axis.text.y=element_text(size=13, family = "serif", colour = "gray10")) 
-test_jmax_all_TPUvNoTPU
-ggsave(plot = test_jmax_all_TPUvNoTPU, "Figures/test_box_jmax_all_TPUvNoTPU.png")
-
-
-
-
-
 
 # Double Boxplots: All v No OS --------------------------------------------
 
-
-
+#### TPU-ommitted Boxplots
 pho_nd_stat <- mutate(pho_nd_stat, subset = "nOS")
-pho_stat <- mutate(pho_stat, subset = "wOS")
+pho_stat <- mutate(pho_stat, subset = "wOS") %>% 
+    select(-V_TPU_se)
 all_and_nOS_noTPU <- rbind(pho_stat, pho_nd_stat)
 
 
@@ -1152,12 +1114,12 @@ vcmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>%
     mutate(subset = fct_reorder(subset, subset , .fun = "length", .desc = TRUE)) %>% 
     ggplot(aes(x = subset, y = vcmax, fill = curv_meth)) +
     geom_boxplot(outlier.shape = 17, outlier.size = 2)+
-    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), 
+    scale_fill_manual(name = "Curve Method", labels = c("DAT", "SS"), 
                       values = c("#31688EFF", "#FDE725FF"))+
     scale_x_discrete(labels = c("All", "No Overshoot")) +
     theme_classic()+
     labs(x="Fit Type",
-         y = expression(V[cmax]*(mu*mol~m^{-2}~s^{-1})))+
+         y = expression(italic(V[cmax])*" "*(mu*mol~m^{-2}~s^{-1}))) +
     theme(axis.title.x=element_text(size=16, family = "serif"),
           axis.title.y=element_text(size=16, family = "serif"),
           axis.text.x=element_text(size=13, family = "serif", color = "gray10"),
@@ -1171,12 +1133,12 @@ jmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>%
     mutate(subset = fct_reorder(subset, subset , .fun = "length", .desc = TRUE)) %>% 
     ggplot(aes(x = subset, y = jmax, fill = curv_meth)) +
     geom_boxplot(outlier.shape = 17, outlier.size = 2)+
-    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
+    scale_fill_manual(name = "Curve Method", labels = c("DAT", "SS"),
                       values = c("#31688EFF", "#FDE725FF"))+
     scale_x_discrete(labels = c("All", "No Overshoot"))+
     theme_classic()+
     labs(x="Fit Type",
-         y = expression(J[max]*(mu*mol~m^{-2}~s^{-1})))+
+         y = expression(italic(J[max])*" "*(mu*mol~m^{-2}~s^{-1})))+
     theme(axis.title.x=element_text(size=16, family = "serif"),
           axis.title.y=element_text(size=16, family = "serif"),
           axis.text.x=element_text(size=13, family = "serif", color = "grey10"),
@@ -1188,9 +1150,11 @@ ggsave(plot = jmax_AllvNoOS_noTPU, "Figures/box_jmax_AllvNoOS_noTPU.png")
 
 
 
+#### TPU-enabled boxplots
 
 pho_nd_stat_tpu <- mutate(pho_nd_stat_tpu, subset = "nOS")
 pho_stat_tpu <- mutate(pho_stat_tpu, subset = "wOS")
+
 all_and_nOS_TPU <- rbind(pho_stat_tpu, pho_nd_stat_tpu)
 
 
@@ -1199,12 +1163,12 @@ vcmax_AllvNoOS_TPU <- all_and_nOS_TPU %>%
     mutate(subset = fct_reorder(subset, subset , .fun = "length", .desc = TRUE)) %>% 
     ggplot(aes(x = subset, y = vcmax, fill = curv_meth)) +
     geom_boxplot(outlier.shape = 17, outlier.size = 2)+
-    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), 
+    scale_fill_manual(name = "Curve Method", labels = c("DAT", "SS"), 
                       values = c("#31688EFF", "#FDE725FF"))+
     scale_x_discrete(labels = c("All", "No Overshoot")) +
     theme_classic()+
     labs(x="Fit Type",
-         y = expression(V[cmax]*(mu*mol~m^{-2}~s^{-1})))+
+         y = expression(italic(V[cmax])*" "*(mu*mol~m^{-2}~s^{-1})))+
     theme(axis.title.x=element_text(size=16, family = "serif"),
           axis.title.y=element_text(size=16, family = "serif"),
           axis.text.x=element_text(size=13, family = "serif", color = "gray10"),
@@ -1218,12 +1182,12 @@ jmax_AllvNoOS_TPU <- all_and_nOS_TPU %>%
     mutate(subset = fct_reorder(subset, subset , .fun = "length", .desc = TRUE)) %>% 
     ggplot(aes(x = subset, y = jmax, fill = curv_meth)) +
     geom_boxplot(outlier.shape = 17, outlier.size = 2)+
-    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
+    scale_fill_manual(name = "Curve Method", labels = c("DAT", "SS"),
                       values = c("#31688EFF", "#FDE725FF"))+
     scale_x_discrete(labels = c("All", "No Overshoot"))+
     theme_classic()+
     labs(x="Fit Type",
-         y = expression(J[max]*(mu*mol~m^{-2}~s^{-1})))+
+         y = expression(italic(J[max])*" "*(mu*mol~m^{-2}~s^{-1})))+
     theme(axis.title.x=element_text(size=16, family = "serif"),
           axis.title.y=element_text(size=16, family = "serif"),
           axis.text.x=element_text(size=13, family = "serif", color = "grey10"),
@@ -1233,6 +1197,14 @@ jmax_AllvNoOS_TPU
 ggsave(plot = jmax_AllvNoOS_TPU, "Figures/box_jmax_AllvNoOS_TPU.png")
 
 
+gK <- ggplotGrob(vcmax_AllvNoOS_TPU + rremove("xlab") + rremove("legend"))
+gL <- ggplotGrob(vcmax_AllvNoOS_noTPU + rremove("ylab"))
+gM <- ggplotGrob(jmax_AllvNoOS_TPU + rremove("xlab") + rremove("legend"))
+gN <- ggplotGrob(jmax_AllvNoOS_noTPU + rremove("ylab"))
+
+figS6 <- grid.arrange(arrangeGrob(cbind(gK, gL), arrangeGrob(cbind(gM, gN))))
+
+ggsave(plot = fig2, "Figures/figureS6.png", width = 6.5, height = 5)
 
 
 
@@ -1524,4 +1496,5 @@ gT <- ggplotGrob(sp_diff_hist_vc_notpu)
 fig2 <- grid.arrange(arrangeGrob(cbind(gQ, gR), arrangeGrob(cbind(gS, gT))))
 
 ggsave(plot = fig2, "Figures/figure2.png", width = 6.5, height = 5)
+
 
