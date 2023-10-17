@@ -97,7 +97,7 @@ pho_nd_leaf <- pho_nd_both %>%
     mutate(leaf_unique = substring(ID, 1, 7),
            curv_meth = Data_point)
 pho_nd_stat <- select(pho_nd_leaf, 'curv_meth', 'Best_Vcmax_25C', 'Best_Jmax_25C', 'V_TPU', 'ID', 
-                      'leaf_unique', 'V_cmax_se', 'J_se')
+                      'leaf_unique', 'V_cmax_se', 'J_se', 'V_TPU_se')
 pho_nd_stat$curv_meth[pho_nd_stat$curv_meth == "Before_DAT"] <- "DAT"
 pho_nd_stat <- rename(pho_nd_stat,
                       vcmax = Best_Vcmax_25C,
@@ -114,7 +114,7 @@ pho_nd_leaf_tpu <- pho_nd_both_tpu %>%
     mutate(leaf_unique = substring(ID, 1, 7),
            curv_meth = Data_point)
 pho_nd_stat_tpu <- select(pho_nd_leaf_tpu, 'curv_meth', 'Best_Vcmax_25C', 'Best_Jmax_25C', 'V_TPU',
-                          'ID', 'leaf_unique', "V_cmax_se", "J_se")
+                          'ID', 'leaf_unique', "V_cmax_se", "J_se", 'V_TPU_se')
 pho_nd_stat_tpu$curv_meth[pho_nd_stat_tpu$curv_meth == "Before_DAT"] <- "DAT"
 pho_nd_stat_tpu <- rename(pho_nd_stat_tpu,
                           vcmax = Best_Vcmax_25C,
@@ -194,11 +194,13 @@ codebook <- read_csv("Results/id_codebook.csv") %>% arrange(desc(rel_can_pos)) %
 
 all_diff_tpu_codes <- left_join(all_diff_tpu, codebook, by = "treename")
 
-#Note that error bars represent the mean of the absolute error for the differences
+# Histograms of differences by species, sorted by relative canopy height (Figure 4)-----
+
+##Note that error bars represent the mean of the absolute error for the differences
 vc_diff_hist <- ggplot(data = all_diff_tpu_codes, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = vc_diff)) +
     geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
-         y = "TPU-enabled Vcmax Differences (SS - DAT)")+
+         y = expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1}))) +
     geom_errorbar(aes(x=gen_spec_id, ymin=vc_diff-vc_diff_se, ymax=vc_diff+vc_diff_se), width=0.3, colour="#CA0068", alpha=0.9, linewidth=0.5)+
     theme_classic(base_family = "serif") +
     geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
@@ -206,12 +208,12 @@ vc_diff_hist <- ggplot(data = all_diff_tpu_codes, aes(x = reorder(gen_spec_id, d
     theme(axis.text.y = element_text(face = "italic"))+
     coord_flip()
 vc_diff_hist
-ggsave(plot = vc_diff_hist, "Figures/vc_diff_hist.png")
+#ggsave(plot = vc_diff_hist, "Figures/vc_diff_hist.png")
 
 j_diff_hist <- ggplot(data = all_diff_tpu_codes, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = j_diff)) +
     geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
-         y = "TPU-enabled Jmax Differences (SS - DAT)")+
+         y = expression("SS - DAT "*italic("J")[italic("max")]* " " *(mu*mol~m^{-2}~s^{-1}))) +
     geom_errorbar(aes(x=gen_spec_id, ymin=j_diff-j_diff_se, ymax=j_diff+j_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
     theme_classic(base_family = "serif") +
     geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
@@ -219,7 +221,7 @@ j_diff_hist <- ggplot(data = all_diff_tpu_codes, aes(x = reorder(gen_spec_id, de
     theme(axis.text.y = element_text(face = "italic"))+
     coord_flip()
 j_diff_hist
-ggsave(plot = j_diff_hist, "Figures/j_diff_hist.png")
+#ggsave(plot = j_diff_hist, "Figures/j_diff_hist.png")
 
 
 plot_arranged <- grid.arrange(vc_diff_hist, j_diff_hist)
@@ -274,7 +276,7 @@ all_diff_notpu_codes <- left_join(all_diff_notpu, codebook, by = "treename")
 vc_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = vc_diff)) +
     geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
-         y = "Without TPU Vcmax Differences (SS - DAT)")+
+         y = expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1}))) +
     geom_errorbar(aes(x=gen_spec_id, ymin=vc_diff-vc_diff_se, ymax=vc_diff+vc_diff_se), width=0.3, colour="#CA0068", alpha=0.9, linewidth=0.5)+
     theme_classic(base_family = "serif") +
     geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
@@ -282,12 +284,12 @@ vc_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes, aes(x = reorder(gen_sp
     theme(axis.text.y = element_text(face = "italic"))+
     coord_flip()
 vc_diff_hist_notpu
-ggsave(plot = vc_diff_hist, "Figures/vc_diff_hist_notpu.png")
+#ggsave(plot = vc_diff_hist, "Figures/vc_diff_hist_notpu.png")
 
 j_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes, aes(x = reorder(gen_spec_id, desc(rel_can_pos)), y = j_diff)) +
     geom_bar(stat="identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
-         y = "Without TPU Jmax Differences (SS - DAT)")+
+         y = expression("SS - DAT "*italic("J")[italic("max")]* " " *(mu*mol~m^{-2}~s^{-1}))) +
     geom_errorbar(aes(x=gen_spec_id, ymin=j_diff-j_diff_se, ymax=j_diff+j_diff_se), width=0.3, colour="#CA0068", alpha=0.9, size=0.5)+
     theme_classic(base_family = "serif") +
     geom_hline(yintercept=0, linetype="solid", color="black", linewidth=0.8) +
@@ -295,8 +297,7 @@ j_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes, aes(x = reorder(gen_spe
     theme(axis.text.y = element_text(face = "italic"))+
     coord_flip()
 j_diff_hist_notpu
-ggsave(plot = j_diff_hist, "Figures/j_diff_hist_notpu.png")
-ggsave(plot = j_diff_hist_notpu, "Figures/j_diff_hist.png")
+#ggsave(plot = j_diff_hist_notpu, "Figures/j_diff_hist_notpu.png")
 
 
 
@@ -306,7 +307,7 @@ gC <- ggplotGrob(j_diff_hist)
 gD <- ggplotGrob(j_diff_hist_notpu + rremove("y.text"))
 
 plot_arranged3 <- grid.arrange(arrangeGrob(cbind(gA, gB), arrangeGrob(cbind(gC, gD))))
-ggsave(plot = plot_arranged3, "Figures/diff_full_fig.png", width = 8.3, height = 5)
+ggsave(plot = plot_arranged3, "Figures/figure4.png", width = 8.3, height = 5)
 
 
 #understanding mean differences --------------------------
@@ -370,63 +371,41 @@ mean(all_diff_notpu_codes$j_diff)
 
 # Density Distributions of differences on a leaf basis ----------------
 
-# ### Aggregating with TPU params by each leaf (n = 28)
-# all_res_dat_tpu_summ_lf <- all_res_dat_tpu %>% group_by(leaf_unique) %>%
-#     summarize(dat_vcmax = mean(vcmax),
-#               dat_jmax = mean(jmax))
-# 
-# all_res_trad_tpu_summ_lf <- all_res_trad_tpu %>% group_by(leaf_unique) %>%
-#     summarize(trad_vcmax = mean(vcmax),
-#               trad_jmax = mean(jmax))
-# 
-# 
-# diff_lf_summ <- cbind(all_res_dat_tpu_summ_lf, all_res_trad_tpu_summ_lf)
-# diff_lf_summ$vc_diff <- diff_lf_summ$trad_vcmax - diff_lf_summ$dat_vcmax
-# diff_lf_summ$j_diff <- diff_lf_summ$trad_jmax - diff_lf_summ$dat_jmax
-# diff_lf_summ <- diff_lf_summ[,-4]
-# 
-# 
-# ### Aggregating no-TPU params by each leaf (n = 28)
-# all_res_dat_notpu_summ_lf <- all_res_dat_notpu %>% group_by(leaf_unique) %>%
-#     summarize(dat_vcmax = mean(vcmax),
-#               dat_jmax = mean(jmax))
-#               
-# all_res_trad_notpu_summ_lf <- all_res_trad_notpu %>% group_by(leaf_unique) %>%
-#     summarize(trad_vcmax = mean(vcmax),
-#               trad_jmax = mean(jmax))
-# 
-# 
-# diff_lf_summ_notpu <- cbind(all_res_dat_notpu_summ_lf, all_res_trad_notpu_summ_lf)
-# diff_lf_summ_notpu$vc_diff <- diff_lf_summ_notpu$trad_vcmax - diff_lf_summ_notpu$dat_vcmax
-# diff_lf_summ_notpu$j_diff <- diff_lf_summ_notpu$trad_jmax - diff_lf_summ_notpu$dat_jmax
-# diff_lf_summ_notpu <- diff_lf_summ_notpu[,-4]
-
-
 
 sp_diff_hist_vc_tpu <- all_diff_tpu2 %>% ggplot(aes(x = vc_diff)) +
     stat_function(fun = dnorm, args = list(0, sd(all_diff_tpu2$vc_diff)), color = "red", linetype = "dashed")+
     geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(all_diff_tpu2$vc_diff), color = "black", alpha = 0.4)+
-    xlab("\U0394Vcmax: TPU-enabled") +
+    xlab(expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1}))) +
     ylab("Density")+
     xlim(-30,50)+
     ylim(0, 0.25)+
     theme_classic()+
+    theme(axis.title.x=element_text(size=14, family = "serif"),
+          axis.title.y=element_text(size=14, family = "serif"),
+          axis.text.x=element_text(size=8, family = "serif", color = "gray10"),
+          axis.text.y=element_text(size=8, family = "serif", color = "gray10"))+
     annotate("text", x = 30, y = 0.18, label = paste0("Mean = ", round(mean(all_diff_tpu2$vc_diff), digits = 2)), size = rel(3))+
     annotate("text", x = 30, y = 0.15, label = paste0("SD = ", round(sd(all_diff_tpu2$vc_diff), digits = 2)), size = rel(3))
 sp_diff_hist_vc_tpu
+
+
 
 sp_diff_hist_vc_notpu <- all_diff_notpu2 %>% ggplot(aes(x = vc_diff)) +
     stat_function(fun = dnorm, args = list(0, sd(all_diff_notpu2$vc_diff)), color = "red", linetype = "dashed")+
     geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(all_diff_notpu2$vc_diff), color = "black", alpha = 0.4)+
-    xlab("\U0394Vcmax: TPU-omitted") +
+    xlab(expression("SS - DAT "*italic("V")[italic("cmax")]*  " " *(mu*mol~m^{-2}~s^{-1}))) +
     ylab("Density")+
     xlim(-30,50)+
     ylim(0, 0.25)+
     theme_classic()+
+    theme(axis.title.x=element_text(size=14, family = "serif"),
+          axis.title.y=element_text(size=14, family = "serif"),
+          axis.text.x=element_text(size=8, family = "serif", color = "gray10"),
+          axis.text.y=element_text(size=8, family = "serif", color = "gray10"))+
     annotate("text", x = 30, y = 0.18, label = paste0("Mean = ", round(mean(all_diff_notpu2$vc_diff), digits = 2)), size = rel(3))+
     annotate("text", x = 30, y = 0.15, label = paste0("SD = ", round(sd(all_diff_notpu2$vc_diff), digits = 2)), size = rel(3))
 sp_diff_hist_vc_notpu
@@ -436,11 +415,15 @@ sp_diff_hist_j_notpu <- all_diff_notpu2 %>% ggplot(aes(x = j_diff)) +
     geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(all_diff_notpu2$j_diff), color = "black", alpha = 0.4)+
-    xlab("\U0394Jmax: TPU-omitted") +
+    xlab(expression("SS - DAT "*italic("J")[italic("max")]* " " * (mu*mol~m^{-2}~s^{-1}))) +
     ylab("Density")+
     xlim(-30,50)+
     ylim(0, 0.25)+
     theme_classic()+
+    theme(axis.title.x=element_text(size=14, family = "serif"),
+          axis.title.y=element_text(size=14, family = "serif"),
+          axis.text.x=element_text(size=8, family = "serif", color = "gray10"),
+          axis.text.y=element_text(size=8, family = "serif", color = "gray10"))+
     annotate("text", x = 30, y = 0.18, label = paste0("Mean = ", round(mean(all_diff_notpu2$j_diff), digits = 2)), size = rel(3))+
     annotate("text", x = 30, y = 0.15, label = paste0("SD = ", round(sd(all_diff_notpu2$j_diff), digits = 2)), size = rel(3))
 sp_diff_hist_j_notpu
@@ -450,11 +433,15 @@ sp_diff_hist_j_tpu <- all_diff_tpu2 %>% ggplot(aes(x = j_diff)) +
     geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
     geom_vline(xintercept = mean(all_diff_tpu2$j_diff), color = "black", alpha = 0.4)+
-    xlab("\U0394Jmax: TPU-enabled") +
+    xlab(expression("SS - DAT "*italic("J")[italic("max")]* " " * (mu*mol~m^{-2}~s^{-1}))) +
     ylab("Density")+
     xlim(-30,50)+
     ylim(0, 0.25)+
     theme_classic()+
+    theme(axis.title.x=element_text(size=14, family = "serif"),
+          axis.title.y=element_text(size=14, family = "serif"),
+          axis.text.x=element_text(size=8, family = "serif", color = "gray10"),
+          axis.text.y=element_text(size=8, family = "serif", color = "gray10"))+
     annotate("text", x = 30, y = 0.18, label = paste0("Mean = ", round(mean(all_diff_tpu2$j_diff), digits = 2)), size = rel(3))+
     annotate("text", x = 30, y = 0.15, label = paste0("SD = ", round(sd(all_diff_tpu2$j_diff), digits = 2)), size = rel(3))
 sp_diff_hist_j_tpu
@@ -464,7 +451,9 @@ gX <- ggplotGrob(sp_diff_hist_vc_notpu)
 gY <- ggplotGrob(sp_diff_hist_j_tpu)
 gZ <- ggplotGrob(sp_diff_hist_j_notpu)
 
-diff_arranged <- grid.arrange(arrangeGrob(cbind(gW, gX), arrangeGrob(cbind(gY, gZ))))
+
+diff_arranged <- grid.arrange(arrangeGrob(arrangeGrob(cbind(gW, gX), arrangeGrob(cbind(gY, gZ)))))
+
 
 ggsave(plot = diff_arranged, "Figures/diff_density_full_fig.png", width = 6.5, height = 5)
 
@@ -489,9 +478,9 @@ hist_vc_se_notpu <- ggplot(mapping = aes(x = V_cmax_se)) +
     geom_vline(xintercept = mean(pho_trad$V_cmax_se), color = "#FDE725FF", alpha = 0.5)+
     annotate("text", x = 5.5, y = 1.8, label = "DAT", size = rel(2.7), color = "#31688EFF")+
     annotate("text", x = 9, y = 1.8, label = "SS", size = rel(2.7), color = "#FFBF00")+
-    annotate("text", x = 3, y = 1.6, label = "Mean SE", size = rel(2.7))+
-    annotate("text", x = 3, y = 1.4, label = "SD SE", size = rel(2.7)) +
-    annotate("text", x = 3, y = 1.2, label = "Range SE", size = rel(2.7)) +
+    annotate("text", x = 2.5, y = 1.6, label = "Mean SE", size = rel(2.7))+
+    annotate("text", x = 2.5, y = 1.4, label = "SD SE", size = rel(2.7)) +
+    annotate("text", x = 2.5, y = 1.2, label = "Range SE", size = rel(2.7)) +
     annotate("text", x = 5.5, y = 1.6, label = round(mean(pho_dat$V_cmax_se, na.rm = TRUE), digits = 2), 
              size = rel(2.7))+
     annotate("text", x = 5.5, y = 1.4, label = round(sd(pho_dat$V_cmax_se, na.rm = TRUE), digits = 2), 
@@ -506,7 +495,7 @@ hist_vc_se_notpu <- ggplot(mapping = aes(x = V_cmax_se)) +
     annotate("text", x = 9, y = 1.2, 
              label = paste0(round(min(pho_trad$V_cmax_se), digits = 2), ", ", round(max(pho_trad$V_cmax_se), digits = 2)), 
              size = rel(2.7)) +
-    xlab(expression(italic("V")[italic("cmax")]* " SE TPU-omitted " *(mu*mol~m^{-2}~s^{-1} *""))) +
+    xlab(expression(italic("V")[italic("cmax")]* " SE " *(mu*mol~m^{-2}~s^{-1} *""))) +
     ylab("Density")+
     xlim(-3,10)+
     ylim(0, 2)+
@@ -524,9 +513,9 @@ hist_vc_se_tpu <- ggplot(mapping = aes(x = V_cmax_se)) +
     geom_vline(xintercept = mean(pho_trad_tpu$V_cmax_se), color = "#FDE725FF", alpha = 0.5)+
     annotate("text", x = 5.5, y = 1.8, label = "DAT", size = rel(2.7), color = "#31688EFF")+
     annotate("text", x = 9, y = 1.8, label = "SS", size = rel(2.7), color = "#FFBF00")+
-    annotate("text", x = 3, y = 1.6, label = "Mean SE", size = rel(2.7))+
-    annotate("text", x = 3, y = 1.4, label = "SD SE", size = rel(2.7)) +
-    annotate("text", x = 3, y = 1.2, label = "Range SE", size = rel(2.7)) +
+    annotate("text", x = 2.5, y = 1.6, label = "Mean SE", size = rel(2.7))+
+    annotate("text", x = 2.5, y = 1.4, label = "SD SE", size = rel(2.7)) +
+    annotate("text", x = 2.5, y = 1.2, label = "Range SE", size = rel(2.7)) +
     annotate("text", x = 5.5, y = 1.6, label = round(mean(pho_dat_tpu$V_cmax_se, na.rm = TRUE), digits = 2), 
              size = rel(2.7))+
     annotate("text", x = 5.5, y = 1.4, label = round(sd(pho_dat_tpu$V_cmax_se, na.rm = TRUE), digits = 2), 
@@ -539,7 +528,7 @@ hist_vc_se_tpu <- ggplot(mapping = aes(x = V_cmax_se)) +
              size = rel(2.7))+
     annotate("text", x = 9, y = 1.2, label = paste0(round(min(pho_trad_tpu$V_cmax_se), digits = 2), ", ", round(max(pho_trad_tpu$V_cmax_se), digits = 2)), 
              size = rel(2.7)) +
-    xlab(expression(italic("V")[italic("cmax")]* " SE TPU-enabled " *(mu*mol~m^{-2}~s^{-1} *""))) +
+    xlab(expression(italic("V")[italic("cmax")]* " SE " *(mu*mol~m^{-2}~s^{-1} *""))) +
     ylab("Density")+
     xlim(-3,10)+
     ylim(0, 2)+
@@ -573,7 +562,7 @@ hist_j_se_notpu <- ggplot(mapping = aes(x = J_se)) +
              size = rel(2.7))+
     annotate("text", x = 1.7, y = 12, label = paste0(round(min(pho_trad$J_se), digits = 2), ", ", round(max(pho_trad$J_se), digits = 2)), 
              size = rel(2.7)) +
-    xlab(expression(italic("J")[italic("max")]* " SE TPU-omitted " *(mu*mol~m^{-2}~s^{-1} *""))) +
+    xlab(expression(italic("J")[italic("max")]* " SE " *(mu*mol~m^{-2}~s^{-1} *""))) +
     ylab("Density")+
     xlim(-1,2)+
     ylim(0, 20)+
@@ -606,21 +595,21 @@ hist_j_se_tpu <- ggplot(mapping = aes(x = J_se)) +
              size = rel(2.7))+
     annotate("text", x = 1.7, y = 12, label = paste0(round(min(pho_trad_tpu$J_se), digits = 2), ", ", round(max(pho_trad_tpu$J_se), digits = 2)), 
              size = rel(2.7)) +
-    xlab(expression(italic("J")[italic("max")]* " SE TPU-enabled " *(mu*mol~m^{-2}~s^{-1} *""))) +
+    xlab(expression(italic("J")[italic("max")]* " SE " *(mu*mol~m^{-2}~s^{-1} *""))) +
     ylab("Density")+
     xlim(-1,2)+
     ylim(0, 20)+
     theme_classic()
 hist_j_se_tpu
 
-gM <- ggplotGrob(hist_vc_se_notpu)
-gN <- ggplotGrob(hist_vc_se_tpu + rremove("ylab"))
-gO <- ggplotGrob(hist_j_se_notpu)
-gP <- ggplotGrob(hist_j_se_tpu + rremove("ylab"))
+gM <- ggplotGrob(hist_vc_se_tpu)
+gN <- ggplotGrob(hist_vc_se_notpu + rremove("ylab"))
+gO <- ggplotGrob(hist_j_se_tpu)
+gP <- ggplotGrob(hist_j_se_notpu + rremove("ylab"))
 
 se_arranged <- grid.arrange(arrangeGrob(cbind(gM, gN), arrangeGrob(cbind(gO, gP))))
 
-ggsave(plot = se_arranged, "Figures/se_density_full_fig.png", width = 6.5, height = 5)
+ggsave(plot = se_arranged, "Figures/figureS5.png", width = 6.5, height = 5)
 
 
 
@@ -1100,12 +1089,11 @@ ggsave(plot = jmax_nOS_TPUvNoTPU, "Figures/box_jmax_nOS_TPUvNoTPU.png")
 
 
 
-# Double Boxplots: All v No OS --------------------------------------------
+# Double Boxplots: All v No OS (Figure S4) --------------------------------------------
 
-#### TPU-ommitted Boxplots
+#### TPU-omitted Boxplots
 pho_nd_stat <- mutate(pho_nd_stat, subset = "nOS")
-pho_stat <- mutate(pho_stat, subset = "wOS") %>% 
-    select(-V_TPU_se)
+pho_stat <- mutate(pho_stat, subset = "wOS")
 all_and_nOS_noTPU <- rbind(pho_stat, pho_nd_stat)
 
 
@@ -1126,7 +1114,7 @@ vcmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>%
           axis.text.y=element_text(size=13, family = "serif", colour = "gray10")) +
     scale_y_continuous(limits = c(0, 85))
 vcmax_AllvNoOS_noTPU
-ggsave(plot = vcmax_AllvNoOS_noTPU, "Figures/box_vcmax_AllvNoOS_noTPU.png")
+#gsave(plot = vcmax_AllvNoOS_noTPU, "Figures/box_vcmax_AllvNoOS_noTPU.png")
 
 
 jmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>% 
@@ -1145,7 +1133,7 @@ jmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>%
           axis.text.y=element_text(size=13, family = "serif", color = "grey10")) +
     scale_y_continuous(limits = c(0, 130), breaks = c(0, 40,  80,  120))
 jmax_AllvNoOS_noTPU
-ggsave(plot = jmax_AllvNoOS_noTPU, "Figures/box_jmax_AllvNoOS_noTPU.png")
+#gsave(plot = jmax_AllvNoOS_noTPU, "Figures/box_jmax_AllvNoOS_noTPU.png")
 
 
 
@@ -1175,7 +1163,7 @@ vcmax_AllvNoOS_TPU <- all_and_nOS_TPU %>%
           axis.text.y=element_text(size=13, family = "serif", colour = "gray10")) +
     scale_y_continuous(limits = c(0, 85))
 vcmax_AllvNoOS_TPU
-ggsave(plot = vcmax_AllvNoOS_TPU, "Figures/box_vcmax_AllvNoOS_TPU.png")
+#gsave(plot = vcmax_AllvNoOS_TPU, "Figures/box_vcmax_AllvNoOS_TPU.png")
 
 
 jmax_AllvNoOS_TPU <- all_and_nOS_TPU %>% 
@@ -1194,17 +1182,17 @@ jmax_AllvNoOS_TPU <- all_and_nOS_TPU %>%
           axis.text.y=element_text(size=13, family = "serif", color = "grey10")) + 
     scale_y_continuous(limits = c(0, 130), breaks = c(0, 40,  80,  120))
 jmax_AllvNoOS_TPU
-ggsave(plot = jmax_AllvNoOS_TPU, "Figures/box_jmax_AllvNoOS_TPU.png")
+#gsave(plot = jmax_AllvNoOS_TPU, "Figures/box_jmax_AllvNoOS_TPU.png")
 
 
-gK <- ggplotGrob(vcmax_AllvNoOS_TPU + rremove("xlab") + rremove("legend"))
-gL <- ggplotGrob(vcmax_AllvNoOS_noTPU + rremove("ylab"))
-gM <- ggplotGrob(jmax_AllvNoOS_TPU + rremove("xlab") + rremove("legend"))
-gN <- ggplotGrob(jmax_AllvNoOS_noTPU + rremove("ylab"))
+gW <- ggplotGrob(vcmax_AllvNoOS_TPU + rremove("xlab") + rremove("legend"))
+gX <- ggplotGrob(vcmax_AllvNoOS_noTPU + rremove("ylab") + rremove("xlab"))
+gY <- ggplotGrob(jmax_AllvNoOS_TPU + rremove("legend"))
+gZ <- ggplotGrob(jmax_AllvNoOS_noTPU + rremove("ylab"))
 
-figS6 <- grid.arrange(arrangeGrob(cbind(gK, gL), arrangeGrob(cbind(gM, gN))))
+figS4 <- grid.arrange(arrangeGrob(cbind(gW, gX), arrangeGrob(cbind(gY, gZ))))
 
-ggsave(plot = fig2, "Figures/figureS6.png", width = 6.5, height = 5)
+ggsave(plot = figS4, "Figures/figureS4.png", width = 6.5, height = 5)
 
 
 
@@ -1321,7 +1309,7 @@ ggsave(plot = nd_jmax_box_noTPU, "Figures/photo_box_nOS_DvT_jmax_noTPU.png")
 
 ## 1:1 plots DAT vs Trad, NO TPU
 
-#Vcmax -- work in progress!!
+#Vcmax
 leaf_sub_vcmax <- select(pho_stat, vcmax, curv_meth, leaf_unique, V_cmax_se)
 leaf_wide_vcmax <- reshape(leaf_sub_vcmax, idvar = "leaf_unique", timevar = "curv_meth",
                            direction = "wide")
@@ -1339,14 +1327,14 @@ pho_1to1_vcmax_NoTPU <- ggplot(data = leaf_wide_vcmax, mapping = aes(x = vcmax_T
          y = expression(italic("V")[italic("cmax-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
          col = "Unique Leaf") +
     theme(aspect.ratio = 1,
-          axis.title.x=element_text(size=12, family = "serif"),
-          axis.title.y=element_text(size=12, family = "serif"),
+          axis.title.x=element_text(size=14, family = "serif"),
+          axis.title.y=element_text(size=14, family = "serif"),
           axis.text.x=element_text(size=8, family = "serif", color = "gray10"),
           axis.text.y=element_text(size=8, family = "serif", color = "gray10"),
           legend.position = "none") +
     scale_x_continuous(limits = c(1, 100)) + 
     scale_y_continuous(limits = c(1, 100)) +
-    annotate(geom = "text", label = paste0("r = ", cor1), x = 25, y = 75)
+    annotate(geom = "text", label = paste0("r = ", cor1), x = 25, y = 75, size = rel(3))
 pho_1to1_vcmax_NoTPU
 ggsave(plot = pho_1to1_vcmax_NoTPU, "Figures/pho_1to1_vcmax_NoTPU.png")
 
@@ -1367,14 +1355,14 @@ pho_1to1_jmax_noTPU <- ggplot(data = leaf_wide_jmax, mapping = aes(x = jmax_Trad
          y = expression(italic("J")[italic("max-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
          col = "Unique Leaf")+
     theme(aspect.ratio = 1,
-          axis.title.x=element_text(size=12, family = "serif"),
-          axis.title.y=element_text(size=12, family = "serif"),
+          axis.title.x=element_text(size=14, family = "serif"),
+          axis.title.y=element_text(size=14, family = "serif"),
           axis.text.x=element_text(size=8, family = "serif", color = "grey10"),
           axis.text.y=element_text(size=8, family = "serif", color = "grey10"),
           legend.position = "none") +
     scale_x_continuous(limits = c(1, 130)) + 
     scale_y_continuous(limits = c(1, 130)) +
-    annotate(geom = "text", label = paste0("r = ", cor2), x = 100, y = 30)
+    annotate(geom = "text", label = paste0("r = ", cor2), x = 100, y = 30, size = rel(3))
 pho_1to1_jmax_noTPU
 ggsave(plot = pho_1to1_jmax_noTPU, "Figures/pho_1to1_jmax_NoTPU.png")
 
@@ -1400,14 +1388,14 @@ pho_1to1_vcmax_tpu <- ggplot(data = leaf_wide_vcmax_tpu, mapping = aes(x = vcmax
          y = expression(italic("V")[italic("cmax-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
          col = "Unique Leaf") +
     theme(aspect.ratio = 1,
-          axis.title.x=element_text(size=12, family = "serif"),
-          axis.title.y=element_text(size=12, family = "serif"),
+          axis.title.x=element_text(size=14, family = "serif"),
+          axis.title.y=element_text(size=14, family = "serif"),
           axis.text.x=element_text(size=8, family = "serif", color = "gray10"),
           axis.text.y=element_text(size=8, family = "serif", color = "gray10"),
           legend.position = "none") +
     scale_x_continuous(limits = c(1, 100)) + 
     scale_y_continuous(limits = c(1, 100)) +
-    annotate(geom = "text", label = paste0("r = ", cor3), x = 25, y = 75)
+    annotate(geom = "text", label = paste0("r = ", cor3), x = 25, y = 75, size = rel(3))
 pho_1to1_vcmax_tpu
 ggsave(plot = pho_1to1_vcmax_tpu, "Figures/pho_1to1_vcmax_tpu.png")
 
@@ -1437,7 +1425,7 @@ pho_1to1_jmax_tpu <- ggplot(data = leaf_wide_jmax_tpu, mapping = aes(x = jmax_Tr
           legend.position = "none") +
     scale_x_continuous(limits = c(1, 130)) + 
     scale_y_continuous(limits = c(1, 130)) +
-    annotate(geom = "text", label = paste0("r = ", cor4), x = 100, y = 30)
+    annotate(geom = "text", label = paste0("r = ", cor4), x = 100, y = 30, size = rel(3))
 pho_1to1_jmax_tpu
 ggsave(plot = pho_1to1_jmax_tpu, "Figures/pho_1to1_datvtrad_jmax_tpu.png")
 
@@ -1469,9 +1457,9 @@ pho_1to1_tpu_tpu <- ggplot(data = only_tpu_fit, mapping = aes(x = tpu_Trad,
           legend.position = "none") +
     scale_x_continuous(limits = c(0, 12), breaks = c(0,3,6,9,12)) + 
     scale_y_continuous(limits = c(0, 12), breaks = c(0,3,6,9,12)) +
-    annotate(geom = "text", label = paste0("r = ", cor5), x = 4, y = 8)
+    annotate(geom = "text", label = paste0("r = ", cor5), x = 4, y = 8, size = rel(3))
 pho_1to1_tpu_tpu
-ggsave(plot = pho_1to1_tpu_tpu, "Figures/pho_1to1_datvtrad_tpu.png")
+ggsave(plot = pho_1to1_tpu_tpu, "Figures/figureS3.png")
 
 
 
@@ -1494,7 +1482,16 @@ gS <- ggplotGrob(pho_1to1_vcmax_NoTPU)
 gT <- ggplotGrob(sp_diff_hist_vc_notpu)
 
 fig2 <- grid.arrange(arrangeGrob(cbind(gQ, gR), arrangeGrob(cbind(gS, gT))))
-
 ggsave(plot = fig2, "Figures/figure2.png", width = 6.5, height = 5)
 
 
+
+# Figure 3 ----------------------------------------------------------------
+
+gQ2 <- ggplotGrob(pho_1to1_jmax_tpu)
+gR2 <- ggplotGrob(sp_diff_hist_j_tpu)
+gS2 <- ggplotGrob(pho_1to1_jmax_noTPU)
+gT2 <- ggplotGrob(sp_diff_hist_j_notpu)
+
+fig3 <- grid.arrange(arrangeGrob(cbind(gQ2, gR2), arrangeGrob(cbind(gS2, gT2))))
+ggsave(plot = fig3, "Figures/figure3.png", width = 6.5, height = 5)
