@@ -1,3 +1,4 @@
+# Load Packages
 library(tidyverse)
 library(readxl)
 
@@ -23,20 +24,20 @@ for (i in 1:length(aci_files_nm)) {
 
 # Assemble into one data file ---------------------------------------------
 
-## Make sure all the data have the same columns (in this case, the 6th and 7th are missing
-## some columns)
-Reduce(setdiff, list(colnames(`data_2022-08-06-1020_walkup_aci_clean.xlsx`), 
-        colnames(`data_2022-08-07-0941_walkup_aci_clean.xlsx`),
-        colnames(`data_2022-08-11-0904_walkup_aci_clean.xlsx`),
-        colnames(`data_2022-08-11-0949_walkup_aci_clean.xlsx`),
-        colnames(`data_2022-08-11-1050_walkup_aci_clean.xlsx`),
-        colnames(`data_2022-08-12-0928_walkup_aci_clean.xlsx`),
-        colnames(`data_2022-08-13-1007_walkup_aci_clean.xlsx`),
-        colnames(`data_2022-08-14-0906_walkup_aci_clean.xlsx`),
-        colnames(`data_2022-08-08-0854_walkup_aci_clean.xlsx`),
-        colnames(`data_2022-08-09-0911_walkup_aci_clean.xlsx`),
-        colnames(`data_2022-08-10-0854_walkup_aci_clean.xlsx`),
-        colnames(`data_2022-08-16-walkup_aci_clean.xlsx`))) #finds the unique columns
+# ## Make sure all the data have the same columns (in this case, the 6th and 7th are missing
+# ## some columns)
+# Reduce(setdiff, list(colnames(`data_2022-08-06-1020_walkup_aci_clean.xlsx`), 
+#         colnames(`data_2022-08-07-0941_walkup_aci_clean.xlsx`),
+#         colnames(`data_2022-08-11-0904_walkup_aci_clean.xlsx`),
+#         colnames(`data_2022-08-11-0949_walkup_aci_clean.xlsx`),
+#         colnames(`data_2022-08-11-1050_walkup_aci_clean.xlsx`),
+#         colnames(`data_2022-08-12-0928_walkup_aci_clean.xlsx`),
+#         colnames(`data_2022-08-13-1007_walkup_aci_clean.xlsx`),
+#         colnames(`data_2022-08-14-0906_walkup_aci_clean.xlsx`),
+#         colnames(`data_2022-08-08-0854_walkup_aci_clean.xlsx`),
+#         colnames(`data_2022-08-09-0911_walkup_aci_clean.xlsx`),
+#         colnames(`data_2022-08-10-0854_walkup_aci_clean.xlsx`),
+#         colnames(`data_2022-08-16-walkup_aci_clean.xlsx`))) #finds the unique columns
 
 
 ## Make a function to remove all the stability criteria columns, since they are uneven 
@@ -144,7 +145,8 @@ all_aci_cln_num <- all_aci_cln %>%
 
 ### adding a column for a four-letter species code and a column for species name
 complete_sp <- all_aci_cln_num %>% 
-  mutate(fourlettercode = Tree_Identifier, SciName = Tree_Identifier,
+  mutate(#fourlettercode = Tree_Identifier, 
+         #SciName = Tree_Identifier,
          k67.id = Tree_Identifier)
 
 # # complete_sp$fourlettercode <- recode(complete_sp$fourlettercode,

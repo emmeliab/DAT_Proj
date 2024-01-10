@@ -10,46 +10,23 @@ wd <- "C://Users/emmel/Desktop/DAT_proj/"
 setwd(wd)
 
 
-
-# Identify and Filter Outliers ---------------------------------------------------
 ## Load Data
-complete_sp <- read.csv("Inputs/clean_aci_with_uniquecode.csv", sep = ",", header = TRUE,
+complete_sp <- read.csv("3_Clean_data/clean_aci_with_uniquecode.csv", sep = ",", header = TRUE,
                         fileEncoding="latin1") 
 complete_sp <- filter(complete_sp, Data_QC == "OK") # All A/Ci curve data
 
 
+# Identify and Filter Outliers ---------------------------------------------------
 ## Identify Outliers and Write new data frame
-cmplt.rm_out <- filter(complete_sp, Ci > -5 & A < 40 & A > -1)
+cmplt.rm_out <- filter(complete_sp, Ci > -5 & A < 40 & A > -1) %>% 
+    mutate(Data_point = recode(Data_point, Before_DAT = "DAT", Traditional = "SS"),
+           curv_meth = Data_point)
 
 
 # Data frame without outliers
-write.csv(x = cmplt.rm_out, file = paste0(getwd(), "/Inputs/Aci_no_out.csv"), 
+write.csv(x = cmplt.rm_out, file = paste0(getwd(), "/3_Clean_data/Aci_no_out.csv"), 
           row.names = FALSE)
 
-
-
-# Load Filtered Data and Split into DAT and Trad  --------------------------
-library(greekLetters)
-
-## Load Filtered data
-cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
-
-
-### May not need
-## Separate into DF of DAT and Trad
-cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT") %>% 
-  select(-contains(greeks("Delta"))) # removes the columns with deltas
-head(cmplt_DAT)
-
-write.csv(x = cmplt_DAT, file = paste0(wd, "/Inputs/all_DAT_data_no_out.csv"), row.names = FALSE)
-
-
-cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional") %>% 
-  select(-contains(greeks("Delta")))
-cmplt_trad <- as.data.frame(cmplt_trad)
-head(cmplt_trad)
-
-write.csv(x = cmplt_trad, file = paste0(wd, "/Inputs/all_trad_data_no_out.csv"), row.names = FALSE)
 
 
 # Make a function to remove backwards points ------------------------------
@@ -83,25 +60,64 @@ cmplt.grp <- group_by(cmplt.rm_out, k67.id)
 
 ## Plot all ACi curves on one graph by tree
 ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = unique)) +
-  geom_point(mapping = aes(pch = Data_point)) +
+  geom_point(mapping = aes(pch = curv_meth)) +
   theme_classic()
 
 
 # Make and save plots for each leaf
 for (id in unique(cmplt.grp$unique)) {
     df1 <- cmplt.grp %>% filter(unique == id)
-    gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, shape = Data_point, color = Data_point)) +
+    gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, shape = curv_meth, color = curv_meth)) +
         geom_point(size = 3) +
         theme_classic() +
-        labs(y = expression("A"[net]*" ??mol "*m^{-2}*" "*s^{-1}), 
-             x = expression("C"[i]*" ??mol "* mol^{-1})) +
+        labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
+             x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1}))) +
         scale_shape_manual(name = "Method", labels = c("DAT", "Steady-State"), values = c(19, 17)) +
         scale_color_viridis_d(begin = 0.3, name = "Method", labels = c("DAT", "Steady-State")) +
         ggtitle(id)
     plot(gg1)
     filename1 <- paste0("plot_", id, ".png")
-    ggsave(filename1, gg1, path = paste0(getwd(), "/Figures/"))
+    ggsave(filename1, gg1, path = paste0(getwd(), "/6_Figures/"))
 }
+
+
+
+# Figure 1 ---------------------------------------------------------------------
+library(gridExtra)
+
+k6717l1 <- ggplot(data = filter(cmplt.grp, unique == "K6717L1"), mapping = aes(x = Ci, y = A, shape = curv_meth, color = curv_meth)) +
+    geom_point(size = 3) +
+    theme_classic() +
+    labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
+         x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1})),
+         tag = "a",
+         title = expression(italic("Aparisthmium cordatum")*", Leaf 1")) +
+    theme(plot.title = element_text(hjust = 0.5),
+          legend.position = "none") +
+    scale_shape_manual(name = "Method", labels = c("DAT", "Steady-State"), values = c(19, 17)) +
+    scale_color_viridis_d(begin = 0.3, name = "Method", labels = c("DAT", "Steady-State"))
+plot(k6717l1)
+
+k6707l2 <- ggplot(data = filter(cmplt.grp, unique == "K6707L2"), mapping = aes(x = Ci, y = A, shape = curv_meth, color = curv_meth)) +
+    geom_point(size = 3) +
+    theme_classic() +
+    labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
+         x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1})),
+         tag = "b",
+         title = expression(italic("Tachigali chrysophylla")*", Leaf 2")) +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    scale_shape_manual(name = "Method", labels = c("DAT", "Steady-State"), values = c(19, 17)) +
+    scale_color_viridis_d(begin = 0.3, name = "Method", labels = c("DAT", "Steady-State"))
+plot(k6707l2)
+
+g1 <- ggplotGrob(k6717l1)
+g2 <- ggplotGrob(k6707l2)
+
+
+fig1 <- grid.arrange(arrangeGrob(cbind(g1, g2)), heights = c(3,2))
+ggsave(plot = fig1, "6_Figures/figure1.png", width = 8, height = 5)
+
+
 
 
 
@@ -111,9 +127,9 @@ for (id in unique(cmplt.grp$unique)) {
 library(plantecophys)
 
 
-cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
-cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT")
-cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
+cmplt.rm_out <- read.csv(file = paste0(wd, "3_Clean_data/Aci_no_out.csv"), header = TRUE, sep = ",")
+cmplt_DAT <- filter(cmplt.rm_out, curv_meth == "DAT")
+cmplt_SS <- filter(cmplt.rm_out, curv_meth == "SS")
 
 
 DAT_filt <- cmplt_DAT %>%
@@ -149,7 +165,7 @@ coef(k6714l1_fit)
 
 
 # PDF file of all plots
-pdf(file = paste0(wd,"Figures/dataci_ecophys_no_TPU.pdf"), height=10, width=20)
+pdf(file = paste0(wd,"6_Figures/dataci_ecophys_no_TPU.pdf"), height=10, width=20)
 plot.new()
 for (curve in 1:33){
   title <- coef(DAT_fits_ecophys)$unique[[curve]]
@@ -178,20 +194,20 @@ table(par_dat$method) ## number of initial DAT curves
 
 
 
-# Fit the ACi curves for Traditional using fitacis
-trad_fits_ecophys <- fitacis(cmplt_trad, group = "unique", fitmethod = "bilinear",
+# Fit the ACi curves for SS using fitacis
+SS_fits_ecophys <- fitacis(cmplt_SS, group = "unique", fitmethod = "bilinear",
                              varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                              PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(trad_fits_ecophys[[14]], main = coef(trad_fits_ecophys)$unique[14])
-coef(trad_fits_ecophys)
+plot(SS_fits_ecophys[[14]], main = coef(SS_fits_ecophys)$unique[14])
+coef(SS_fits_ecophys)
 
 
 # Save all plots to a pdf
-pdf(file = paste0(wd,"Figures/tradaci_ecophys.pdf"), height=10, width=20)
+pdf(file = paste0(wd,"6_Figures/SSaci_ecophys.pdf"), height=10, width=20)
 plot.new()
 for (curve in 1:28){
-  title <- coef(trad_fits_ecophys)$unique[[curve]]
-  plot(trad_fits_ecophys[[curve]], main = title)
+  title <- coef(SS_fits_ecophys)$unique[[curve]]
+  plot(SS_fits_ecophys[[curve]], main = title)
 }
 dev.off()
 
@@ -200,21 +216,21 @@ dev.off()
 
 
 ## Make a dataframe of coefficients
-par_trad <- as.data.frame(coef(trad_fits_ecophys), row.names = NULL)
-#par_trad <- par_trad[-1,]
-par_trad <- par_trad %>% 
-  add_column(method = "trad")
+par_SS <- as.data.frame(coef(SS_fits_ecophys), row.names = NULL)
+#par_SS <- par_SS[-1,]
+par_SS <- par_SS %>% 
+  add_column(method = "SS")
 
 
 
 
 
-# Merge DAT and Trad coef dfs
-par_join <- bind_rows(par_dat, par_trad)
+# Merge DAT and SS coef dfs
+par_join <- bind_rows(par_dat, par_SS)
 head(par_join)
 
 
-write.csv(x = par_join, file = paste0(wd, "/Results/params_ecophys_no_TPU.csv"), row.names = FALSE)
+write.csv(x = par_join, file = paste0(wd, "/5_Results/params_ecophys_no_TPU.csv"), row.names = FALSE)
 
 
 
@@ -224,9 +240,9 @@ write.csv(x = par_join, file = paste0(wd, "/Results/params_ecophys_no_TPU.csv"),
 
 library(photosynthesis)
 
-cmplt.rm_out <- read.csv(file = paste0(wd, "Inputs/Aci_no_out.csv"), header = TRUE, sep = ",")
-cmplt_DAT <- filter(cmplt.rm_out, Data_point == "Before_DAT")
-cmplt_trad <- filter(cmplt.rm_out, Data_point == "Traditional")
+cmplt.rm_out <- read.csv(file = paste0(wd, "/3_Clean_data/Aci_no_out.csv"), header = TRUE, sep = ",")
+cmplt_DAT <- filter(cmplt.rm_out, curv_meth == "DAT")
+cmplt_SS <- filter(cmplt.rm_out, curv_meth == "SS")
 
 
 DAT_filt_ex <- cmplt_DAT %>%
@@ -237,20 +253,20 @@ DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 
 # Convert leaf temperature to Kelvin
 cmplt_DAT$Tleaf <- cmplt_DAT$Tleaf + 273
-cmplt_trad$Tleaf <- cmplt_trad$Tleaf + 273
+cmplt_SS$Tleaf <- cmplt_SS$Tleaf + 273
 DAT_filt_ex$Tleaf <- DAT_filt_ex$Tleaf + 273
-cmplt_trad <- as.data.frame(cmplt_trad)
+cmplt_SS <- as.data.frame(cmplt_SS)
 
 
 
-# fitting many curves at a time: NO TPU --------------------------------------------------
-trad_fits_photo_noTPU <- fit_many(data = cmplt_trad, fitTPU = FALSE,
+# Fitting all curves Without TPU --------------------------------------------------
+SS_fits_photo_noTPU <- fit_many(data = cmplt_SS, fitTPU = FALSE,
                             varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                             funct = fit_aci_response,
                             group = "unique")
-trad_fits_photo_graphs_noTPU <- compile_data(trad_fits_photo_noTPU,
+SS_fits_photo_graphs_noTPU <- compile_data(SS_fits_photo_noTPU,
                                        list_element = 2)
-trad_fits_photo_pars_noTPU <- compile_data(trad_fits_photo_noTPU,
+SS_fits_photo_pars_noTPU <- compile_data(SS_fits_photo_noTPU,
                                      output_type = "dataframe",
                                      list_element = 1)
 
@@ -265,25 +281,25 @@ dat_fits_photo_pars_noTPU <- compile_data(dat_fits_photo_noTPU,
                                     output_type = "dataframe",
                                     list_element = 1)
 
-write.csv(x = trad_fits_photo_pars_noTPU, file = paste0(wd, "Results/trad_fits_photo_pars_no_TPU.csv"),
+######### Should we bother to keep these if we have the corrected outputs??
+write.csv(x = SS_fits_photo_pars_noTPU, file = paste0(wd, "/5_Results/SS_fits_photo_pars_noTPU.csv"),
           row.names = FALSE)
 
-write.csv(x = dat_fits_photo_pars_noTPU, file = paste0(wd, "Results/dat_fits_photo_pars_filt_no_TPU.csv"),
+write.csv(x = dat_fits_photo_pars_noTPU, file = paste0(wd, "/5_Results/dat_fits_photo_pars_filt_no_TPU.csv"),
           row.names = FALSE)
 
 
 
-#Write PDF of outputs
-
-pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_no_TPU.pdf"))
+# Make .pdf files with all fitted figures
+pdf(file = paste0(wd,"/6_Figures/SS_fits_photo_figs_no_TPU.pdf"))
 plot.new()
-for (curve in 1:nrow(trad_fits_photo_pars_noTPU)){
-    plot(trad_fits_photo_graphs_noTPU[[curve]])
+for (curve in 1:nrow(SS_fits_photo_pars_noTPU)){
+    plot(SS_fits_photo_graphs_noTPU[[curve]])
 }
 dev.off()
 
 
-pdf(file = paste0(wd,"Figures/dat_fits_photo_figs_filt_no_TPU.pdf"))
+pdf(file = paste0(wd,"/6_Figures/dat_fits_photo_figs_filt_no_TPU.pdf"))
 plot.new()
 for (curve in 1:nrow(dat_fits_photo_pars_noTPU)){
     plot(dat_fits_photo_graphs_noTPU[[curve]])
@@ -291,14 +307,14 @@ for (curve in 1:nrow(dat_fits_photo_pars_noTPU)){
 dev.off()
 
 
-# fitting many curves at a time: WITH TPU --------------------------------------------------
-trad_fits_photo <- fit_many(data = cmplt_trad, fitTPU = TRUE,
+# Fitting all curves WITH TPU --------------------------------------------------
+SS_fits_photo <- fit_many(data = cmplt_SS, fitTPU = TRUE,
                             varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                             funct = fit_aci_response,
                             group = "unique")
-trad_fits_photo_graphs <- compile_data(trad_fits_photo,
+SS_fits_photo_graphs <- compile_data(SS_fits_photo,
                                        list_element = 2)
-trad_fits_photo_pars <- compile_data(trad_fits_photo,
+SS_fits_photo_pars <- compile_data(SS_fits_photo,
                                      output_type = "dataframe",
                                      list_element = 1)
 
@@ -314,25 +330,24 @@ dat_fits_photo_pars <- compile_data(dat_fits_photo,
                                     list_element = 1)
 
 
-
-write.csv(x = trad_fits_photo_pars, file = paste0(wd, "Results/trad_fits_photo_pars.csv"),
+######## same question; do we keep?
+write.csv(x = SS_fits_photo_pars, file = paste0(wd, "/5_Results/SS_fits_photo_pars.csv"),
           row.names = FALSE)
 
-write.csv(x = dat_fits_photo_pars, file = paste0(wd, "Results/dat_fit_ex_photo_pars.csv"),
+write.csv(x = dat_fits_photo_pars, file = paste0(wd, "/5_Results/dat_fit_ex_photo_pars.csv"),
           row.names = FALSE)
 
 
 
-#Write PDF of outputs
-
-pdf(file = paste0(wd,"Figures/trad_fits_photo_figs_with_TPU.pdf"))
+# Write .pdfs files with all fitted figures
+pdf(file = paste0(wd,"/6_Figures/SS_fits_photo_figs_with_TPU.pdf"))
 plot.new()
-for (curve in 1:nrow(trad_fits_photo_pars)){
-    plot(trad_fits_photo_graphs[[curve]])
+for (curve in 1:nrow(SS_fits_photo_pars)){
+    plot(SS_fits_photo_graphs[[curve]])
 }
 dev.off()
 
-pdf(file = paste0(wd,"Figures/dat_fits_photo_figs_filt_with_TPU.pdf"))
+pdf(file = paste0(wd,"/6_Figures/dat_fits_photo_figs_filt_with_TPU.pdf"))
 plot.new()
 for (curve in 1:nrow(dat_fits_photo_pars)){ 
     plot(dat_fits_photo_graphs[[curve]])
@@ -341,26 +356,26 @@ dev.off()
 
 
 #Temperature correction: For NO TPU data -------------------------------
-cmplt.rm_out <- read_csv("~/Documents/GitHub/DAT_Proj/Inputs/Aci_no_out.csv")
-pars_photo_dat <- read_csv("~/Documents/GitHub/DAT_Proj/Results/dat_fits_photo_pars_filt_no_TPU.csv")
-pars_photo_trad <- read_csv("~/Documents/GitHub/DAT_Proj/Results/trad_fits_photo_pars_no_TPU.csv")
+cmplt.rm_out <- read_csv(paste0(wd, "/3_Clean_data/Aci_no_out.csv"))
+pars_photo_dat <- read_csv(paste0(wd, "/5_Results/dat_fits_photo_pars_filt_no_TPU.csv"))
+pars_photo_SS <- read_csv(paste0(wd, "/5_Results/SS_fits_photo_pars_no_TPU.csv"))
 
 grp_curv <- cmplt.rm_out %>% 
-    group_by(Data_point, unique) %>% 
+    group_by(curv_meth, unique) %>% 
     summarize(meanTleaf = mean(Tleaf)) %>% 
     mutate(meanTleafK = meanTleaf + 273.15)
 grp_curv2 <- grp_curv %>% 
     rename(ID = unique)
-grp_dat <- filter(grp_curv2, Data_point == "Before_DAT")
-grp_trad <- filter(grp_curv2, Data_point == "Traditional")
+grp_dat <- filter(grp_curv2, curv_meth == "DAT")
+grp_SS <- filter(grp_curv2, curv_meth == "SS")
 
 pars_photo_dat$method <- "DAT"
-pars_photo_trad$method <- "Traditional"
+pars_photo_SS$method <- "SS"
 
 curv_dat_temp <- left_join(by = "ID", pars_photo_dat, grp_dat)
-curv_trad_temp <- left_join(by = "ID", pars_photo_trad, grp_trad)
+curv_SS_temp <- left_join(by = "ID", pars_photo_SS, grp_SS)
 
-###Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
+### Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
 R             <- 0.008314    # Gas constant
 R2            <- R * 1000
 Kc   		      <- 40.49		   # Michaelis-Menten constant for CO2 (Pa) (Bernacchi et al 2001,2002) or 404.9 microbar von Caemmerer et al. (1994)
@@ -406,47 +421,47 @@ meanTleafK <- curv_dat_temp$meanTleafK
 best_Vcmax_25C_dat        <- Vc_peaked_25C(curv_dat_temp[[2]],Ea_V, Delta_V, Ed)
 best_Jmax_25C_dat         <- J_peaked_25C(curv_dat_temp[[4]], Ea_J, Delta_J, Ed)
 
-meanTleafK <- curv_trad_temp$meanTleafK
+meanTleafK <- curv_SS_temp$meanTleafK
 
-best_Vcmax_25C_trad        <- Vc_peaked_25C(curv_trad_temp[[2]],Ea_V, Delta_V, Ed)
-best_Jmax_25C_trad         <- J_peaked_25C(curv_trad_temp[[4]], Ea_J, Delta_J, Ed)
+best_Vcmax_25C_SS        <- Vc_peaked_25C(curv_SS_temp[[2]],Ea_V, Delta_V, Ed)
+best_Jmax_25C_SS         <- J_peaked_25C(curv_SS_temp[[4]], Ea_J, Delta_J, Ed)
 
 dat_corrected <- curv_dat_temp %>% 
     mutate(Best_Vcmax_25C = best_Vcmax_25C_dat,
            Best_Jmax_25C = best_Jmax_25C_dat)
 
-trad_corrected <- curv_trad_temp %>% 
-    mutate(Best_Vcmax_25C = best_Vcmax_25C_trad,
-           Best_Jmax_25C = best_Jmax_25C_trad)
+SS_corrected <- curv_SS_temp %>% 
+    mutate(Best_Vcmax_25C = best_Vcmax_25C_SS,
+           Best_Jmax_25C = best_Jmax_25C_SS)
 
-#Write csvs
 
+# Write .csv files for corrected data
 write.csv(x = dat_corrected, file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"),
           row.names = FALSE)
 
-write.csv(x = trad_corrected, file = paste0(wd, "Results/trad_fits_photo_pars_correct_no_TPU.csv"),
+write.csv(x = SS_corrected, file = paste0(wd, "Results/SS_fits_photo_pars_correct_no_TPU.csv"),
           row.names = FALSE)
 
 
-#Temperature correction: For WITH TPU data -------------------------------
-cmplt.rm_out <- read_csv("~/Documents/GitHub/DAT_Proj/Inputs/Aci_no_out.csv")
-pars_photo_dat <- read_csv("~/Documents/GitHub/DAT_Proj/Results/dat_fit_ex_photo_pars.csv")
-pars_photo_trad <- read_csv("~/Documents/GitHub/DAT_Proj/Results/trad_fits_photo_pars.csv")
+# Temperature correction: For WITH TPU data -------------------------------
+cmplt.rm_out <- read_csv(paste0(wd, "/3_Clean_data/Aci_no_out.csv"))
+pars_photo_dat <- read_csv(paste0(wd, "/5_Results/dat_fits_photo_pars_filt_no_TPU.csv"))
+pars_photo_SS <- read_csv(paste0(wd, "/5_Results/SS_fits_photo_pars_no_TPU.csv"))
 
 grp_curv <- cmplt.rm_out %>% 
-    group_by(Data_point, unique) %>% 
+    group_by(curv_meth, unique) %>% 
     summarize(meanTleaf = mean(Tleaf)) %>% 
     mutate(meanTleafK = meanTleaf + 273.15)
 grp_curv2 <- grp_curv %>% 
     rename(ID = unique)
-grp_dat <- filter(grp_curv2, Data_point == "Before_DAT")
-grp_trad <- filter(grp_curv2, Data_point == "Traditional")
+grp_dat <- filter(grp_curv2, curv_meth == "DAT")
+grp_SS <- filter(grp_curv2, curv_meth == "SS")
 
 pars_photo_dat$method <- "DAT"
-pars_photo_trad$method <- "Traditional"
+pars_photo_SS$method <- "SS"
 
 curv_dat_temp <- left_join(by = "ID", pars_photo_dat, grp_dat)
-curv_trad_temp <- left_join(by = "ID", pars_photo_trad, grp_trad)
+curv_SS_temp <- left_join(by = "ID", pars_photo_SS, grp_SS)
 
 ###Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
 R             <- 0.008314    # Gas constant
@@ -494,22 +509,22 @@ meanTleafK <- curv_dat_temp$meanTleafK
 best_Vcmax_25C_dat        <- Vc_peaked_25C(curv_dat_temp[[2]],Ea_V, Delta_V, Ed)
 best_Jmax_25C_dat         <- J_peaked_25C(curv_dat_temp[[4]], Ea_J, Delta_J, Ed)
 
-meanTleafK <- curv_trad_temp$meanTleafK
+meanTleafK <- curv_SS_temp$meanTleafK
 
-best_Vcmax_25C_trad        <- Vc_peaked_25C(curv_trad_temp[[2]],Ea_V, Delta_V, Ed)
-best_Jmax_25C_trad         <- J_peaked_25C(curv_trad_temp[[4]], Ea_J, Delta_J, Ed)
+best_Vcmax_25C_SS        <- Vc_peaked_25C(curv_SS_temp[[2]],Ea_V, Delta_V, Ed)
+best_Jmax_25C_SS         <- J_peaked_25C(curv_SS_temp[[4]], Ea_J, Delta_J, Ed)
 
 dat_corrected <- curv_dat_temp %>% 
     mutate(Best_Vcmax_25C = best_Vcmax_25C_dat,
            Best_Jmax_25C = best_Jmax_25C_dat)
 
-trad_corrected <- curv_trad_temp %>% 
-    mutate(Best_Vcmax_25C = best_Vcmax_25C_trad,
-           Best_Jmax_25C = best_Jmax_25C_trad)
+SS_corrected <- curv_SS_temp %>% 
+    mutate(Best_Vcmax_25C = best_Vcmax_25C_SS,
+           Best_Jmax_25C = best_Jmax_25C_SS)
 
-#Write csvs
 
-write.csv(x = trad_corrected, file = paste0(wd, "Results/trad_fits_photo_pars_correct_with_TPU.csv"),
+## Write .csv files for temperature corrected data
+write.csv(x = SS_corrected, file = paste0(wd, "Results/SS_fits_photo_pars_correct_with_TPU.csv"),
           row.names = FALSE)
 
 write.csv(x = dat_corrected, file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_with_TPU.csv"),
