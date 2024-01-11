@@ -15,26 +15,26 @@ library(gridExtra)
 library(reshape2)
 
 
-wd <- "C://Users/emmel/Desktop/DAT_proj/"
+wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
 setwd(wd)
 
 # Subest the datasets -------------------------------------------
 
 ### Excluding K6709L3 as the SS curve was not a matched pair with the DAT curve
-pho_dat <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"), sep = ",", 
+pho_dat <- read.csv(file = paste0(wd, "5_Results/dat_fits_photo_pars_filt_correct_no_TPU.csv"), sep = ",", 
                     header = TRUE, na.strings = 1000) %>% ## TPU values at 1000 are coded as NA
     subset(ID != "K6709L3")
 
-pho_SS <- read.csv(file = paste0(wd, "Results/SS_fits_photo_pars_correct_no_TPU.csv"), sep = ",", 
+pho_SS <- read.csv(file = paste0(wd, "5_Results/trad_fits_photo_pars_correct_no_TPU.csv"), sep = ",", 
                      header = TRUE, na.strings = 1000) %>% 
     subset(ID != "K6709L3")
 
 
-pho_dat_tpu <- read.csv(file = paste0(wd, "Results/dat_fits_photo_pars_filt_correct_with_TPU.csv"), sep = ",", 
+pho_dat_tpu <- read.csv(file = paste0(wd, "5_Results/dat_fits_photo_pars_filt_correct_with_TPU.csv"), sep = ",", 
                         header = TRUE, na.strings = 1000) %>%  ## TPU values at 1000 are coded as NA
     subset(ID != "K6709L3")
 
-pho_SS_tpu <- read.csv(file = paste0(wd, "Results/SS_fits_photo_pars_correct_with_TPU.csv"), sep = ",", 
+pho_SS_tpu <- read.csv(file = paste0(wd, "5_Results/trad_fits_photo_pars_correct_with_TPU.csv"), sep = ",", 
                          header = TRUE, na.strings = 1000) %>% 
     subset(ID != "K6709L3")
 
@@ -154,6 +154,7 @@ dat_res_tpu_summ <- filter(all_res_tpu_summ, curv_meth == "DAT") %>%
     rename(dat_vcmax = vcmax,
            dat_jmax = jmax)
 
+#This is Steady State vcmax and jmax for each leaf
 ss_res_tpu_summ <- filter(all_res_tpu_summ, curv_meth == "SS") %>% 
     rename(ss_vcmax = vcmax,
            ss_jmax = jmax)
@@ -178,9 +179,44 @@ rel_can_pos <- c(11, 5.1, 6, 4, 2, 3, 1, 10, 12, 8, 7, 9, 5.2)
 all_diff_tpu$rel_can_pos <- rel_can_pos
 all_diff_tpu <- all_diff_tpu[order(all_diff_tpu$rel_can_pos, decreasing = TRUE),]
 
-codebook <- read_csv("Results/id_codebook.csv") %>% arrange(desc(rel_can_pos)) %>% select(-c(overshoot, treeid, rel_can_pos))
+codebook <- read_csv("5_Results/id_codebook.csv") %>% arrange(desc(rel_can_pos)) %>% select(-c(overshoot, treeid, rel_can_pos))
 
 all_diff_tpu_codes <- left_join(all_diff_tpu, codebook, by = "treename")
+
+
+
+
+
+#Table S1 summary ------------------------------------------
+## NEED TO REARRANGE! CHARLIE MADE THIS ON 1/11/24
+
+pho_stat_tpu <- select(pho_leaf_tpu, 'curv_meth', 'Best_Vcmax_25C', 'Best_Jmax_25C', 'V_TPU', 
+                       'ID', 'leaf_unique', 'V_cmax_se', 'J_se', 'V_TPU_se')
+pho_stat_tpu_ss <- rename(pho_stat_tpu,
+                       vcmax = Best_Vcmax_25C,
+                       jmax = Best_Jmax_25C,
+                       tpu = V_TPU,
+                       vcmax_se = V_cmax_se,
+                       jmax_se = J_se,
+                       leaf_id = ID) %>% 
+    mutate(fit_type = "tpu") %>% 
+    filter(curv_meth == "SS")
+
+treename <- as.numeric(substring(pho_stat_tpu_ss$leaf_unique, 4, 5))
+
+pho_stat_tpu_ss$treename <- treename
+
+ss_keyparams_tpu <- pho_stat_tpu_ss %>% group_by(treename) %>% summarize(mean_vcmax = mean(vcmax),
+                                                                         sd_vcmax = sd(vcmax),
+                                                                         mean_jmax = mean(jmax),
+                                                                         sd_jmax = sd(jmax))
+
+ss_keyparams_tpu_codes <- left_join(ss_keyparams_tpu, codebook, by = "treename")
+
+######### END AWKWARD SECTION
+
+
+
 
 
 

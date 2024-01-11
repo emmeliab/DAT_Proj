@@ -45,7 +45,7 @@ exclude_backwardsCi <- function(data, givedf){
 # # Apply function to tibble. if .keep = TRUE this throws an error
 # # Additional info: https://stackoverflow.com/questions/63412850/managing-dplyr-group-by-function-to-keep-the-grouping-variable-when-used-in-comb
 # DAT_filt_ex <- DAT_filt %>%
-#   group_by(unique) %>%
+#   group_by(unique_id) %>%
 #   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
 # DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 
@@ -55,18 +55,18 @@ exclude_backwardsCi <- function(data, givedf){
 
 # Plotting ACi Curves -----------------------------------------------------
 
-cmplt.grp <- group_by(cmplt.rm_out, k67.id)
+cmplt.grp <- group_by(cmplt.rm_out, unique_id)
 
 
 ## Plot all ACi curves on one graph by tree
-ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = unique)) +
+ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = unique_id)) +
   geom_point(mapping = aes(pch = curv_meth)) +
   theme_classic()
 
 
 # Make and save plots for each leaf
-for (id in unique(cmplt.grp$unique)) {
-    df1 <- cmplt.grp %>% filter(unique == id)
+for (id in unique(cmplt.grp$unique_id)) {
+    df1 <- cmplt.grp %>% filter(unique_id == id)
     gg1 <- ggplot(data = df1, mapping = aes(x = Ci, y = A, shape = curv_meth, color = curv_meth)) +
         geom_point(size = 3) +
         theme_classic() +
@@ -85,7 +85,7 @@ for (id in unique(cmplt.grp$unique)) {
 # Figure 1 ---------------------------------------------------------------------
 library(gridExtra)
 
-k6717l1 <- ggplot(data = filter(cmplt.grp, unique == "K6717L1"), mapping = aes(x = Ci, y = A, shape = curv_meth, color = curv_meth)) +
+k6717l1 <- ggplot(data = filter(cmplt.grp, unique_id == "K6717L1"), mapping = aes(x = Ci, y = A, shape = curv_meth, color = curv_meth)) +
     geom_point(size = 3) +
     theme_classic() +
     labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
@@ -98,7 +98,7 @@ k6717l1 <- ggplot(data = filter(cmplt.grp, unique == "K6717L1"), mapping = aes(x
     scale_color_viridis_d(begin = 0.3, name = "Method", labels = c("DAT", "Steady-State"))
 plot(k6717l1)
 
-k6707l2 <- ggplot(data = filter(cmplt.grp, unique == "K6707L2"), mapping = aes(x = Ci, y = A, shape = curv_meth, color = curv_meth)) +
+k6707l2 <- ggplot(data = filter(cmplt.grp, unique_id == "K6707L2"), mapping = aes(x = Ci, y = A, shape = curv_meth, color = curv_meth)) +
     geom_point(size = 3) +
     theme_classic() +
     labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
@@ -133,7 +133,7 @@ cmplt_SS <- filter(cmplt.rm_out, curv_meth == "SS")
 
 
 DAT_filt <- cmplt_DAT %>%
-  group_by(unique) %>%
+  group_by(unique_id) %>%
   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
 DAT_filt <- as.data.frame(DAT_filt)
 
@@ -141,19 +141,19 @@ DAT_filt <- as.data.frame(DAT_filt)
 
 
 ## Remove K6714L1, since it acts weird with fitacis
-DAT_filt_ex <- filter(DAT_filt_ex, unique != "K6714L1") %>% 
+DAT_filt_ex <- filter(DAT_filt_ex, unique_id != "K6714L1") %>% 
     as.data.frame()
 
 
 ## Fit the ACi curves for each species for DAT using fitacis
-DAT_fits_ecophys <- fitacis(DAT_filt_ex, group = "unique", fitmethod = "bilinear",
+DAT_fits_ecophys <- fitacis(DAT_filt_ex, group = "unique_id", fitmethod = "bilinear",
                             varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                             PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(DAT_fits_ecophys[[23]], main = coef(DAT_fits_ecophys)$unique[[23]])
+plot(DAT_fits_ecophys[[23]], main = coef(DAT_fits_ecophys)$unique_id[[23]])
 coef(DAT_fits_ecophys)
 
 ### Run K6706L1 separately, since it gives a weird curve
-k6714l1 <- filter(DAT_filt, unique == "K6714L1")
+k6714l1 <- filter(DAT_filt, unique_id == "K6714L1")
 k6714l1_fit <- fitaci(k6714l1, fitmethod = "bilinear", 
                       varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                       PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE,
@@ -168,7 +168,7 @@ coef(k6714l1_fit)
 pdf(file = paste0(wd,"6_Figures/dataci_ecophys_no_TPU.pdf"), height=10, width=20)
 plot.new()
 for (curve in 1:33){
-  title <- coef(DAT_fits_ecophys)$unique[[curve]]
+  title <- coef(DAT_fits_ecophys)$unique_id[[curve]]
   plot(DAT_fits_ecophys[[curve]], main = title)
 }
 plot(k6714l1_fit, main = "K6714L1")
@@ -195,10 +195,10 @@ table(par_dat$method) ## number of initial DAT curves
 
 
 # Fit the ACi curves for SS using fitacis
-SS_fits_ecophys <- fitacis(cmplt_SS, group = "unique", fitmethod = "bilinear",
+SS_fits_ecophys <- fitacis(cmplt_SS, group = "unique_id", fitmethod = "bilinear",
                              varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                              PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(SS_fits_ecophys[[14]], main = coef(SS_fits_ecophys)$unique[14])
+plot(SS_fits_ecophys[[14]], main = coef(SS_fits_ecophys)$unique_id[14])
 coef(SS_fits_ecophys)
 
 
@@ -206,7 +206,7 @@ coef(SS_fits_ecophys)
 pdf(file = paste0(wd,"6_Figures/SSaci_ecophys.pdf"), height=10, width=20)
 plot.new()
 for (curve in 1:28){
-  title <- coef(SS_fits_ecophys)$unique[[curve]]
+  title <- coef(SS_fits_ecophys)$unique_id[[curve]]
   plot(SS_fits_ecophys[[curve]], main = title)
 }
 dev.off()
@@ -246,7 +246,7 @@ cmplt_SS <- filter(cmplt.rm_out, curv_meth == "SS")
 
 
 DAT_filt_ex <- cmplt_DAT %>%
-  group_by(unique) %>%
+  group_by(unique_id) %>%
   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
 DAT_filt_ex <- as.data.frame(DAT_filt_ex)
 
@@ -263,7 +263,7 @@ cmplt_SS <- as.data.frame(cmplt_SS)
 SS_fits_photo_noTPU <- fit_many(data = cmplt_SS, fitTPU = FALSE,
                             varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                             funct = fit_aci_response,
-                            group = "unique")
+                            group = "unique_id")
 SS_fits_photo_graphs_noTPU <- compile_data(SS_fits_photo_noTPU,
                                        list_element = 2)
 SS_fits_photo_pars_noTPU <- compile_data(SS_fits_photo_noTPU,
@@ -274,7 +274,7 @@ SS_fits_photo_pars_noTPU <- compile_data(SS_fits_photo_noTPU,
 dat_fits_photo_noTPU <- fit_many(data = DAT_filt_ex, fitTPU = FALSE,
                            varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                            funct = fit_aci_response,
-                           group = "unique")
+                           group = "unique_id")
 dat_fits_photo_graphs_noTPU <- compile_data(dat_fits_photo_noTPU,
                                       list_element = 2)
 dat_fits_photo_pars_noTPU <- compile_data(dat_fits_photo_noTPU,
@@ -311,7 +311,7 @@ dev.off()
 SS_fits_photo <- fit_many(data = cmplt_SS, fitTPU = TRUE,
                             varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                             funct = fit_aci_response,
-                            group = "unique")
+                            group = "unique_id")
 SS_fits_photo_graphs <- compile_data(SS_fits_photo,
                                        list_element = 2)
 SS_fits_photo_pars <- compile_data(SS_fits_photo,
@@ -322,7 +322,7 @@ SS_fits_photo_pars <- compile_data(SS_fits_photo,
 dat_fits_photo <- fit_many(data = DAT_filt_ex, fitTPU = TRUE,## uses the back-filtered data
                            varnames = list(A_net = "A", T_leaf = "Tleaf", C_i = "Ci", PPFD = "Qin"), 
                            funct = fit_aci_response,
-                           group = "unique")
+                           group = "unique_id")
 dat_fits_photo_graphs <- compile_data(dat_fits_photo,
                                       list_element = 2)
 dat_fits_photo_pars <- compile_data(dat_fits_photo,
@@ -358,19 +358,16 @@ dev.off()
 #Temperature correction: For NO TPU data -------------------------------
 cmplt.rm_out <- read_csv(paste0(wd, "/3_Clean_data/Aci_no_out.csv"))
 pars_photo_dat <- read_csv(paste0(wd, "/5_Results/dat_fits_photo_pars_filt_no_TPU.csv"))
-pars_photo_SS <- read_csv(paste0(wd, "/5_Results/SS_fits_photo_pars_no_TPU.csv"))
+pars_photo_SS <- read_csv(paste0(wd, "/5_Results/trad_fits_photo_pars_no_TPU.csv"))
 
 grp_curv <- cmplt.rm_out %>% 
-    group_by(curv_meth, unique) %>% 
+    group_by(curv_meth, unique_id) %>% 
     summarize(meanTleaf = mean(Tleaf)) %>% 
     mutate(meanTleafK = meanTleaf + 273.15)
 grp_curv2 <- grp_curv %>% 
-    rename(ID = unique)
+    rename(ID = unique_id)
 grp_dat <- filter(grp_curv2, curv_meth == "DAT")
 grp_SS <- filter(grp_curv2, curv_meth == "SS")
-
-pars_photo_dat$method <- "DAT"
-pars_photo_SS$method <- "SS"
 
 curv_dat_temp <- left_join(by = "ID", pars_photo_dat, grp_dat)
 curv_SS_temp <- left_join(by = "ID", pars_photo_SS, grp_SS)
@@ -449,16 +446,13 @@ pars_photo_dat <- read_csv(paste0(wd, "/5_Results/dat_fits_photo_pars_filt_no_TP
 pars_photo_SS <- read_csv(paste0(wd, "/5_Results/SS_fits_photo_pars_no_TPU.csv"))
 
 grp_curv <- cmplt.rm_out %>% 
-    group_by(curv_meth, unique) %>% 
+    group_by(curv_meth, unique_id) %>% 
     summarize(meanTleaf = mean(Tleaf)) %>% 
     mutate(meanTleafK = meanTleaf + 273.15)
 grp_curv2 <- grp_curv %>% 
-    rename(ID = unique)
+    rename(ID = unique_id)
 grp_dat <- filter(grp_curv2, curv_meth == "DAT")
 grp_SS <- filter(grp_curv2, curv_meth == "SS")
-
-pars_photo_dat$method <- "DAT"
-pars_photo_SS$method <- "SS"
 
 curv_dat_temp <- left_join(by = "ID", pars_photo_dat, grp_dat)
 curv_SS_temp <- left_join(by = "ID", pars_photo_SS, grp_SS)
