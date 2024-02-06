@@ -863,7 +863,7 @@ nd_complete %>%
     wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
     add_significance()
 
-
+#####
 
 
 # TPU Wilcoxon
