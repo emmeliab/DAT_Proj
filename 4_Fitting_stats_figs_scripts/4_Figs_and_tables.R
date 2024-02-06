@@ -35,7 +35,7 @@ pho_nd_stat_tpu <- read.csv(here("3_Clean_data/pho_nd_stat_tpu.csv"))
 ids <- read.csv(here("3_Clean_data/id_codebook.csv")) #%>% 
     #rename(treeid = ï..treeid)
 
-
+###
 
 # Plot Curves with Clean Data (not fit) ------------------------------------------------
 
@@ -67,7 +67,7 @@ for (id in unique(cmplt.grp$unique_id)) {
 
 
 
-
+###
 
 # Figure 1: Overshoot and no-overshoot comparison ---------------------------------
 
@@ -113,7 +113,7 @@ fig1 <- grid.arrange(arrangeGrob(cbind(g1, g2)))
 ggsave(plot = fig1, here("6_Figures/figure1.png"), width = 8, height = 3)
 
 
-
+###
 
 # Figure 2: Vcmax 1:1 and Density of Differences --------------------------------------
 
@@ -266,7 +266,7 @@ fig2 <- grid.arrange(arrangeGrob(gQ, left = TPU), gR, arrangeGrob(gS, left = noT
 
 ggsave(plot = fig2, here("6_Figures/figure2.png"), width = 6.5, height = 5)
 
-
+###
 
 # Figure 3: Jmax 1:1 and Density of Differences ----------------------------------------------------------------
 
@@ -401,8 +401,9 @@ gT2 <- ggplotGrob(sp_diff_hist_j_notpu)
 
 fig3 <- grid.arrange(arrangeGrob(cbind(gQ2, gR2), arrangeGrob(cbind(gS2, gT2))))
 
-ggsave(plot = fig3, "Figures/figure3.png", width = 6.5, height = 5)
+ggsave(plot = fig3, "6_Figures/figure3.png", width = 6.5, height = 5)
 
+###
 
 # Figure 4 Histograms of differences by species, sorted by relative canopy height ----------
 
@@ -509,7 +510,7 @@ plot_arranged3 <- grid.arrange(arrangeGrob(cbind(gA, gB), arrangeGrob(cbind(gC, 
 ggsave(plot = plot_arranged3, here("6_Figures/figure4.png"), width = 8.3, height = 5)
 
 
-
+###
 
 # Table S1: Summary stats for SS, TPU-enabled parameters------------------------------------------
 
@@ -532,6 +533,7 @@ ss_keyparams_tpu_codes <- left_join(ss_keyparams_tpu, ids, by = "treeid")
 # Sort the dataframe by rel_can_pos in ascending order
 sorted_df <- ss_keyparams_tpu_codes[order(ss_keyparams_tpu_codes$rel_can_pos), ]
 
+###
 
 # Figure S3: TPU 1:1 -------------------------------------------------------
 
@@ -573,10 +575,7 @@ pho_1to1_tpu_tpu
 # ggsave(plot = pho_1to1_tpu_tpu, here("6_Figures/figureS3.png"))
 
 
-
-
-
-
+###
 
 # Figure S4: Double Boxplots: All v No OS --------------------------------------------
 
@@ -691,7 +690,7 @@ figS4 <- grid.arrange(
 
 ggsave(plot = figS4, here("6_Figures/figureS4.png"), width = 6.5, height = 5)
 
-
+###
 
 # Figure S5: Density distribution of standard errors ---------------------------------
 
@@ -934,7 +933,7 @@ se_arranged <- grid.arrange(arrangeGrob(cbind(gM, gN), arrangeGrob(cbind(gO, gP)
 
 ggsave(plot = se_arranged, here("6_Figures/figureS5.png"), width = 6.5, height = 5)
 
-
+###
 
 # TPU v. No TPU Boxplots --------------------------------------------------------------
 
@@ -1018,8 +1017,4 @@ ggsave(plot = se_arranged, here("6_Figures/figureS5.png"), width = 6.5, height =
 #           axis.text.y = element_text(size = 13, family = "serif", color = "grey10"))
 # jmax_nOS_TPUvNoTPU
 # # ggsave(plot = jmax_nOS_TPUvNoTPU, here("6_Figures/box_jmax_nOS_TPUvNoTPU.png"))
-# 
-# 
-# 
-# 
 # 
