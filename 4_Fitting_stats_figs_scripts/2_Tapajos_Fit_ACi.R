@@ -16,7 +16,7 @@ library(here)
 # Load Data and Filter DAT and SS ------------------------------------------------
 
 cmplt.rm_out <- read.csv(file = here("3_Clean_data/clean_aci_noOutliers.csv"),
-                         header = TRUE, sep = ",")
+                         header = TRUE, sep = ",", fileEncoding = "latin1")
 cmplt_DAT <- filter(cmplt.rm_out, curv_meth == "DAT")
 cmplt_SS <- filter(cmplt.rm_out, curv_meth == "SS")
 
@@ -417,6 +417,8 @@ grp_SS <- cmplt_SS %>%
 # grp_SS <- filter(grp_curv, curv_meth == "SS")
 
 ### Joining the mean Tleaf in Kelvin to fitted parameters
+
+
 
 curv_dat_temp <- left_join(by = "ID",
                            dat_fits_photo_pars_noTPU,

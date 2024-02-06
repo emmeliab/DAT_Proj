@@ -13,8 +13,8 @@ library(here)
 # Load and Subset the datasets -------------------------------------------
 
 ### Tree ids
-ids <- read.csv(here("3_Clean_data/id_codebook.csv")) %>% 
-    rename(treeid = ï..treeid)
+ids <- read.csv(here("3_Clean_data/id_codebook.csv")) #%>% 
+    #rename(treeid = ï..treeid)
 
 ### Excluding K6709L3 as the SS curve was not a matched pair with the DAT curve
 
