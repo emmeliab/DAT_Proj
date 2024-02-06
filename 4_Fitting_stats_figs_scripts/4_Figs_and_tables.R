@@ -11,7 +11,8 @@ theme_set(theme_classic(base_family = "serif", base_size = 12))
 
 ## For the raw data plots and Fig 1
 cmplt.rm_out <- read.csv(here("3_Clean_data/clean_aci_noOutliers.csv"),
-                         header = TRUE)
+                         header = TRUE,
+                         fileEncoding="latin1")
 
 cmplt.grp <- group_by(cmplt.rm_out, unique_id)
 
@@ -31,8 +32,8 @@ pho_nd_stat <- read.csv(here("3_Clean_data/pho_nd_stat.csv"))
 pho_nd_stat_tpu <- read.csv(here("3_Clean_data/pho_nd_stat_tpu.csv"))
 
 ### ID codebook
-ids <- read.csv(here("3_Clean_data/id_codebook.csv")) %>% 
-    rename(treeid = ï..treeid)
+ids <- read.csv(here("3_Clean_data/id_codebook.csv")) #%>% 
+    #rename(treeid = ï..treeid)
 
 
 
@@ -510,17 +511,7 @@ ggsave(plot = plot_arranged3, here("6_Figures/figure4.png"), width = 8.3, height
 
 
 
-# Table S1: Summary stats ------------------------------------------
-## NEED TO REARRANGE! CHARLIE MADE THIS ON 1/11/24
-
-
-
-
-pho_stat_tpu <- select(pho_leaf_tpu, 'curv_meth', 
-                       'Best_Vcmax_25C', 'Best_Jmax_25C', 'V_TPU', 
-                       'ID', 'leaf_unique', 'V_cmax_se', 'J_se', 'V_TPU_se',
-                       'treeid')
-
+# Table S1: Summary stats for SS, TPU-enabled parameters------------------------------------------
 
 pho_stat_tpu_ss <- rename(pho_stat_tpu,
                           vcmax_se = V_cmax_se,
@@ -535,10 +526,11 @@ ss_keyparams_tpu <- pho_stat_tpu_ss %>%
               mean_jmax = mean(jmax),
               sd_jmax = sd(jmax))
 
+# join with codes
 ss_keyparams_tpu_codes <- left_join(ss_keyparams_tpu, ids, by = "treeid")
 
-
-### Gtsummary?
+# Sort the dataframe by rel_can_pos in ascending order
+sorted_df <- ss_keyparams_tpu_codes[order(ss_keyparams_tpu_codes$rel_can_pos), ]
 
 
 # Figure S3: TPU 1:1 -------------------------------------------------------
