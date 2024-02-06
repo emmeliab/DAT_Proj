@@ -3,17 +3,38 @@
 # Load packages
 library(tidyverse)
 library(gridExtra)
+library(here)
 
-# Load in the data and filter
+# Load in the data --------------------------------------------------------
+
+## For the raw data plots and Fig 1
 cmplt.rm_out <- read.csv(here("3_Clean_data/clean_aci_noOutliers.csv"),
                          header = TRUE)
 
 cmplt.grp <- group_by(cmplt.rm_out, unique_id)
 
 
+### For 1:1 plots
+pho_stat <- read.csv(here("3_Clean_data/pho_stat.csv"))
+pho_stat_tpu <- read.csv(here("3_Clean_data/pho_stat_tpu.csv"))
 
 
-# Plot Curves with Clean Data (not fit) -----------------------------------------------------
+### For difference figs
+diff_tpu_lf <- read.csv(here("3_Clean_data/lf_diffs_summ_TPU.csv"))
+diff_notpu_lf <- read.csv(here("3_Clean_data/lf_diffs_summ_noTPU.csv"))
+
+
+### For double boxplots
+pho_nd_stat <- read.csv(here("3_Clean_data/pho_nd_stat.csv"))
+pho_nd_stat_tpu <- read.csv(here("3_Clean_data/pho_nd_stat_tpu.csv"))
+
+### ID codebook
+ids <- read.csv(here("3_Clean_data/id_codebook.csv")) %>% 
+    rename(treeid = ï..treeid)
+
+
+
+# Plot Curves with Clean Data (not fit) ------------------------------------------------
 
 ## Plot all ACi curves on one graph by leaf
 ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = unique_id)) +
@@ -90,7 +111,8 @@ ggsave(plot = fig1, here("6_Figures/figure1.png"), width = 8, height = 5)
 
 
 
-# Figure 2: Vcmax 1:1 and Density of Differences ----------------------------------------------------------------
+# Figure 2: Vcmax 1:1 and Density of Differences --------------------------------------
+
 
 ### Vcmax 1:1 WITH TPU
 leaf_sub_vcmax_tpu <- select(pho_stat_tpu, vcmax, curv_meth, leaf_unique, V_cmax_se)
@@ -162,14 +184,14 @@ pho_1to1_vcmax_NoTPU
 
 
 ### Vcmax Density of differences WITH TPU
-sp_diff_hist_vc_tpu <- all_diff_tpu2 %>%
+sp_diff_hist_vc_tpu <- diff_tpu_lf %>%
     ggplot(aes(x = vc_diff)) +
     stat_function(fun = dnorm, 
-                  args = list(0, sd(all_diff_tpu2$vc_diff)), 
+                  args = list(0, sd(diff_tpu_lf$vc_diff)), 
                   color = "red", linetype = "dashed") +
     geom_density(linewidth = 0.8) +
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
-    geom_vline(xintercept = mean(all_diff_tpu2$vc_diff), color = "black", alpha = 0.4) +
+    geom_vline(xintercept = mean(diff_tpu_lf$vc_diff), color = "black", alpha = 0.4) +
     xlab(expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1}))) +
     ylab("Density") +
     xlim(-30, 50) +
@@ -180,23 +202,23 @@ sp_diff_hist_vc_tpu <- all_diff_tpu2 %>%
           axis.text.x = element_text(size = 8, family = "serif", color = "gray10"),
           axis.text.y = element_text(size = 8, family = "serif", color = "gray10")) +
     annotate("text", x = 30, y = 0.18, 
-             label = paste0("Mean = ", round(mean(all_diff_tpu2$vc_diff), digits = 2)), 
+             label = paste0("Mean = ", round(mean(diff_tpu_lf$vc_diff), digits = 2)), 
              size = rel(3)) +
     annotate("text", x = 30, y = 0.15, 
-             label = paste0("SD = ", round(sd(all_diff_tpu2$vc_diff), digits = 2)), 
+             label = paste0("SD = ", round(sd(diff_tpu_lf$vc_diff), digits = 2)), 
              size = rel(3))
 sp_diff_hist_vc_tpu
 
 
 ### Vcmax density of differences WITHOUT TPU
-sp_diff_hist_vc_notpu <- all_diff_notpu2 %>% 
+sp_diff_hist_vc_notpu <- diff_notpu_lf %>% 
     ggplot(aes(x = vc_diff)) +
     stat_function(fun = dnorm, 
-                  args = list(0, sd(all_diff_notpu2$vc_diff)), 
+                  args = list(0, sd(diff_notpu_lf$vc_diff)), 
                   color = "red", linetype = "dashed")+
     geom_density(linewidth = 0.8) +
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
-    geom_vline(xintercept = mean(all_diff_notpu2$vc_diff), color = "black", alpha = 0.4) +
+    geom_vline(xintercept = mean(diff_notpu_lf$vc_diff), color = "black", alpha = 0.4) +
     xlab(expression("SS - DAT "*italic("V")[italic("cmax")]*  " " *(mu*mol~m^{-2}~s^{-1}))) +
     ylab("Density") +
     xlim(-30, 50) +
@@ -207,10 +229,10 @@ sp_diff_hist_vc_notpu <- all_diff_notpu2 %>%
           axis.text.x = element_text(size = 8, family = "serif", color = "gray10"),
           axis.text.y = element_text(size = 8, family = "serif", color = "gray10")) +
     annotate("text", x = 30, y = 0.18, 
-             label = paste0("Mean = ", round(mean(all_diff_notpu2$vc_diff), digits = 2)), 
+             label = paste0("Mean = ", round(mean(diff_notpu_lf$vc_diff), digits = 2)), 
              size = rel(3)) +
     annotate("text", x = 30, y = 0.15, 
-             label = paste0("SD = ", round(sd(all_diff_notpu2$vc_diff), digits = 2)), 
+             label = paste0("SD = ", round(sd(diff_notpu_lf$vc_diff), digits = 2)), 
              size = rel(3))
 sp_diff_hist_vc_notpu
 
@@ -297,14 +319,14 @@ pho_1to1_jmax_tpu
 
 
 ### Jmax WITHOUT TPU
-sp_diff_hist_j_notpu <- all_diff_notpu2 %>% 
+sp_diff_hist_j_notpu <- diff_notpu_lf %>% 
     ggplot(aes(x = j_diff)) +
     stat_function(fun = dnorm, 
-                  args = list(0, sd(all_diff_notpu2$j_diff)), 
+                  args = list(0, sd(diff_notpu_lf$j_diff)), 
                   linetype = "dashed", color = "red")+
     geom_density(linewidth = 0.8)+
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
-    geom_vline(xintercept = mean(all_diff_notpu2$j_diff), color = "black", alpha = 0.4)+
+    geom_vline(xintercept = mean(diff_notpu_lf$j_diff), color = "black", alpha = 0.4)+
     xlab(expression("SS - DAT "*italic("J")[italic("max")]* " " * (mu*mol~m^{-2}~s^{-1}))) +
     ylab("Density")+
     xlim(-30, 50)+
@@ -315,24 +337,24 @@ sp_diff_hist_j_notpu <- all_diff_notpu2 %>%
           axis.text.x = element_text(size = 8, family = "serif", color = "gray10"),
           axis.text.y = element_text(size = 8, family = "serif", color = "gray10"))+
     annotate("text", x = 30, y = 0.18, 
-             label = paste0("Mean = ", round(mean(all_diff_notpu2$j_diff), digits = 2)), 
+             label = paste0("Mean = ", round(mean(diff_notpu_lf$j_diff), digits = 2)), 
              size = rel(3))+
     annotate("text", x = 30, y = 0.15, 
-             label = paste0("SD = ", round(sd(all_diff_notpu2$j_diff), digits = 2)), 
+             label = paste0("SD = ", round(sd(diff_notpu_lf$j_diff), digits = 2)), 
              size = rel(3))
 sp_diff_hist_j_notpu
 
 
 
 ### Jmax WITH TPU
-sp_diff_hist_j_tpu <- all_diff_tpu2 %>% 
+sp_diff_hist_j_tpu <- diff_tpu_lf %>% 
     ggplot(aes(x = j_diff)) +
     stat_function(fun = dnorm, 
-                  args = list(0, sd(all_diff_tpu2$j_diff)), 
+                  args = list(0, sd(diff_tpu_lf$j_diff)), 
                   color = "red", linetype = "dashed") +
     geom_density(linewidth = 0.8) +
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
-    geom_vline(xintercept = mean(all_diff_tpu2$j_diff), color = "black", alpha = 0.4) +
+    geom_vline(xintercept = mean(diff_tpu_lf$j_diff), color = "black", alpha = 0.4) +
     xlab(expression("SS - DAT "*italic("J")[italic("max")]* " " * (mu*mol~m^{-2}~s^{-1}))) +
     ylab("Density") +
     xlim(-30, 50) +
@@ -343,10 +365,10 @@ sp_diff_hist_j_tpu <- all_diff_tpu2 %>%
           axis.text.x = element_text(size = 8, family = "serif", color = "gray10"),
           axis.text.y = element_text(size = 8, family = "serif", color = "gray10")) +
     annotate("text", x = 30, y = 0.18, 
-             label = paste0("Mean = ", round(mean(all_diff_tpu2$j_diff), digits = 2)),
+             label = paste0("Mean = ", round(mean(diff_tpu_lf$j_diff), digits = 2)),
              size = rel(3)) +
     annotate("text", x = 30, y = 0.15, 
-             label = paste0("SD = ", round(sd(all_diff_tpu2$j_diff), digits = 2)),
+             label = paste0("SD = ", round(sd(diff_tpu_lf$j_diff), digits = 2)),
              size = rel(3))
 sp_diff_hist_j_tpu
 
@@ -368,13 +390,14 @@ ggsave(plot = fig3, "Figures/figure3.png", width = 6.5, height = 5)
 ## Note that error bars represent the mean of the absolute error for the differences
 
 ### Read in the data
-all_diff_tpu_codes <- read.csv(here("5_Results/species_diffs_summary_TPU.csv"))
-all_diff_notpu_codes <- read.csv(here("5_Results/species_diffs_summary_noTPU.csv"))
+all_diff_tpu_codes <- read.csv(here("5_Results/tree_diffs_summary_TPU.csv"))
+all_diff_notpu_codes <- read.csv(here("5_Results/tree_diffs_summary_noTPU.csv"))
+
 
 
 ## Vcmax WITH TPU
 vc_diff_hist <- ggplot(data = all_diff_tpu_codes, 
-                       aes(x = reorder(gen_spec_id, desc(rel_can_pos)),
+                       aes(x = reorder(gen_spec_id, desc(rel_can_pos.x)),
                            y = vc_diff)) +
     geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
@@ -394,7 +417,7 @@ vc_diff_hist
 
 # Jmax WITH TPU
 j_diff_hist <- ggplot(data = all_diff_tpu_codes, 
-                      aes(x = reorder(gen_spec_id, desc(rel_can_pos)),
+                      aes(x = reorder(gen_spec_id, desc(rel_can_pos.x)),
                           y = j_diff)) +
     geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
@@ -419,7 +442,7 @@ j_diff_hist
 
 ## Vcmax WITHOUT TPU
 vc_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes, 
-                             aes(x = reorder(gen_spec_id, desc(rel_can_pos)),
+                             aes(x = reorder(gen_spec_id, desc(rel_can_pos.x)),
                                  y = vc_diff)) +
     geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
@@ -439,7 +462,7 @@ vc_diff_hist_notpu
 
 ## Jmax WITHOUT TPU
 j_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes,
-                            aes(x = reorder(gen_spec_id, desc(rel_can_pos)),
+                            aes(x = reorder(gen_spec_id, desc(rel_can_pos.x)),
                                 y = j_diff)) +
     geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
@@ -472,42 +495,32 @@ ggsave(plot = plot_arranged3, here("6_Figures/figure4.png"), width = 8.3, height
 # Table S1: Summary stats ------------------------------------------
 ## NEED TO REARRANGE! CHARLIE MADE THIS ON 1/11/24
 
+
+
+
 pho_stat_tpu <- select(pho_leaf_tpu, 'curv_meth', 
                        'Best_Vcmax_25C', 'Best_Jmax_25C', 'V_TPU', 
                        'ID', 'leaf_unique', 'V_cmax_se', 'J_se', 'V_TPU_se',
-                       treeid # see if we can just use this column
-                       )
+                       'treeid')
 
 
 pho_stat_tpu_ss <- rename(pho_stat_tpu,
-                          vcmax = Best_Vcmax_25C,
-                          jmax = Best_Jmax_25C,
-                          tpu = V_TPU,
                           vcmax_se = V_cmax_se,
-                          jmax_se = J_se,
-                          leaf_id = ID) %>% 
-    mutate(fit_type = "tpu") %>% 
+                          jmax_se = J_se) %>% 
     filter(curv_meth == "SS")
 
-treename <- as.numeric(substring(pho_stat_tpu_ss$leaf_unique, 4, 5))  ##### Pretty sure we can use treeid for this
-
-pho_stat_tpu_ss$treename <- treename
 
 ss_keyparams_tpu <- pho_stat_tpu_ss %>%
-    group_by(treename) %>% 
+    group_by(treeid) %>% 
     summarize(mean_vcmax = mean(vcmax),
               sd_vcmax = sd(vcmax),
               mean_jmax = mean(jmax),
               sd_jmax = sd(jmax))
 
-ss_keyparams_tpu_codes <- left_join(ss_keyparams_tpu, codebook, by = "treename")
-
-######### END AWKWARD SECTION
+ss_keyparams_tpu_codes <- left_join(ss_keyparams_tpu, ids, by = "treeid")
 
 
-########## Don't we need this for the other ones, not just SS TPU?
-
-
+### Gtsummary?
 
 
 # Figure S3: TPU 1:1 -------------------------------------------------------
@@ -517,7 +530,8 @@ leaf_sub_tpu <- select(pho_stat_tpu, tpu, curv_meth, leaf_unique, V_TPU_se)
 leaf_wide_tpu <- reshape(leaf_sub_tpu,
                          idvar = "leaf_unique",
                          timevar = "curv_meth", 
-                         direction = "wide")
+                         direction = "wide") %>% 
+    na.omit()
 names(leaf_wide_tpu)[2:5] = c("tpu_DAT", "tpu_DAT_se", "tpu_SS", "tpu_SS_se")
 cor5 <- round(cor(leaf_wide_tpu$tpu_DAT, leaf_wide_tpu$tpu_SS), 3)
 only_tpu_fit <- filter(leaf_wide_tpu, !is.na(tpu_DAT) & !is.na(tpu_SS))
@@ -555,9 +569,6 @@ pho_1to1_tpu_tpu
 
 
 # Figure S4: Double Boxplots: All v No OS --------------------------------------------
-
-#### Again, get the data that needs to be read into these
-
 
 #### TPU-omitted Boxplots
 pho_nd_stat <- mutate(pho_nd_stat, subset = "nOS")
@@ -655,11 +666,18 @@ jmax_AllvNoOS_TPU
 
 
 gW <- ggplotGrob(vcmax_AllvNoOS_TPU + rremove("xlab") + rremove("legend"))
-gX <- ggplotGrob(vcmax_AllvNoOS_noTPU + rremove("ylab") + rremove("xlab"))
-gY <- ggplotGrob(jmax_AllvNoOS_TPU + rremove("legend"))
-gZ <- ggplotGrob(jmax_AllvNoOS_noTPU + rremove("ylab"))
+gX <- ggplotGrob(vcmax_AllvNoOS_noTPU + rremove("ylab") + rremove("xlab") + rremove("legend")) 
+gY <- ggplotGrob(jmax_AllvNoOS_TPU + rremove("legend")) 
+gZ <- ggplotGrob(jmax_AllvNoOS_noTPU + rremove("ylab") + rremove("legend"))
 
-figS4 <- grid.arrange(arrangeGrob(cbind(gW, gX), arrangeGrob(cbind(gY, gZ))))
+figS4_grid <- grid.arrange(arrangeGrob(cbind(gW, gX), arrangeGrob(cbind(gY, gZ))))
+
+legend <- cowplot::get_legend(vcmax_AllvNoOS_noTPU)
+figS4 <- grid.arrange(
+    figS4_grid,
+    legend,
+   widths = c(4, 1)
+)
 
 ggsave(plot = figS4, here("6_Figures/figureS4.png"), width = 6.5, height = 5)
 
@@ -670,6 +688,9 @@ ggsave(plot = figS4, here("6_Figures/figureS4.png"), width = 6.5, height = 5)
 # colors: blue = "#31688EFF", yellow = "#FDE725FF", yellow text = "#FFBF00"
 
 ### Read in the data
+
+### Excluding K6709L3 as the SS curve was not a matched pair with the DAT curve
+
 pho_dat <- read.csv(file = here("5_Results/DAT_photo_pars_crct_noTPU.csv"), 
                     sep = ",", 
                     header = TRUE, na.strings = 1000) %>% 
@@ -681,6 +702,18 @@ pho_SS <- read.csv(file = here("5_Results/SS_photo_pars_crct_noTPU.csv"),
                    header = TRUE, na.strings = 1000) %>% 
     subset(ID != "K6709L3")
 
+
+pho_dat_tpu <- read.csv(file = here("5_Results/DAT_photo_pars_crct_TPU.csv"),
+                        sep = ",", 
+                        header = TRUE, na.strings = 1000) %>% 
+    ## TPU values at 1000 are coded as NA
+    subset(ID != "K6709L3")
+
+
+pho_SS_tpu <- read.csv(file = here("5_Results/SS_photo_pars_crct_TPU.csv"),
+                   sep = ",", 
+                   header = TRUE, na.strings = 1000) %>% 
+    subset(ID != "K6709L3")
 
 
 #### Vcmax WITHOUT TPU
@@ -889,210 +922,94 @@ gP <- ggplotGrob(hist_j_se_notpu + rremove("ylab"))
 
 se_arranged <- grid.arrange(arrangeGrob(cbind(gM, gN), arrangeGrob(cbind(gO, gP))))
 
-ggsave(plot = se_arranged, "Figures/figureS5.png", width = 6.5, height = 5)
-
-
+ggsave(plot = se_arranged, here("6_Figures/figureS5.png"), width = 6.5, height = 5)
 
 
 
 # TPU v. No TPU Boxplots --------------------------------------------------------------
 
-# Full data
-
-### Vcmax ALL data
-vcmax_all_TPUvNoTPU <- ggplot(all_results2, 
-                              aes(x = factor(fit_type, levels = c("tpu", "no_tpu")),
-                                  y = vcmax, fill = curv_meth)) +
-    geom_boxplot(outlier.shape = 17, outlier.size = 2) +
-    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), 
-                      values = c("#31688EFF", "#FDE725FF")) +
-    scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
-    theme_classic() +
-    labs(x = "Fit Type",
-         y = expression(italic(V[cmax])* " " *(mu*mol~m^{-2}~s^{-1}))) +
-    theme(axis.title.x = element_text(size = 16, family = "serif"),
-          axis.title.y = element_text(size = 16, family = "serif"),
-          axis.text.x = element_text(size = 13, family = "serif", color = "gray10"),
-          axis.text.y = element_text(size = 13, family = "serif", colour = "gray10"))
-vcmax_all_TPUvNoTPU
-# ggsave(plot = vcmax_all_TPUvNoTPU, here("6_Figures/box_vcmax_all_TPUvNoTPU.png"))
-
-### Jmax ALL data
-jmax_all_TPUvNoTPU <- ggplot(all_results2, 
-                             aes(x = factor(fit_type, levels = c("tpu", "no_tpu")),
-                                 y = jmax, fill = curv_meth)) +
-    geom_boxplot(outlier.shape = 17, outlier.size = 2) +
-    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
-                      values = c("#31688EFF", "#FDE725FF")) +
-    scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
-    theme_classic() +
-    labs(x="Fit Type",
-         y = expression(italic(J[max])* " " *(mu*mol~m^{-2}~s^{-1}))) +
-    theme(axis.title.x=element_text(size=16, family = "serif"),
-          axis.title.y=element_text(size=16, family = "serif"),
-          axis.text.x=element_text(size=13, family = "serif", color = "grey10"),
-          axis.text.y=element_text(size=13, family = "serif", color = "grey10"))
-jmax_all_TPUvNoTPU
-# ggsave(plot = jmax_all_TPUvNoTPU, here("6_Figures/box_jmax_all_TPUvNoTPU.png"))
-
-
-
-# No Overshoot curves
-
-### Vcmax no overhoot data
-vcmax_nOS_TPUvNoTPU <- ggplot(nd_complete, 
-                              aes(x = factor(fit_type, levels = c("tpu", "no_tpu")), 
-                                  y = vcmax, fill = curv_meth)) +
-    geom_boxplot(outlier.shape = 17, outlier.size = 2) +
-    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
-                      values = c("#31688EFF", "#FDE725FF")) +
-    scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
-    theme_classic() +
-    labs(x = "Fit Type",
-         y = expression(italic(V[cmax])*" "*(mu*mol~m^{-2}~s^{-1}))) +
-    theme(axis.title.x = element_text(size = 16, family = "serif"),
-          axis.title.y = element_text(size = 16, family = "serif"),
-          axis.text.x = element_text(size = 13, family = "serif", color = "grey10"),
-          axis.text.y = element_text(size = 13, family = "serif", color = "grey10"))
-vcmax_nOS_TPUvNoTPU
-# ggsave(plot = vcmax_nOS_TPUvNoTPU, here("6_Figures/box_vcmax_nOS_TPUvNoTPU.png"))
-
-
-### Jmax no overshoot data
-jmax_nOS_TPUvNoTPU <- ggplot(nd_complete, 
-                             aes(x = factor(fit_type, levels = c("tpu", "no_tpu")),
-                                 y = jmax, fill = curv_meth)) +
-    geom_boxplot(outlier.shape = 17, outlier.size = 2) +
-    scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
-                      values = c("#31688EFF", "#FDE725FF")) +
-    scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
-    theme_classic() +
-    labs(x = "Fit Type",
-         y = expression(italic(J[max])*" "*(mu*mol~m^{-2}~s^{-1}))) +
-    theme(axis.title.x = element_text(size = 16, family = "serif"),
-          axis.title.y = element_text(size = 16, family = "serif"),
-          axis.text.x = element_text(size = 13, family = "serif", color = "grey10"),
-          axis.text.y = element_text(size = 13, family = "serif", color = "grey10"))
-jmax_nOS_TPUvNoTPU
-# ggsave(plot = jmax_nOS_TPUvNoTPU, here("6_Figures/box_jmax_nOS_TPUvNoTPU.png"))
-
-
-
-
-
-
-# Single boxplots ---------------------------------------------------------
-
-####### Can we just take this out?????, think it's a relic
-
-
-
-lab_DATSS <- c('DAT', 'Steady-State')
-
-#### All data, No TPU
-vcmax_all_noTPU <- ggplot(pho_leaf, aes(x=curv_meth, y=Best_Vcmax_25C)) +
-    geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
-    labs(x="Method", y = expression(V[cmax]*" "*(mu*mol~m^{-2}~s^{-1})))+
-    theme_classic()+
-    theme(aspect.ratio = 1,
-          axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=14, family = "serif", colour = "grey10"),
-          axis.text.y=element_text(size = 12, family = "serif", colour = "grey10"),
-          legend.position="none")+
-    scale_x_discrete(labels=lab_DATSS)
-vcmax_all_noTPU
-ggsave(plot = vcmax_all_noTPU, "Figures/pho_box_DvT_vcmax_noTPU.png")
-
-
-jmax_all_noTPU <- ggplot(pho_leaf, aes(x=curv_meth, y=Best_Jmax_25C, fill = DAT)) +
-    geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
-    labs(x="Method", y = expression(J[max]*" "*(mu*mol~m^{-2}~s^{-1} *"")))+
-    theme_classic()+
-    theme(aspect.ratio = 1,
-          axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=14, family = "serif", colour = "grey10"),
-          axis.text.y=element_text(size = 12, family = "serif", colour = "grey10"),
-          legend.position="none")+
-    scale_x_discrete(labels=lab_DATSS) +
-    scale_y_continuous(limits = c(0, 130), breaks = c(0, 40,  80,  120))
-jmax_all_noTPU
-ggsave(plot = jmax_all_noTPU, "Figures/photo_box_DvT_jmax_noTPU.png")
-
-
-
-
-### All data, with TPU
-vcmax_all_TPU <- ggplot(pho_leaf_tpu, aes(x=curv_meth, y=Best_Vcmax_25C)) +
-    geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
-    labs(x="Method", y = expression(V[cmax]*" "*(mu*mol~m^{-2}~s^{-1})))+
-    theme_classic()+
-    theme(aspect.ratio = 1,
-          axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=14, family = "serif", colour = "grey10"),
-          axis.text.y=element_text(size = 12, family = "serif", colour = "grey10"),
-          legend.position="none")+
-    scale_x_discrete(labels=lab_DATSS)
-vcmax_all_TPU
-ggsave(plot = vcmax_all_TPU, "Figures/pho_box_DvT_vcmax_TPU.png")
-
-
-jmax_all_TPU <- ggplot(pho_leaf_tpu, aes(x=curv_meth, y=Best_Jmax_25C, fill = DAT)) +
-    geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
-    labs(x="Method", y = expression(J[max]*" "*(mu*mol~m^{-2}~s^{-1} *"")))+
-    theme_classic()+
-    theme(aspect.ratio = 1,
-          axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=14, family = "serif", colour = "grey10"),
-          axis.text.y=element_text(size = 12, family = "serif", colour = "grey10"),
-          legend.position="none")+
-    scale_x_discrete(labels=lab_DATSS) +
-    scale_y_continuous(limits = c(0, 130), breaks = c(0, 40,  80,  120))
-jmax_all_TPU
-ggsave(plot = jmax_all_TPU, "Figures/photo_box_DvT_jmax_TPU.png")
-
-
-
-################## One instance of 'method'
-
-## No Overshoot, without TPU
-nd_vcmax_box_noTPU <- ggplot(grp_pho_nd_all, aes(x=curv_meth, y=vcmax, fill = method)) +
-    geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
-    labs(x="Method", y = expression(V[cmax]*" "*(mu*mol~m^{-2}~s^{-1})))+
-    theme_classic()+
-    theme(aspect.ratio = 1,
-          axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=14, family = "serif", colour = "grey10"),
-          axis.text.y=element_text(size = 12, family = "serif", colour = "grey10"),
-          legend.position="none")+
-    scale_x_discrete(labels=lab_DATSS)
-nd_vcmax_box_noTPU
-ggsave(plot = nd_vcmax_box_noTPU, "Figures/pho_box_noOS_DvT_vcmax_noTPU.png")
-
-################ another instance of method. Can we use curv_meth?
-
-nd_jmax_box_noTPU <- ggplot(grp_pho_nd_all, aes(x=curv_meth, y=jmax, fill = method)) +
-    geom_boxplot(position = position_dodge(1), outlier.shape = 17, outlier.size = 2, fill = "lightgrey")+
-    labs(x="Method", y = expression(J[max]*" "*(mu*mol~m^{-2}~s^{-1} *"")))+
-    theme_classic()+
-    theme(aspect.ratio = 1,
-          axis.title.x=element_text(size=18, family = "serif"),
-          axis.title.y=element_text(size=18, family = "serif"),
-          axis.text.x=element_text(size=14, family = "serif", colour = "grey10"),
-          axis.text.y=element_text(size = 12, family = "serif", colour = "grey10"),
-          legend.position="none")+
-    scale_x_discrete(labels=lab_DATSS)
-nd_jmax_box_noTPU
-ggsave(plot = nd_jmax_box_noTPU, "Figures/photo_box_nOS_DvT_jmax_noTPU.png")
-
-
-
-
-
-
-
-
+### Not in manuscript
+# 
+# # Full data
+# 
+# ### Vcmax ALL data
+# vcmax_all_TPUvNoTPU <- ggplot(all_avg_lf_res, 
+#                               aes(x = factor(fit_type, levels = c("tpu", "no_tpu")),
+#                                   y = vcmax, fill = curv_meth)) +
+#     geom_boxplot(outlier.shape = 17, outlier.size = 2) +
+#     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"), 
+#                       values = c("#31688EFF", "#FDE725FF")) +
+#     scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
+#     theme_classic() +
+#     labs(x = "Fit Type",
+#          y = expression(italic(V[cmax])* " " *(mu*mol~m^{-2}~s^{-1}))) +
+#     theme(axis.title.x = element_text(size = 16, family = "serif"),
+#           axis.title.y = element_text(size = 16, family = "serif"),
+#           axis.text.x = element_text(size = 13, family = "serif", color = "gray10"),
+#           axis.text.y = element_text(size = 13, family = "serif", colour = "gray10"))
+# vcmax_all_TPUvNoTPU
+# # ggsave(plot = vcmax_all_TPUvNoTPU, here("6_Figures/box_vcmax_all_TPUvNoTPU.png"))
+# 
+# ### Jmax ALL data
+# jmax_all_TPUvNoTPU <- ggplot(all_avg_lf_res, 
+#                              aes(x = factor(fit_type, levels = c("tpu", "no_tpu")),
+#                                  y = jmax, fill = curv_meth)) +
+#     geom_boxplot(outlier.shape = 17, outlier.size = 2) +
+#     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
+#                       values = c("#31688EFF", "#FDE725FF")) +
+#     scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
+#     theme_classic() +
+#     labs(x="Fit Type",
+#          y = expression(italic(J[max])* " " *(mu*mol~m^{-2}~s^{-1}))) +
+#     theme(axis.title.x=element_text(size=16, family = "serif"),
+#           axis.title.y=element_text(size=16, family = "serif"),
+#           axis.text.x=element_text(size=13, family = "serif", color = "grey10"),
+#           axis.text.y=element_text(size=13, family = "serif", color = "grey10"))
+# jmax_all_TPUvNoTPU
+# # ggsave(plot = jmax_all_TPUvNoTPU, here("6_Figures/box_jmax_all_TPUvNoTPU.png"))
+# 
+# 
+# 
+# # No Overshoot curves
+# 
+# ### Vcmax no overhoot data
+# vcmax_nOS_TPUvNoTPU <- ggplot(nd_complete, 
+#                               aes(x = factor(fit_type, levels = c("tpu", "no_tpu")), 
+#                                   y = vcmax, fill = curv_meth)) +
+#     geom_boxplot(outlier.shape = 17, outlier.size = 2) +
+#     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
+#                       values = c("#31688EFF", "#FDE725FF")) +
+#     scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
+#     theme_classic() +
+#     labs(x = "Fit Type",
+#          y = expression(italic(V[cmax])*" "*(mu*mol~m^{-2}~s^{-1}))) +
+#     theme(axis.title.x = element_text(size = 16, family = "serif"),
+#           axis.title.y = element_text(size = 16, family = "serif"),
+#           axis.text.x = element_text(size = 13, family = "serif", color = "grey10"),
+#           axis.text.y = element_text(size = 13, family = "serif", color = "grey10"))
+# vcmax_nOS_TPUvNoTPU
+# # ggsave(plot = vcmax_nOS_TPUvNoTPU, here("6_Figures/box_vcmax_nOS_TPUvNoTPU.png"))
+# 
+# 
+# ### Jmax no overshoot data
+# jmax_nOS_TPUvNoTPU <- ggplot(nd_complete, 
+#                              aes(x = factor(fit_type, levels = c("tpu", "no_tpu")),
+#                                  y = jmax, fill = curv_meth)) +
+#     geom_boxplot(outlier.shape = 17, outlier.size = 2) +
+#     scale_fill_manual(name = "Curve Method", labels = c("DAT", "Steady-state"),
+#                       values = c("#31688EFF", "#FDE725FF")) +
+#     scale_x_discrete(labels = c("TPU-enabled", "TPU-omitted")) +
+#     theme_classic() +
+#     labs(x = "Fit Type",
+#          y = expression(italic(J[max])*" "*(mu*mol~m^{-2}~s^{-1}))) +
+#     theme(axis.title.x = element_text(size = 16, family = "serif"),
+#           axis.title.y = element_text(size = 16, family = "serif"),
+#           axis.text.x = element_text(size = 13, family = "serif", color = "grey10"),
+#           axis.text.y = element_text(size = 13, family = "serif", color = "grey10"))
+# jmax_nOS_TPUvNoTPU
+# # ggsave(plot = jmax_nOS_TPUvNoTPU, here("6_Figures/box_jmax_nOS_TPUvNoTPU.png"))
+# 
+# 
+# 
+# 
+# 
