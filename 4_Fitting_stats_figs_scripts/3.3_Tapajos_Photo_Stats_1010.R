@@ -2,18 +2,12 @@
 # Using the 'photosynthesis' package
 
 ######### Check to see which of these packages we actually need
-library(tidyverse) #
-library(ggpubr) #
-#library(ggrepel)
-#library(hydroGOF)
-#library(Publish)
-#library(moments) 
-#library(vcd)
-library(car)#
-library(rstatix) #For wilcox_effsize function
-#library(gridExtra)
-library(reshape2) #
-library(here) #
+library(tidyverse) 
+library(ggpubr) 
+library(car)
+library(rstatix)
+library(reshape2) 
+library(here) 
 
 
 # Load and Subset the datasets -------------------------------------------
@@ -36,18 +30,11 @@ pho_SS <- read.csv(file = here("5_Results/SS_photo_pars_crct_noTPU.csv"),
     subset(ID != "K6709L3")
 
 
-pho_dat_tpu <- read.csv(file = here("0_Archive/dat_fits_photo_pars_filt_correct_with_TPU.csv"),
+pho_dat_tpu <- read.csv(file = here("5_Results/DAT_photo_pars_crct_TPU.csv"),
                         sep = ",", 
                         header = TRUE, na.strings = 1000) %>%  
     ## TPU values at 1000 are coded as NA
     subset(ID != "K6709L3")
-
-#### For the time being until we run it agian
-pho_dat_tpu <- pho_dat_tpu%>% 
-    mutate(treeid = substring(ID, 1, 5)) %>% 
-    left_join(., ids, by = "treeid") %>% 
-    rename(curv_meth = method) %>% 
-    select(-c(Data_point, meanTleaf))
 
 
 
@@ -808,7 +795,8 @@ all_avg_lf_res %>%
     add_significance()
 
 all_avg_lf_res %>%
-    group_by(fit_type) %>% wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+    group_by(fit_type) %>% 
+    wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
 
 
 
@@ -825,16 +813,8 @@ all_avg_lf_res %>%
     add_significance()
 
 all_avg_lf_res %>%
-    group_by(curv_meth) %>% wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
-
-
-
-nd_complete %>% 
-    group_by(curv_meth, fit_type) %>% 
-    summarise(meanj = mean(jmax),
-              meanv = mean(vcmax), 
-              n = n())
-
+    group_by(curv_meth) %>% 
+    wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
 
 
 
@@ -849,7 +829,8 @@ nd_complete %>%
     add_significance()
 
 nd_complete %>%
-    group_by(fit_type) %>% wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+    group_by(fit_type) %>% 
+    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
 
 
 ### Vcmax Wilcoxon by TPU v. no TPU
@@ -870,7 +851,8 @@ nd_complete %>%
     add_significance()
 
 nd_complete %>%
-    group_by(fit_type) %>% wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+    group_by(fit_type) %>%
+    wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
 
 
 ### Jmax Wilcoxon by TPU v. no TPU

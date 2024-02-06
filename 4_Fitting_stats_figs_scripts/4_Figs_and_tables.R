@@ -5,6 +5,8 @@ library(tidyverse)
 library(gridExtra)
 library(here)
 
+theme_set(theme_classic(base_family = "serif", base_size = 12))
+
 # Load in the data --------------------------------------------------------
 
 ## For the raw data plots and Fig 1
@@ -38,8 +40,7 @@ ids <- read.csv(here("3_Clean_data/id_codebook.csv")) %>%
 
 ## Plot all ACi curves on one graph by leaf
 ggplot(cmplt.grp, mapping = aes(x = Ci, y = A, color = unique_id)) +
-    geom_point(mapping = aes(pch = curv_meth)) +
-    theme_classic()
+    geom_point(mapping = aes(pch = curv_meth)) 
 
 
 # Make and save plots for each leaf
@@ -69,44 +70,46 @@ for (id in unique(cmplt.grp$unique_id)) {
 
 # Figure 1: Overshoot and no-overshoot comparison ---------------------------------
 
-
 k6717l1 <- ggplot(data = filter(cmplt.grp, unique_id == "K6717L1"), 
                   mapping = aes(x = Ci, y = A,
                                 shape = curv_meth, color = curv_meth)) +
     geom_point(size = 3) +
-    theme_classic() +
     labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
          x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1})),
          tag = "a",
          title = expression(italic("Aparisthmium cordatum")*", Leaf 1")) +
     theme(plot.title = element_text(hjust = 0.5),
-          legend.position = "none") +
+          legend.position = "none",
+          plot.tag = element_text(size = rel(0.9))) +
     scale_shape_manual(name = "Method", 
                        labels = c("DAT", "Steady-State"), values = c(19, 17)) +
     scale_color_viridis_d(begin = 0.3, name = "Method", 
                           labels = c("DAT", "Steady-State"))
 plot(k6717l1)
 
-k6707l2 <- ggplot(data = filter(cmplt.grp, unique_id == "K6707L2"), mapping = aes(x = Ci, y = A, shape = curv_meth, color = curv_meth)) +
+k6707l2 <- ggplot(data = filter(cmplt.grp, unique_id == "K6707L2"),
+                  mapping = aes(x = Ci, y = A, 
+                                shape = curv_meth, color = curv_meth)) +
     geom_point(size = 3) +
-    theme_classic() +
     labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
          x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1})),
          tag = "b",
          title = expression(italic("Tachigali chrysophylla")*", Leaf 2")) +
-    theme(plot.title = element_text(hjust = 0.5)) +
+    theme(plot.title = element_text(hjust = 0.5),
+          plot.tag = element_text(size = rel(0.9))) +
     scale_shape_manual(name = "Method",
                        labels = c("DAT", "Steady-State"), values = c(19, 17)) +
     scale_color_viridis_d(begin = 0.3, name = "Method", 
                           labels = c("DAT", "Steady-State"))
 plot(k6707l2)
 
+
 g1 <- ggplotGrob(k6717l1)
 g2 <- ggplotGrob(k6707l2)
 
+fig1 <- grid.arrange(arrangeGrob(cbind(g1, g2)))
 
-fig1 <- grid.arrange(arrangeGrob(cbind(g1, g2)), heights = c(3,2))
-ggsave(plot = fig1, here("6_Figures/figure1.png"), width = 8, height = 5)
+ggsave(plot = fig1, here("6_Figures/figure1.png"), width = 8, height = 3)
 
 
 
@@ -120,31 +123,35 @@ leaf_wide_vcmax_tpu <- reshape(leaf_sub_vcmax_tpu,
                                idvar = "leaf_unique", 
                                timevar = "curv_meth",
                                direction = "wide")
-names(leaf_wide_vcmax_tpu)[2:5]=c("vcmax_DAT", "vcmax_DAT_se", "vcmax_SS", "vcmax_SS_se")
+names(leaf_wide_vcmax_tpu)[2:5] = c("vcmax_DAT", "vcmax_DAT_se", 
+                                    "vcmax_SS", "vcmax_SS_se")
 cor3 <- round(cor(leaf_wide_vcmax_tpu$vcmax_DAT, leaf_wide_vcmax_tpu$vcmax_SS), 3)
-#leaf_wide_vcmax_tpu <- subset(leaf_wide_vcmax_tpu, select = -tree_id.SS)
+
 
 pho_1to1_vcmax_tpu <- ggplot(data = leaf_wide_vcmax_tpu, 
                              mapping = aes(x = vcmax_SS,
                                            y = vcmax_DAT,
-                                           color = leaf_unique))+
-    geom_point()+
-    geom_errorbar(aes(ymin = vcmax_DAT - vcmax_DAT_se, ymax = vcmax_DAT + vcmax_DAT_se)) + 
-    geom_errorbarh(aes(xmin = vcmax_SS - vcmax_SS_se, xmax = vcmax_SS + vcmax_SS_se)) +
-    geom_abline(intercept = 0, slope = 1, linetype = 5, linewidth = 0.6) +
-    theme_classic() +
+                                           color = leaf_unique)) +
+    geom_point() +
+    geom_errorbar(aes(ymin = vcmax_DAT - vcmax_DAT_se,
+                      ymax = vcmax_DAT + vcmax_DAT_se)) + 
+    geom_errorbarh(aes(xmin = vcmax_SS - vcmax_SS_se, 
+                       xmax = vcmax_SS + vcmax_SS_se)) +
+    geom_abline(intercept = 0, slope = 1, 
+                linetype = 5, linewidth = 0.6) +
     labs(x = expression(italic("V")[italic("cmax-SS")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
-         y = expression(italic("V")[italic("cmax-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
-         col = "Unique Leaf") +
+         y = expression(italic("V")[italic("cmax-DAT")]* " " *(mu*mol~m^{-2}~s^{-1})),
+         tag = "a") +
     theme(aspect.ratio = 1,
-          axis.title.x = element_text(size = 14, family = "serif"),
-          axis.title.y = element_text(size = 14, family = "serif"),
-          axis.text.x = element_text(size = 8, family = "serif", color = "gray10"),
-          axis.text.y = element_text(size = 8, family = "serif", color = "gray10"),
-          legend.position = "none") +
+          axis.text.x = element_text(size = 10, color = "gray10"),
+          axis.text.y = element_text(size = 10, color = "gray10"),
+          legend.position = "none",
+          plot.tag = element_text(size = rel(0.9)),
+          plot.tag.position = c(-0.05, 1)) +
     scale_x_continuous(limits = c(1, 100)) + 
     scale_y_continuous(limits = c(1, 100)) +
-    annotate(geom = "text", label = paste0("r = ", cor3), x = 25, y = 75, size = rel(3))
+    annotate(geom = "text", label = paste0("r = ", cor3),
+             x = 25, y = 75, size = rel(3))
 pho_1to1_vcmax_tpu
 # ggsave(plot = pho_1to1_vcmax_tpu, here("6_Figures/pho_1to1_vcmax_tpu.png"))
 
@@ -155,30 +162,36 @@ leaf_wide_vcmax <- reshape(leaf_sub_vcmax,
                            idvar = "leaf_unique", 
                            timevar = "curv_meth",
                            direction = "wide")
-names(leaf_wide_vcmax)[2:5] = c("vcmax_DAT", "vcmax_DAT_se", "vcmax_SS", "vcmax_SS_se")
+names(leaf_wide_vcmax)[2:5] = c("vcmax_DAT", "vcmax_DAT_se", 
+                                "vcmax_SS", "vcmax_SS_se")
 cor1 <- round(cor(leaf_wide_vcmax$vcmax_DAT, leaf_wide_vcmax$vcmax_SS), 3)
+
 
 pho_1to1_vcmax_NoTPU <- ggplot(data = leaf_wide_vcmax, 
                                mapping = aes(x = vcmax_SS,
                                              y = vcmax_DAT,
                                              color = leaf_unique)) +
     geom_point() +
-    geom_errorbar(aes(ymin = vcmax_DAT - vcmax_DAT_se, ymax = vcmax_DAT + vcmax_DAT_se)) + 
-    geom_errorbarh(aes(xmin = vcmax_SS - vcmax_SS_se, xmax = vcmax_SS + vcmax_SS_se)) +
-    geom_abline(intercept = 0, slope = 1, linetype = 5, linewidth = 0.6) +
-    theme_classic() +
+    geom_errorbar(aes(ymin = vcmax_DAT - vcmax_DAT_se, 
+                      ymax = vcmax_DAT + vcmax_DAT_se)) + 
+    geom_errorbarh(aes(xmin = vcmax_SS - vcmax_SS_se, 
+                       xmax = vcmax_SS + vcmax_SS_se)) +
+    geom_abline(intercept = 0, slope = 1, 
+                linetype = 5, linewidth = 0.6) +
     labs(x = expression(italic("V")[italic("cmax-SS")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
-         y = expression(italic("V")[italic("cmax-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
-         col = "Unique Leaf") +
+         y = expression(italic("V")[italic("cmax-DAT")]* " " *(mu*mol~m^{-2}~s^{-1})),
+        # col = "Unique Leaf",
+         tag = "c") +
     theme(aspect.ratio = 1,
-          axis.title.x = element_text(size = 14, family = "serif"),
-          axis.title.y = element_text(size = 14, family = "serif"),
-          axis.text.x = element_text(size = 8, family = "serif", color = "gray10"),
-          axis.text.y = element_text(size = 8, family = "serif", color = "gray10"),
-          legend.position = "none") +
+          axis.text.x = element_text(size = 10, color = "gray10"),
+          axis.text.y = element_text(size = 10, color = "gray10"),
+          legend.position = "none",
+          plot.tag = element_text(size = rel(0.9)),
+          plot.tag.position = c(-0.05, 1)) +
     scale_x_continuous(limits = c(1, 100)) + 
     scale_y_continuous(limits = c(1, 100)) +
-    annotate(geom = "text", label = paste0("r = ", cor1), x = 25, y = 75, size = rel(3))
+    annotate(geom = "text", label = paste0("r = ", cor1), 
+             x = 25, y = 75, size = rel(3))
 pho_1to1_vcmax_NoTPU
 # ggsave(plot = pho_1to1_vcmax_NoTPU, here("6_Figures/pho_1to1_vcmax_NoTPU.png"))
 
@@ -192,15 +205,14 @@ sp_diff_hist_vc_tpu <- diff_tpu_lf %>%
     geom_density(linewidth = 0.8) +
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
     geom_vline(xintercept = mean(diff_tpu_lf$vc_diff), color = "black", alpha = 0.4) +
-    xlab(expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1}))) +
-    ylab("Density") +
+    labs(x = expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1})),
+         y = "Density",
+         tag = "b") +
     xlim(-30, 50) +
     ylim(0, 0.25) +
-    theme_classic() +
-    theme(axis.title.x = element_text(size = 14, family = "serif"),
-          axis.title.y = element_text(size = 14, family = "serif"),
-          axis.text.x = element_text(size = 8, family = "serif", color = "gray10"),
-          axis.text.y = element_text(size = 8, family = "serif", color = "gray10")) +
+    theme(axis.text.x = element_text(size = 10, color = "gray10"),
+          axis.text.y = element_text(size = 10, color = "gray10"),
+          plot.tag = element_text(size = rel(0.9))) +
     annotate("text", x = 30, y = 0.18, 
              label = paste0("Mean = ", round(mean(diff_tpu_lf$vc_diff), digits = 2)), 
              size = rel(3)) +
@@ -219,15 +231,14 @@ sp_diff_hist_vc_notpu <- diff_notpu_lf %>%
     geom_density(linewidth = 0.8) +
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
     geom_vline(xintercept = mean(diff_notpu_lf$vc_diff), color = "black", alpha = 0.4) +
-    xlab(expression("SS - DAT "*italic("V")[italic("cmax")]*  " " *(mu*mol~m^{-2}~s^{-1}))) +
-    ylab("Density") +
+    labs(x = expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1})),
+         y = "Density",
+         tag = "d") +
     xlim(-30, 50) +
     ylim(0, 0.25) +
-    theme_classic() +
-    theme(axis.title.x = element_text(size = 14, family = "serif"),
-          axis.title.y = element_text(size = 14, family = "serif"),
-          axis.text.x = element_text(size = 8, family = "serif", color = "gray10"),
-          axis.text.y = element_text(size = 8, family = "serif", color = "gray10")) +
+    theme(axis.text.x = element_text(size = 10, color = "gray10"),
+          axis.text.y = element_text(size = 10, color = "gray10"),
+          plot.tag = element_text(size = rel(0.9))) +
     annotate("text", x = 30, y = 0.18, 
              label = paste0("Mean = ", round(mean(diff_notpu_lf$vc_diff), digits = 2)), 
              size = rel(3)) +
@@ -241,8 +252,17 @@ gQ <- ggplotGrob(pho_1to1_vcmax_tpu)
 gR <- ggplotGrob(sp_diff_hist_vc_tpu)
 gS <- ggplotGrob(pho_1to1_vcmax_NoTPU)
 gT <- ggplotGrob(sp_diff_hist_vc_notpu)
+TPU <- textGrob("With TPU", rot = 90,
+                 gp = gpar(fontfamily = "serif", fontface = "bold", cex = 1))
+noTPU <- textGrob("Without TPU", rot = 90, 
+                  gp = gpar(fontfamily = "serif", fontface = "bold", cex = 1))
 
 fig2 <- grid.arrange(arrangeGrob(cbind(gQ, gR), arrangeGrob(cbind(gS, gT))))
+
+
+fig2 <- grid.arrange(arrangeGrob(gQ, left = TPU), gR, arrangeGrob(gS, left = noTPU), gT, nrow = 2) 
+
+
 ggsave(plot = fig2, here("6_Figures/figure2.png"), width = 6.5, height = 5)
 
 
@@ -264,19 +284,21 @@ pho_1to1_jmax_noTPU <- ggplot(data = leaf_wide_jmax,
                                             y = jmax_DAT,
                                             color = leaf_unique))+
     geom_point() +
-    geom_errorbar(aes(ymin = jmax_DAT - jmax_DAT_se, ymax = jmax_DAT + jmax_DAT_se)) + 
-    geom_errorbarh(aes(xmin = jmax_SS - jmax_SS_se, xmax = jmax_SS + jmax_SS_se)) +
-    geom_abline(intercept = 0, slope = 1, linetype = 5, linewidth = 0.6) +
-    theme_classic() +
+    geom_errorbar(aes(ymin = jmax_DAT - jmax_DAT_se, 
+                      ymax = jmax_DAT + jmax_DAT_se)) + 
+    geom_errorbarh(aes(xmin = jmax_SS - jmax_SS_se, 
+                       xmax = jmax_SS + jmax_SS_se)) +
+    geom_abline(intercept = 0, slope = 1, 
+                linetype = 5, linewidth = 0.6) +
     labs(x = expression(italic("J")[italic("max-SS")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
          y = expression(italic("J")[italic("max-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
-         col = "Unique Leaf") +
+         tag = "c") +
     theme(aspect.ratio = 1,
-          axis.title.x = element_text(size = 14, family = "serif"),
-          axis.title.y = element_text(size = 14, family = "serif"),
-          axis.text.x = element_text(size = 8, family = "serif", color = "grey10"),
-          axis.text.y = element_text(size = 8, family = "serif", color = "grey10"),
-          legend.position = "none") +
+          axis.text.x = element_text(size = 10, color = "grey10"),
+          axis.text.y = element_text(size = 10, color = "grey10"),
+          legend.position = "none",
+          plot.tag = element_text(size = rel(0.9)),
+          plot.tag.position = c(-0.05, 1)) +
     scale_x_continuous(limits = c(1, 130)) + 
     scale_y_continuous(limits = c(1, 130)) +
     annotate(geom = "text", label = paste0("r = ", cor2), x = 100, y = 30, size = rel(3))
@@ -301,16 +323,15 @@ pho_1to1_jmax_tpu <- ggplot(data = leaf_wide_jmax_tpu,
     geom_errorbar(aes(ymin = jmax_DAT - jmax_DAT_se, ymax = jmax_DAT + jmax_DAT_se)) + 
     geom_errorbarh(aes(xmin = jmax_SS - jmax_SS_se, xmax = jmax_SS + jmax_SS_se)) +
     geom_abline(intercept = 0, slope = 1, linetype = 5, linewidth = 0.6) +
-    theme_classic() +
     labs(x = expression(italic("J")[italic("max-SS")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
          y = expression(italic("J")[italic("max-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
-         col = "Unique Leaf") +
+         tag = "a") +
     theme(aspect.ratio = 1,
-          axis.title.x = element_text(size = 12, family = "serif"),
-          axis.title.y = element_text(size = 12, family = "serif"),
-          axis.text.x = element_text(size = 8, family = "serif", color = "grey10"),
-          axis.text.y = element_text(size = 8, family = "serif", color = "grey10"),
-          legend.position = "none") +
+          axis.text.x = element_text(size = 10, color = "grey10"),
+          axis.text.y = element_text(size = 10, color = "grey10"),
+          legend.position = "none",
+          plot.tag = element_text(size = rel(0.9)),
+          plot.tag.position = c(-0.05, 1)) +
     scale_x_continuous(limits = c(1, 130)) + 
     scale_y_continuous(limits = c(1, 130)) +
     annotate(geom = "text", label = paste0("r = ", cor4), x = 100, y = 30, size = rel(3))
@@ -323,22 +344,21 @@ sp_diff_hist_j_notpu <- diff_notpu_lf %>%
     ggplot(aes(x = j_diff)) +
     stat_function(fun = dnorm, 
                   args = list(0, sd(diff_notpu_lf$j_diff)), 
-                  linetype = "dashed", color = "red")+
-    geom_density(linewidth = 0.8)+
-    geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3)+
-    geom_vline(xintercept = mean(diff_notpu_lf$j_diff), color = "black", alpha = 0.4)+
-    xlab(expression("SS - DAT "*italic("J")[italic("max")]* " " * (mu*mol~m^{-2}~s^{-1}))) +
-    ylab("Density")+
-    xlim(-30, 50)+
-    ylim(0, 0.25)+
-    theme_classic()+
-    theme(axis.title.x = element_text(size = 14, family = "serif"),
-          axis.title.y = element_text(size = 14, family = "serif"),
-          axis.text.x = element_text(size = 8, family = "serif", color = "gray10"),
-          axis.text.y = element_text(size = 8, family = "serif", color = "gray10"))+
+                  linetype = "dashed", color = "red") +
+    geom_density(linewidth = 0.8) +
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
+    geom_vline(xintercept = mean(diff_notpu_lf$j_diff), color = "black", alpha = 0.4) +
+    labs(x = expression("SS - DAT "*italic("J")[italic("max")]* " " * (mu*mol~m^{-2}~s^{-1})),
+         y = "Density",
+         tag = "d") +
+    xlim(-30, 50) +
+    ylim(0, 0.25) +
+    theme(axis.text.x = element_text(size = 10, color = "gray10"),
+          axis.text.y = element_text(size = 10, color = "gray10"),
+          plot.tag = element_text(size = rel(0.9))) +
     annotate("text", x = 30, y = 0.18, 
              label = paste0("Mean = ", round(mean(diff_notpu_lf$j_diff), digits = 2)), 
-             size = rel(3))+
+             size = rel(3)) +
     annotate("text", x = 30, y = 0.15, 
              label = paste0("SD = ", round(sd(diff_notpu_lf$j_diff), digits = 2)), 
              size = rel(3))
@@ -355,15 +375,14 @@ sp_diff_hist_j_tpu <- diff_tpu_lf %>%
     geom_density(linewidth = 0.8) +
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
     geom_vline(xintercept = mean(diff_tpu_lf$j_diff), color = "black", alpha = 0.4) +
-    xlab(expression("SS - DAT "*italic("J")[italic("max")]* " " * (mu*mol~m^{-2}~s^{-1}))) +
-    ylab("Density") +
+    labs(x = expression("SS - DAT "*italic("J")[italic("max")]* " " * (mu*mol~m^{-2}~s^{-1})),
+         y = "Density",
+         tag = "b") +
     xlim(-30, 50) +
     ylim(0, 0.25) +
-    theme_classic() +
-    theme(axis.title.x = element_text(size = 14, family = "serif"),
-          axis.title.y = element_text(size = 14, family = "serif"),
-          axis.text.x = element_text(size = 8, family = "serif", color = "gray10"),
-          axis.text.y = element_text(size = 8, family = "serif", color = "gray10")) +
+    theme(axis.text.x = element_text(size = 10, color = "gray10"),
+          axis.text.y = element_text(size = 10, color = "gray10"),
+          plot.tag = element_text(size = rel(0.9))) +
     annotate("text", x = 30, y = 0.18, 
              label = paste0("Mean = ", round(mean(diff_tpu_lf$j_diff), digits = 2)),
              size = rel(3)) +
@@ -374,14 +393,13 @@ sp_diff_hist_j_tpu
 
 
 
-
-
 gQ2 <- ggplotGrob(pho_1to1_jmax_tpu)
 gR2 <- ggplotGrob(sp_diff_hist_j_tpu)
 gS2 <- ggplotGrob(pho_1to1_jmax_noTPU)
 gT2 <- ggplotGrob(sp_diff_hist_j_notpu)
 
 fig3 <- grid.arrange(arrangeGrob(cbind(gQ2, gR2), arrangeGrob(cbind(gS2, gT2))))
+
 ggsave(plot = fig3, "Figures/figure3.png", width = 6.5, height = 5)
 
 

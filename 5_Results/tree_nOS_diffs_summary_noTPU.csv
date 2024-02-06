@@ -1,13 +1,13 @@
 "","treeid","vc_diff","j_diff","vc_diff_se","j_diff_se","rel_can_pos.x","treename","family","gen_spec","gen_spec_id","overshoot","rel_can_pos.y"
 "1","K6714",NA,NA,NA,NA,12,14,"Annonaceae","Anaxagorea dolichocarpa","Anaxagorea dolichocarpa","1",12
 "2","K6702",NA,NA,NA,NA,11,2,"Lecythidaceae","Couratari stellata","Couratari stellata","Partial",11
-"3","K6713",0.417790666458332,4.22027403022417,0.386993418227198,0.821413413658966,10,13,"Hypericaceae","Vismia cayennensis","Vismia cayennensis","0",10
-"4","K6717",2.87988853869115,2.10909022363359,0.228720201026801,0.375404861860743,9,17,"Euphorbiaceae","Aparisthmium cordatum","Aparisthmium cordatum","0",9
-"5","K6715",0.250583753835999,6.22302761319957,0.198510887842741,0.0797726180346114,8,15,"Rubiaceae","Coussarea paniculata","Coussarea paniculata","0",8
-"6","K6716",3.48315981069065,11.2117121721133,0.477055809719096,0.694188652300392,7,16,"Melastomataceae","Miconia egensis","Miconia egensis","0",7
-"7","K6705",0.249119514812675,0.0929977834328248,0.17209421450962,0.882045472177531,6,5,"Burseraceae","Protium apiculatum","Protium apiculatum","0",6
-"8","K6718",2.2020768915687,1.767041675221,0.349009794135923,0.430064997107551,5.2,18,"Fabaceae","Abarema mataybifolia","Abarema mataybifolia #2","0",5.2
-"9","K6704",3.29602958772325,5.2896352604525,0.0687924884575339,0.841168149252498,5.1,4,"Fabaceae","Abarema mataybifolia","Abarema mataybifolia #1","0",5.1
+"3","K6713",0.417790666458332,4.07284474412267,0.386993418227198,0.850666681771756,10,13,"Hypericaceae","Vismia cayennensis","Vismia cayennensis","0",10
+"4","K6717",2.87988853869115,2.10909022363364,0.228720201026801,0.375404861860727,9,17,"Euphorbiaceae","Aparisthmium cordatum","Aparisthmium cordatum","0",9
+"5","K6715",0.119660450377227,7.05994962175887,0.156033759150341,0.191760737173625,8,15,"Rubiaceae","Coussarea paniculata","Coussarea paniculata","0",8
+"6","K6716",1.5951578120277,7.21100998677275,0.135492924922551,0.603810535753439,7,16,"Melastomataceae","Miconia egensis","Miconia egensis","0",7
+"7","K6705",-0.499514540845725,-2.0748687209473,0.0707947463219634,0.178696701852869,6,5,"Burseraceae","Protium apiculatum","Protium apiculatum","0",6
+"8","K6718",1.44927563907315,2.84244300383805,0.153936565446556,0.505979950620879,5.2,18,"Fabaceae","Abarema mataybifolia","Abarema mataybifolia #2","0",5.2
+"9","K6704",2.43621092830695,6.6938763200042,0.0758740312389192,0.929873853632029,5.1,4,"Fabaceae","Abarema mataybifolia","Abarema mataybifolia #1","0",5.1
 "10","K6706",NA,NA,NA,NA,4,6,"Lecythidaceae","Eschweilera sp. trufle1","Eschweilera sp. trufle1","1",4
 "11","K6708",-0.620508340051899,4.4316521526854,0.354566226041973,0.472525203646265,3,8,"Rubiaceae","Chimarrhis turbinata","Chimarrhis turbinata","0",3
 "12","K6707",NA,NA,NA,NA,2,7,"Fabaceae","Tachigali chrysophylla","Tachigali chrysophylla","1",2

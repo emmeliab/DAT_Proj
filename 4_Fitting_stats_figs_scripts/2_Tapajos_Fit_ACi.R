@@ -53,13 +53,13 @@ DAT_filt <- as.data.frame(DAT_filt)
 
 
 
-# Fitting ACi Curves with Plantecophys ------------------------------------------------------
+# Fitting ACi Curves with Plantecophys ----------------------------------------------------
 
 library(plantecophys)
 
 
 ## Remove K6714L1, since it acts weird with fitacis
-DAT_filt_ex <- filter(DAT_filt_ex, unique_id != "K6714L1") %>% 
+DAT_filt_ex <- filter(DAT_filt, unique_id != "K6714L1") %>% 
     as.data.frame()
 
 
@@ -67,8 +67,6 @@ DAT_filt_ex <- filter(DAT_filt_ex, unique_id != "K6714L1") %>%
 DAT_fits_ecophys <- fitacis(DAT_filt_ex, group = "unique_id", fitmethod = "bilinear",
                             varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                             PPFD = "Qin"), fitTPU = FALSE, Tcorrect = TRUE)
-plot(DAT_fits_ecophys[[23]], main = coef(DAT_fits_ecophys)$unique_id[[23]])
-coef(DAT_fits_ecophys)
 
 
 ### Run K6706L1 separately, since it gives a weird curve
@@ -79,16 +77,13 @@ k6714l1_fit <- fitaci(k6714l1, fitmethod = "bilinear",
                       # The Ci transition is specified as 200, as per Sharkey's
                       # recommendations and to avoid an unreasonable Jmax value
                       citransition = 200) 
-   
-plot(k6714l1_fit)
-coef(k6714l1_fit)
 
 
 
 # PDF file of all plots
-pdf(file = here("6_Figures/dataci_ecophys_no_TPU.pdf"), height=10, width=20)
+pdf(file = here("6_Figures/DAT_ecophys_figs_noTPU.pdf"))
 plot.new()
-for (curve in 1:33){
+for (curve in 1:length(DAT_fits_ecophys)){
   title <- coef(DAT_fits_ecophys)$unique_id[[curve]]
   plot(DAT_fits_ecophys[[curve]], main = title)
 }
@@ -98,8 +93,9 @@ dev.off()
 
 ## Make a dataframe out of coefficients
 par_dat <- as.data.frame(coef(DAT_fits_ecophys), row.names = NULL)
-par_dat[23,] <- c("K6714L1", 20.8393492, 13.5285784, 0.1658439, 0.47818072, NA, 0.02406953)
-#par_dat <- par_dat[-1,]
+k6714l1_pars <- matrix(data = c(k6714l1_fit$pars[,1], k6714l1_fit$pars[,2]), 
+                       nrow = 1, ncol = 6)
+par_dat[33,] <- c("K6714L1", k6714l1_pars)
 par_dat <- par_dat %>%
   add_column(curv_meth = "DAT")
 par_dat$Vcmax <- as.double(par_dat$Vcmax)
@@ -121,12 +117,9 @@ SS_fits_ecophys <- fitacis(cmplt_SS, group = "unique_id", fitmethod = "bilinear"
                              varnames = list(ALEAF = "A", Tleaf = "Tleaf", Ci = "Ci",
                                              PPFD = "Qin"),
                            fitTPU = FALSE, Tcorrect = TRUE)
-plot(SS_fits_ecophys[[14]], main = coef(SS_fits_ecophys)$unique_id[14])
-coef(SS_fits_ecophys)
-
 
 # Save all plots to a pdf
-pdf(file = here("6_Figures/SSaci_ecophys.pdf"), height=10, width=20)
+pdf(file = here("6_Figures/SS_ecophys_figs_noTPU.pdf"), height=10, width=20)
 plot.new()
 for (curve in 1:28){
   title <- coef(SS_fits_ecophys)$unique_id[[curve]]
@@ -140,10 +133,8 @@ dev.off()
 
 ## Make a dataframe of coefficients
 par_SS <- as.data.frame(coef(SS_fits_ecophys), row.names = NULL)
-#par_SS <- par_SS[-1,]
 par_SS <- par_SS %>% 
   add_column(curv_meth = "SS")
-
 
 
 
@@ -153,10 +144,11 @@ par_join <- bind_rows(par_dat, par_SS)
 head(par_join)
 
 
-write.csv(x = par_join, file = here("/5_Results/pars_ecophys_noTPU.csv"),
+write.csv(x = par_join, file = here("5_Results/pars_ecophys_noTPU.csv"),
           row.names = FALSE)
 
 
+### Since plantecophys does not work for DAT curves, we did not run with TPU
 
 
 
@@ -164,12 +156,13 @@ write.csv(x = par_join, file = here("/5_Results/pars_ecophys_noTPU.csv"),
 
 library(photosynthesis)
 
+### Warning: fitting all DAT curves with photosynthesis takes several hours; including TPU fitting takes longer
 
 # Convert leaf temperature to Kelvin
 cmplt_SS$Tleaf <- cmplt_SS$Tleaf + 273.15
 cmplt_SS <- as.data.frame(cmplt_SS)
 DAT_filt$Tleaf <- DAT_filt$Tleaf + 273.15
-
+DAT_filt <- as.data.frame(DAT_filt)
 
 
 
