@@ -6,20 +6,12 @@ library(ggpubr)
 library(here)
 
 
-# # Set working directory to DAT_proj -- use here package instead
-# wd <- "C://Users/emmel/Desktop/DAT_proj/"
-# setwd(wd)
-
-
-
-
 # Load Data and Filter DAT and SS ------------------------------------------------
 
 cmplt.rm_out <- read.csv(file = here("3_Clean_data/clean_aci_noOutliers.csv"),
                          header = TRUE, sep = ",", fileEncoding = "latin1")
 cmplt_DAT <- filter(cmplt.rm_out, curv_meth == "DAT")
 cmplt_SS <- filter(cmplt.rm_out, curv_meth == "SS")
-
 
 
 # Make and use a function to remove backwards points ------------------------------
@@ -52,6 +44,7 @@ DAT_filt <- cmplt_DAT %>%
 DAT_filt <- as.data.frame(DAT_filt)
 
 
+###
 
 # Fitting ACi Curves with Plantecophys ----------------------------------------------------
 
@@ -269,6 +262,7 @@ SS_fits_photo_TPU <- fit_many(data = cmplt_SS, fitTPU = TRUE,
                                             C_i = "Ci", PPFD = "Qin"), 
                             funct = fit_aci_response,
                             group = "unique_id")
+
 SS_fits_photo_graphs_TPU <- compile_data(SS_fits_photo_TPU,
                                        list_element = 2)
 SS_fits_photo_pars_TPU <- compile_data(SS_fits_photo_TPU,
@@ -287,6 +281,7 @@ dat_fits_photo_TPU <- fit_many(data = DAT_filt_ex, fitTPU = TRUE,
                                            C_i = "Ci", PPFD = "Qin"), 
                            funct = fit_aci_response,
                            group = "unique_id")
+
 dat_fits_photo_graphs_TPU <- compile_data(dat_fits_photo_TPU,
                                       list_element = 2)
 dat_fits_photo_pars_TPU <- compile_data(dat_fits_photo_TPU,
@@ -349,20 +344,20 @@ dev.off()
 ### Photosynthesis does not perform it's own temperature correction, so we apply our own
 
 ### Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
-R             <- 0.008314    # Gas constant
+R             <- 0.008314   # Gas constant
 R2            <- R * 1000
-Kc   		      <- 40.49		   # Michaelis-Menten constant for CO2 (Pa) (Bernacchi et al 2001,2002) or 404.9 microbar von Caemmerer et al. (1994)
-delta_Kc 		  <- 79430 	     # (J mol-1) from Medlyn et al 2002
-Ko   		      <- 27.84		   # Michaelis-Menten constant for CO2 (kPa)(Bernacchi et al 2001,2002) or 278.4 mbar von Caemmerer et al. (1994)
-delta_Ko 		  <- 36380	     # (J mol-1) from Medlyn et al 2002
-gstar  		    <- 4.275		   # CO2 compensation point (Pa) (Bernacchi et al 2001,2002) or 36.9 microbar von Caemmerer et al. (1994)
-delta_gstar 	<- 37830	     # (J mol-1)
+Kc   		      <- 40.49  # Michaelis-Menten constant for CO2 (Pa) (Bernacchi et al 2001,2002) or 404.9 microbar von Caemmerer et al. (1994)
+delta_Kc 		  <- 79430 	# (J mol-1) from Medlyn et al 2002
+Ko   		      <- 27.84  # Michaelis-Menten constant for CO2 (kPa)(Bernacchi et al 2001,2002) or 278.4 mbar von Caemmerer et al. (1994)
+delta_Ko 		  <- 36380	# (J mol-1) from Medlyn et al 2002
+gstar  		    <- 4.275    # CO2 compensation point (Pa) (Bernacchi et al 2001,2002) or 36.9 microbar von Caemmerer et al. (1994)
+delta_gstar 	<- 37830	# (J mol-1)
 
 #Other Constants
-curv          <- 0.85        # Curvature for calculating J from Evans (1989)
+curv          <- 0.85       # Curvature for calculating J from Evans (1989)
 Ambient.CO2   <- 400
-O2  	      	<- 21 		     # Estimated Oxygen concentration at chloroplast - (kPa)
-K0            <- 0.388       # for accounting for diffusion of CO2 through the gasket (Licor 6400 only) maybe we need to remove this part the new machine is alredy accounting for it
+O2  	      	<- 21 	    # Estimated Oxygen concentration at chloroplast - (kPa)
+K0            <- 0.388      # for accounting for diffusion of CO2 through the gasket (Licor 6400 only) maybe we need to remove this part the new machine is alredy accounting for it
 
 ### Peaked function Medlin et al. 2002PCE
 ### Ea = Activation Energy, DeltaS = entropy factor = 200, Hd = Deactivation Energy)
@@ -404,51 +399,37 @@ grp_SS <- cmplt_SS %>%
     summarize(meanTleafK = mean(Tleaf)) %>% 
     rename(ID = unique_id)
 
-# grp_curv <- cmplt.rm_out %>% 
-#     ### Group by curve type and unique_id
-#     group_by(curv_meth, unique_id) %>% 
-#     ### Calculate the mean Tleaf per curve
-#     summarize(meanTleaf = mean(Tleaf)) %>% 
-#     ### Convert to Kelvin
-#     mutate(meanTleafK = meanTleaf + 273.15) %>% 
-#     rename(ID = unique_id)
-# ### Filter by curve type
-# grp_dat <- filter(grp_curv, curv_meth == "DAT")
-# grp_SS <- filter(grp_curv, curv_meth == "SS")
 
 ### Joining the mean Tleaf in Kelvin to fitted parameters
 
-
-
-curv_dat_temp <- left_join(by = "ID",
+curv_dat_temp_noTPU <- left_join(by = "ID",
                            dat_fits_photo_pars_noTPU,
                            grp_dat)
-curv_SS_temp <- left_join(by = "ID", 
+curv_SS_temp_noTPU <- left_join(by = "ID", 
                           SS_fits_photo_pars_noTPU, 
                           grp_SS)
 
 
 
- 
 ### Run the temperature correction on the DAT data
-meanTleafK <- curv_dat_temp$meanTleafK
+meanTleafK <- curv_dat_temp_noTPU$meanTleafK
 
-best_Vcmax_25C_dat <- Vc_peaked_25C(curv_dat_temp[[2]], Ea_V, Delta_V, Ed)
-best_Jmax_25C_dat <- J_peaked_25C(curv_dat_temp[[4]], Ea_J, Delta_J, Ed)
+best_Vcmax_25C_dat <- Vc_peaked_25C(curv_dat_temp_noTPU[[2]], Ea_V, Delta_V, Ed)
+best_Jmax_25C_dat <- J_peaked_25C(curv_dat_temp_noTPU[[4]], Ea_J, Delta_J, Ed)
 
-dat_corrected <- curv_dat_temp %>% 
+dat_corrected_noTPU <- curv_dat_temp_noTPU %>% 
     mutate(Best_Vcmax_25C = best_Vcmax_25C_dat,
            Best_Jmax_25C = best_Jmax_25C_dat,
            curv_meth = "DAT") ####### Check whether you use curv_meth or method in following scripts
 
 
 ### Run the temperature correction on the SS data
-meanTleafK <- curv_SS_temp$meanTleafK
+meanTleafK <- curv_SS_temp_noTPU$meanTleafK
 
-best_Vcmax_25C_SS <- Vc_peaked_25C(curv_SS_temp[[2]],Ea_V, Delta_V, Ed)
-best_Jmax_25C_SS <- J_peaked_25C(curv_SS_temp[[4]], Ea_J, Delta_J, Ed)
+best_Vcmax_25C_SS <- Vc_peaked_25C(curv_SS_temp_noTPU[[2]],Ea_V, Delta_V, Ed)
+best_Jmax_25C_SS <- J_peaked_25C(curv_SS_temp_noTPU[[4]], Ea_J, Delta_J, Ed)
 
-SS_corrected <- curv_SS_temp %>% 
+SS_corrected_noTPU <- curv_SS_temp_noTPU %>% 
     mutate(Best_Vcmax_25C = best_Vcmax_25C_SS,
            Best_Jmax_25C = best_Jmax_25C_SS,
            curv_meth = "SS")
@@ -457,11 +438,11 @@ SS_corrected <- curv_SS_temp %>%
 
 
 # Write .csv files for corrected data
-write.csv(x = dat_corrected, 
+write.csv(x = dat_corrected_noTPU, 
           file = here("5_Results/DAT_photo_pars_crct_noTPU.csv"),
           row.names = FALSE)
 
-write.csv(x = SS_corrected, 
+write.csv(x = SS_corrected_noTPU, 
           file = here("5_Results/SS_photo_pars_crct_noTPU.csv"),
           row.names = FALSE)
 
@@ -486,10 +467,10 @@ grp_SS <- cmplt_SS %>%
 
 ### Joining the mean Tleaf in Kelvin to fitted parameters
 
-curv_dat_temp <- left_join(by = "ID",
-                           DAT_fits_photo_pars_TPU, 
+curv_dat_temp_TPU <- left_join(by = "ID",
+                           dat_fits_photo_pars_TPU, 
                            grp_dat)
-curv_SS_temp <- left_join(by = "ID",
+curv_SS_temp_TPU <- left_join(by = "ID",
                           SS_fits_photo_pars_TPU,
                           grp_SS)
 
@@ -497,12 +478,12 @@ curv_SS_temp <- left_join(by = "ID",
 
 ### Run the temperature correction on the SS data
 
-meanTleafK <- curv_SS_temp$meanTleafK
+meanTleafK <- curv_SS_temp_TPU$meanTleafK
 
-best_Vcmax_25C_SS <- Vc_peaked_25C(curv_SS_temp[[2]],Ea_V, Delta_V, Ed)
-best_Jmax_25C_SS <- J_peaked_25C(curv_SS_temp[[4]], Ea_J, Delta_J, Ed)
+best_Vcmax_25C_SS <- Vc_peaked_25C(curv_SS_temp_TPU[[2]],Ea_V, Delta_V, Ed)
+best_Jmax_25C_SS <- J_peaked_25C(curv_SS_temp_TPU[[4]], Ea_J, Delta_J, Ed)
 
-SS_corrected <- curv_SS_temp %>% 
+SS_corrected_TPU <- curv_SS_temp_TPU %>% 
     mutate(Best_Vcmax_25C = best_Vcmax_25C_SS,
            Best_Jmax_25C = best_Jmax_25C_SS,
            curv_meth = "SS")
@@ -511,12 +492,12 @@ SS_corrected <- curv_SS_temp %>%
 
 ### Run the temperature correction on the DAT data
 
-meanTleafK <- curv_dat_temp$meanTleafK
+meanTleafK <- curv_dat_temp_TPU$meanTleafK
 
-best_Vcmax_25C_dat <- Vc_peaked_25C(curv_dat_temp[[2]], Ea_V, Delta_V, Ed)
-best_Jmax_25C_dat <- J_peaked_25C(curv_dat_temp[[4]], Ea_J, Delta_J, Ed)
+best_Vcmax_25C_dat <- Vc_peaked_25C(curv_dat_temp_TPU[[2]], Ea_V, Delta_V, Ed)
+best_Jmax_25C_dat <- J_peaked_25C(curv_dat_temp_TPU[[4]], Ea_J, Delta_J, Ed)
 
-dat_corrected <- curv_dat_temp %>% 
+dat_corrected_TPU <- curv_dat_temp_TPU %>% 
     mutate(Best_Vcmax_25C = best_Vcmax_25C_dat,
            Best_Jmax_25C = best_Jmax_25C_dat,
            curv_meth = "DAT") ####### Check whether you use curv_meth or method in following scripts
@@ -525,11 +506,11 @@ dat_corrected <- curv_dat_temp %>%
 
 
 # Write .csv files for corrected data
-write.csv(x = dat_corrected, 
+write.csv(x = dat_corrected_TPU, 
           file = here("5_Results/DAT_photo_pars_crct_TPU.csv"),
           row.names = FALSE)
 
-write.csv(x = SS_corrected, 
+write.csv(x = SS_corrected_TPU, 
           file = here("5_Results/SS_photo_pars_crct_TPU.csv"),
           row.names = FALSE)
 
