@@ -13,8 +13,8 @@ library(here)
 # Load and Subset the datasets -------------------------------------------
 
 ### Tree ids
-ids <- read.csv(here("3_Clean_data/id_codebook.csv")) %>% 
-    rename(treeid = ï..treeid)
+ids <- read.csv(here("3_Clean_data/id_codebook.csv")) #%>% 
+    #rename(treeid = ï..treeid)
 
 ### Excluding K6709L3 as the SS curve was not a matched pair with the DAT curve
 
@@ -473,14 +473,14 @@ tpu_just6_all <- rbind(grp_tpu_6SS, grp_tpu_6dat)
 
 ### All data
 all_avg_lf_res %>% 
-    group_by(curv_meth, fit_type) %>%
-    get_summary_stats(vcmax, jmax, show = c("mean", "median", "sd", "min", "max"))
+    group_by(fit_type, curv_meth) %>%
+    get_summary_stats(vcmax, jmax, show = c("mean", "median", "sd", "min", "max")) %>% as.data.frame()
 
 
 ### No-overshoot data
 nd_complete %>% 
-    group_by(curv_meth, fit_type) %>% 
-    get_summary_stats(vcmax, jmax, show = c("mean", "median", "sd", "min", "max"))
+    group_by(fit_type, curv_meth) %>% 
+    get_summary_stats(vcmax, jmax, show = c("mean", "median", "sd", "min", "max")) %>% as.data.frame()
 
 
 ### Just the TPU data
