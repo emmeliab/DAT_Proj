@@ -57,10 +57,13 @@ pho_nd <- pho_dat %>%
 pho_nd_tpu <- pho_dat_tpu %>% 
     subset(ID != "K6707L2" & ID != "K6707L2-2" & ID != "K6707L1" & ID != "K6707L1-1" & ID != "K6709L6" & ID != "K6714L2" & ID != "K6714L1" & ID != "K6702L1" & ID != "K6706L2" & ID != "K6706L1" & ID != "K6709L2")
 
+
 ### Append those datasets together
 pho_nd_both <- rbind(pho_nd, pho_SS)
 pho_nd_both_tpu <- rbind(pho_nd_tpu, pho_SS_tpu)
 
+
+###
 
 # Initial Processing/Grouping ----------------------------------
 
@@ -77,10 +80,9 @@ pho_stat <- select(pho_leaf,
            tpu = V_TPU,
            leaf_id = ID) %>% 
     mutate(fit_type = "no_tpu")
-# Describe factor levels: 0 is SS, 1 is DAT
-# pho_stat$curv_meth <- factor(pho_stat$curv_meth) ########## Is this necessary?
 
-write.csv(pho_stat, file = here("3_Clean_data/pho_stat.csv"))
+
+write.csv(pho_stat, file = here("5_Results/pho_stat.csv"))
 
 # Full data, with TPU
 pho_leaf_tpu <- mutate(pho_both_tpu, leaf_unique = substring(ID, 1, 7))
@@ -94,10 +96,8 @@ pho_stat_tpu <- select(pho_leaf_tpu,
            tpu = V_TPU,
            leaf_id = ID) %>% 
     mutate(fit_type = "tpu")
-# Describe factor levels: 0 is SS, 1 is DAT
-# pho_stat_tpu$curv_meth <- factor(pho_stat_tpu$curv_meth)
 
-write.csv(pho_stat_tpu, file = here("3_Clean_data/pho_stat_tpu.csv"))
+write.csv(pho_stat_tpu, file = here("5_Results/pho_stat_tpu.csv"))
 
 
 
@@ -119,10 +119,8 @@ pho_nd_stat <- select(pho_nd_leaf, 'curv_meth',
            tpu = V_TPU,
            leaf_id = ID) %>%
     mutate(fit_type = "no_tpu")
-#Describe factor levels: 0 is SS, 1 is DAT
-# pho_nd_stat$curv_meth <- factor(pho_nd_stat$curv_meth)
 
-write.csv(pho_nd_stat, file = here("3_Clean_data/pho_nd_stat.csv"))
+write.csv(pho_nd_stat, file = here("5_Results/pho_nd_stat.csv"))
 
 
 
@@ -137,10 +135,11 @@ pho_nd_stat_tpu <- select(pho_nd_leaf_tpu, 'curv_meth', 'Best_Vcmax_25C',
            tpu = V_TPU,
            leaf_id = ID) %>% 
     mutate(fit_type = "tpu")
-#Describe factor levels: 0 is SS, 1 is DAT
-# pho_nd_stat_tpu$curv_meth <- factor(pho_nd_stat_tpu$curv_meth)
 
-write.csv(pho_nd_stat_tpu, file = here("3_Clean_data/pho_nd_stat_tpu.csv"))
+write.csv(pho_nd_stat_tpu, file = here("5_Results/pho_nd_stat_tpu.csv"))
+
+
+###
 
 # Calculate mean Vcmax and Jmax values: All Data ------------------------------------
 
@@ -163,7 +162,7 @@ notpu_results_grp <- pho_stat %>%
 
 ### Merge the summary tables together
 all_avg_lf_res <- rbind(tpu_results_grp, notpu_results_grp)
-#all_avg_lf_res$fit_type <- factor(all_avg_lf_res$fit_type)
+
 
 
 # WITH TPU results
@@ -254,7 +253,7 @@ diff_notpu_tree_codes <- left_join(diff_notpu_tree, ids, by = "treeid")
 
 ### Write .csv file of WITHOUT TPU differences
 write.csv(diff_notpu_tree_codes, here("5_Results/tree_diffs_summary_noTPU.csv"))
-write.csv(diff_notpu_lf, here("3_Clean_data/lf_diffs_summ_noTPU.csv"))
+write.csv(diff_notpu_lf, here("5_Results/lf_diffs_summ_noTPU.csv"))
 
 
 # Calculate mean Vcmax and Jmax values: No Overshoot Data -----------------------------
@@ -278,7 +277,7 @@ notpu_nd_results_grp <- pho_nd_stat %>%
 
 ### Merge the summary tables together
 nd_avg_lf_res <- rbind(tpu_nd_results_grp, notpu_nd_results_grp)
-#all_avg_lf_res$fit_type <- factor(all_avg_lf_res$fit_type)
+
 
 
 # WITH TPU results
@@ -316,7 +315,8 @@ nd_diff_tpu_tree <- ungroup(nd_diff_tpu_lf) %>%
 ### Adding back in the relative canopy position and sorting by height
 rel_can_pos <- select(ids, treeid, rel_can_pos)
 nd_diff_tpu_tree <- left_join(nd_diff_tpu_tree, rel_can_pos, by = "treeid")
-nd_diff_tpu_tree <- nd_diff_tpu_tree[order(nd_diff_tpu_tree$rel_can_pos, decreasing = TRUE),]
+nd_diff_tpu_tree <- nd_diff_tpu_tree[order(nd_diff_tpu_tree$rel_can_pos, 
+                                           decreasing = TRUE),]
 
 nd_diff_tpu_tree_codes <- left_join(nd_diff_tpu_tree, ids, by = "treeid")
 

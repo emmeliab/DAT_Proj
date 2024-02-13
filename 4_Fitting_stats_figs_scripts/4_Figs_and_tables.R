@@ -8,6 +8,8 @@ library(grid)
 
 theme_set(theme_classic(base_family = "serif", base_size = 12))
 
+###
+
 # Load in the data --------------------------------------------------------
 
 ## For the raw data plots and Fig 1
@@ -19,21 +21,21 @@ cmplt.grp <- group_by(cmplt.rm_out, unique_id)
 
 
 ### For 1:1 plots
-pho_stat <- read.csv(here("3_Clean_data/pho_stat.csv"))
-pho_stat_tpu <- read.csv(here("3_Clean_data/pho_stat_tpu.csv"))
+pho_stat <- read.csv(here("5_Results/pho_stat.csv"))
+pho_stat_tpu <- read.csv(here("5_Results/pho_stat_tpu.csv"))
 
 
 ### For difference figs
-diff_tpu_lf <- read.csv(here("3_Clean_data/lf_diffs_summ_TPU.csv"))
-diff_notpu_lf <- read.csv(here("3_Clean_data/lf_diffs_summ_noTPU.csv"))
+diff_tpu_lf <- read.csv(here("5_Results/lf_diffs_summ_TPU.csv"))
+diff_notpu_lf <- read.csv(here("5_Results/lf_diffs_summ_noTPU.csv"))
 
 
 ### For double boxplots
-pho_nd_stat <- read.csv(here("3_Clean_data/pho_nd_stat.csv"))
-pho_nd_stat_tpu <- read.csv(here("3_Clean_data/pho_nd_stat_tpu.csv"))
+pho_nd_stat <- read.csv(here("5_Results/pho_nd_stat.csv"))
+pho_nd_stat_tpu <- read.csv(here("5_Results/pho_nd_stat_tpu.csv"))
 
 ### ID codebook
-ids <- read.csv(here("3_Clean_data/id_codebook.csv")) %>% 
+ids <- read.csv(here("5_Results/id_codebook.csv")) %>% 
     rename(treeid = ï..treeid)
 
 ###
@@ -439,7 +441,7 @@ vc_diff_hist <- ggplot(data = all_diff_tpu_codes,
     theme(axis.text.y = element_text(face = "italic"),
           plot.title = element_text(face = "bold", hjust = 0.5),
           plot.tag = element_text(size = rel(0.9)),
-          plot.tag.position = c(0.5, 0.9)) +
+          plot.tag.position = c(0.35, 0.9)) +
     coord_flip()
 vc_diff_hist
 #ggsave(plot = vc_diff_hist, here("6_Figures/vc_diff_hist.png"))
@@ -452,7 +454,7 @@ j_diff_hist <- ggplot(data = all_diff_tpu_codes,
     geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
          y = expression("SS - DAT "*italic("J")[italic("max")]*" "*(mu*mol~m^{-2}~s^{-1})),
-         tag = "b") +
+         tag = "c") +
     geom_errorbar(aes(x = gen_spec_id, 
                       ymin = j_diff - j_diff_se,
                       ymax = j_diff + j_diff_se),
@@ -461,7 +463,7 @@ j_diff_hist <- ggplot(data = all_diff_tpu_codes,
     ylim(-20, 50) +
     theme(axis.text.y = element_text(face = "italic"),
           plot.tag = element_text(size = rel(0.9)),
-          plot.tag.position = c(0.5, 0.95)) +
+          plot.tag.position = c(0.35, 0.95)) +
     coord_flip()
 j_diff_hist
 #ggsave(plot = j_diff_hist, here("6_Figures/j_diff_hist.png"))
@@ -476,7 +478,7 @@ vc_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes,
     labs(x = NULL,
          y = expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1})),
          title = "Without TPU",
-         tag = "c") +
+         tag = "b") +
     geom_errorbar(aes(x = gen_spec_id, 
                       ymin = vc_diff - vc_diff_se, 
                       ymax = vc_diff + vc_diff_se),
