@@ -8,14 +8,14 @@ library(grid)
 library(ggpubr)
 library(ggmagnify) # for figure S1
 
-theme_set(theme_classic(base_family = "serif", base_size = 12))
+theme_set(theme_classic(base_size = 12))
 
 
 ###
 
 # Load in the data --------------------------------------------------------
 
-## For the raw data plots and Fig 1
+## For the raw data plots, Fig 1, and Fig S1
 cmplt.rm_out <- read.csv(here("3_Clean_data/clean_aci_noOutliers.csv"),
                          header = TRUE,
                          fileEncoding="latin1")
@@ -441,90 +441,7 @@ ggsave(plot = fig3, "6_Figures/figure3.png", width = 6.5, height = 5, dpi = 600)
 
 ###
 
-# Table S1: Summary stats for SS, TPU-enabled parameters------------------------------------------
-
-pho_stat_tpu_ss <- rename(pho_stat_tpu,
-                          vcmax_se = V_cmax_se,
-                          jmax_se = J_se) %>% 
-    filter(curv_meth == "SS")
-
-
-ss_keyparams_tpu <- pho_stat_tpu_ss %>%
-    group_by(treeid) %>% 
-    summarize(mean_vcmax = mean(vcmax),
-              sd_vcmax = sd(vcmax),
-              mean_jmax = mean(jmax),
-              sd_jmax = sd(jmax))
-
-# join with codes
-ss_keyparams_tpu_codes <- left_join(ss_keyparams_tpu, ids, by = "treeid")
-
-# Sort the dataframe by rel_can_pos in ascending order
-sorted_df <- ss_keyparams_tpu_codes[order(ss_keyparams_tpu_codes$rel_can_pos), ]
-
-###
-
-# Figure S1: Backwards points ---------------------------------------------
-
-k6715l1.1 <- ggplot(data = filter(cmplt.grp, unique_id == "K6715L1-1"), 
-                  mapping = aes(x = Ci, y = A)) +
-    geom_point(size = 3) +
-    labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
-         x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1}))) +
-    theme(legend.position = "none") +
-    geom_magnify(from = c(-5, 100, -1, 3), to = c(500, 1000, 0, 7), axes = "xy",
-                 shadow = TRUE)
-k6715l1.1
-
-ggsave(plot = k6715l1.1, file = here("6_figures/figureS1.png"), dpi = 600,
-       height = 4, width = 4.5)
-
-
-# Figure S2: TPU 1:1 -------------------------------------------------------
-
-# TPU 1:1
-leaf_sub_tpu <- select(pho_stat_tpu, tpu, curv_meth, leaf_unique, V_TPU_se)
-leaf_wide_tpu <- reshape(leaf_sub_tpu,
-                         idvar = "leaf_unique",
-                         timevar = "curv_meth", 
-                         direction = "wide") %>% 
-    na.omit()
-names(leaf_wide_tpu)[2:5] = c("tpu_DAT", "tpu_DAT_se", "tpu_SS", "tpu_SS_se")
-cor5 <- round(cor(leaf_wide_tpu$tpu_DAT, leaf_wide_tpu$tpu_SS), 3)
-only_tpu_fit <- filter(leaf_wide_tpu, !is.na(tpu_DAT) & !is.na(tpu_SS))
-only_tpu_fit$tpu_DAT_se <- as.numeric(only_tpu_fit$tpu_DAT_se)
-only_tpu_fit$tpu_SS_se <- as.numeric(only_tpu_fit$tpu_SS_se)
-
-
-pho_1to1_tpu_tpu <- ggplot(data = only_tpu_fit,
-                           mapping = aes(x = tpu_SS,
-                                         y = tpu_DAT,
-                                         color = leaf_unique)) +
-    geom_point(cex = 2.5) +
-    geom_errorbar(aes(ymin = tpu_DAT - tpu_DAT_se, ymax = tpu_DAT + tpu_DAT_se)) + 
-    geom_errorbarh(aes(xmin = tpu_SS - tpu_SS_se, xmax = tpu_SS + tpu_SS_se)) +
-    geom_abline(intercept = 0, slope = 1, linetype = 5, linewidth = 0.6) +
-    theme_classic() +
-    labs(x = expression("TPU"[SS] * " " * (mu*mol~m^{-2}~s^{-1})),
-         y = expression("TPU"[DAT] * " " * (mu*mol~m^{-2}~s^{-1})),
-         col = "Unique Leaf") +
-    theme(aspect.ratio = 1,
-          axis.title.x = element_text(size = 12, family = "serif"),
-          axis.title.y = element_text(size = 12, family = "serif"),
-          axis.text.x = element_text(size = 8, family = "serif", color = "grey10"),
-          axis.text.y = element_text(size = 8, family = "serif", color = "grey10"),
-          legend.position = "none") +
-    scale_x_continuous(limits = c(0, 12), breaks = c(0,3,6,9,12)) + 
-    scale_y_continuous(limits = c(0, 12), breaks = c(0,3,6,9,12)) +
-    annotate(geom = "text", label = paste0("r = ", cor5), x = 4, y = 8, size = rel(3))
-pho_1to1_tpu_tpu
-
-ggsave(plot = pho_1to1_tpu_tpu, here("6_Figures/figureS2.png"), dpi = 600)
-
-
-###
-
-# Figure S3: Density distribution of standard errors ---------------------------------
+# Figure 4: Density distribution of standard errors ---------------------------------
 
 # colors: blue = "#31688EFF", yellow = "#FDE725FF", yellow text = "#FFBF00"
 
@@ -772,7 +689,90 @@ ggsave(plot = se_arranged, here("6_Figures/figureS3.png"), width = 6.5, height =
 
 ###
 
-# Figure S4: Double Boxplots: All v No OS --------------------------------------------
+# Table S1: Summary stats for SS, TPU-enabled parameters------------------------------------------
+
+pho_stat_tpu_ss <- rename(pho_stat_tpu,
+                          vcmax_se = V_cmax_se,
+                          jmax_se = J_se) %>% 
+    filter(curv_meth == "SS")
+
+
+ss_keyparams_tpu <- pho_stat_tpu_ss %>%
+    group_by(treeid) %>% 
+    summarize(mean_vcmax = mean(vcmax),
+              sd_vcmax = sd(vcmax),
+              mean_jmax = mean(jmax),
+              sd_jmax = sd(jmax))
+
+# join with codes
+ss_keyparams_tpu_codes <- left_join(ss_keyparams_tpu, ids, by = "treeid")
+
+# Sort the dataframe by rel_can_pos in ascending order
+sorted_df <- ss_keyparams_tpu_codes[order(ss_keyparams_tpu_codes$rel_can_pos), ]
+
+###
+
+# Figure S1: Backwards points ---------------------------------------------
+
+k6715l1.1 <- ggplot(data = filter(cmplt.grp, unique_id == "K6715L1-1"), 
+                  mapping = aes(x = Ci, y = A)) +
+    geom_point(size = 3) +
+    labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
+         x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1}))) +
+    theme(legend.position = "none") +
+    geom_magnify(from = c(-5, 100, -1, 3), to = c(500, 1000, 0, 7), axes = "xy",
+                 shadow = TRUE)
+k6715l1.1
+
+ggsave(plot = k6715l1.1, file = here("6_figures/figureS1.png"), dpi = 600,
+       height = 4, width = 4.5)
+
+
+# Figure S2: TPU 1:1 -------------------------------------------------------
+
+# TPU 1:1
+leaf_sub_tpu <- select(pho_stat_tpu, tpu, curv_meth, leaf_unique, V_TPU_se)
+leaf_wide_tpu <- reshape(leaf_sub_tpu,
+                         idvar = "leaf_unique",
+                         timevar = "curv_meth", 
+                         direction = "wide") %>% 
+    na.omit()
+names(leaf_wide_tpu)[2:5] = c("tpu_DAT", "tpu_DAT_se", "tpu_SS", "tpu_SS_se")
+cor5 <- round(cor(leaf_wide_tpu$tpu_DAT, leaf_wide_tpu$tpu_SS), 3)
+only_tpu_fit <- filter(leaf_wide_tpu, !is.na(tpu_DAT) & !is.na(tpu_SS))
+only_tpu_fit$tpu_DAT_se <- as.numeric(only_tpu_fit$tpu_DAT_se)
+only_tpu_fit$tpu_SS_se <- as.numeric(only_tpu_fit$tpu_SS_se)
+
+
+pho_1to1_tpu_tpu <- ggplot(data = only_tpu_fit,
+                           mapping = aes(x = tpu_SS,
+                                         y = tpu_DAT,
+                                         color = leaf_unique)) +
+    geom_point(cex = 2.5) +
+    geom_errorbar(aes(ymin = tpu_DAT - tpu_DAT_se, ymax = tpu_DAT + tpu_DAT_se)) + 
+    geom_errorbarh(aes(xmin = tpu_SS - tpu_SS_se, xmax = tpu_SS + tpu_SS_se)) +
+    geom_abline(intercept = 0, slope = 1, linetype = 5, linewidth = 0.6) +
+    theme_classic() +
+    labs(x = expression("TPU"[SS] * " " * (mu*mol~m^{-2}~s^{-1})),
+         y = expression("TPU"[DAT] * " " * (mu*mol~m^{-2}~s^{-1})),
+         col = "Unique Leaf") +
+    theme(aspect.ratio = 1,
+          axis.title.x = element_text(size = 12, family = "serif"),
+          axis.title.y = element_text(size = 12, family = "serif"),
+          axis.text.x = element_text(size = 8, family = "serif", color = "grey10"),
+          axis.text.y = element_text(size = 8, family = "serif", color = "grey10"),
+          legend.position = "none") +
+    scale_x_continuous(limits = c(0, 12), breaks = c(0,3,6,9,12)) + 
+    scale_y_continuous(limits = c(0, 12), breaks = c(0,3,6,9,12)) +
+    annotate(geom = "text", label = paste0("r = ", cor5), x = 4, y = 8, size = rel(3))
+pho_1to1_tpu_tpu
+
+ggsave(plot = pho_1to1_tpu_tpu, here("6_Figures/figureS2.png"), dpi = 600)
+
+
+###
+
+# Figure S3: Double Boxplots: All v No OS --------------------------------------------
 
 #### TPU-omitted Boxplots
 pho_nd_stat <- mutate(pho_nd_stat, subset = "nOS")
@@ -901,7 +901,7 @@ ggsave(plot = figS4, here("6_Figures/figureS4.png"),
 
 ###
 
-# Figure S5 Histograms of differences by species, sorted by relative canopy height ----------
+# Figure S4 Histograms of differences by species, sorted by relative canopy height ----------
 
 ## Note that error bars represent the mean of the absolute error for the differences
 
