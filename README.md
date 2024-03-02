@@ -1,24 +1,26 @@
 # DAT_Proj
 
-## Purpose
 This repository contains the data and code to process 32 DAT and 27 steady-state A/Ci curves during a field campaign to the Tapajos National Forest in Para, Brazil during August of 2022.
 
 ## Data
-* A/Ci data were collected on 13 trees in the Tapajos National Forest accessible from the walkup tower at K67; 33 DAT curves and 28 SS curves (note that one pair of curves were not a matched set and were excluded from the analyses, totalling 32 DAT curves and 27 SS curves)
+* A/Ci data were collected on 13 trees in the Tapajos National Forest accessible from the walkup tower at K67; 33 DAT curves and 28 SS curves (note that one pair of curves were not a matched set and were excluded from the analyses, totaling 32 DAT curves and 27 SS curves)
 * Data were collected using the LI-6800
 * DAT curves were collected with the DAT_continuous program and SS curves collected manually at each point
 * DAT curves were ran right before SS curves on the same leaves; two leaves per tree (typically)
-* Of note, MNG revisted MACA1 on 8/16 and measured new, different leaves than on the first day (8/6?). MNG recorded a Leaf_number of 2, which had already been recorded in the data. In a manual recoding of data, CDS gave a unique identifier to each leaf, with the second leaf 2 recorded as leaf 8.
+* Of note, MNG revisted MACA1 on 8/16 and measured new, different leaves than on the first day (8/6?). MNG recorded a Leaf_number of 2, which had already been recorded in the data. In a manual recording of data, CDS gave a unique identifier to each leaf, with the second leaf 2 recorded as leaf 8.
 
 ## File Structure
 ### 0_Archive
 Contains results and scripts from our first pass-over with the data. Contains redundant data files and MNG scripts for processing curves. Files in here are likely not needed, but are being kept in case.
 
 ### 1_Raw_data
-Contains raw data files from the 6800, with added Data_QC column
+Contains raw .xlsx files from the 6800, with added Data_QC column
 
 ### 2_Cleaning_Scripts
-Contains the script used to clean and assemble the raw data files
+Contains the script (1_Tapajos_DAT_data_assembly.R) used to clean and assemble the raw data files. 
+
+- Takes raw .xlsx files as input and compiles to 3_Clean_data/raw_combined_aci_data.csv
+- Removes outliers in the raw data and saves as 3_Clean_data/clean_aci_noOutliers.csv
 
 ### 3_Clean_data
 Contains .csv of cleaned data as well as tree identification

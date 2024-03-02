@@ -187,10 +187,6 @@ cmplt.rm_out <- read.csv("3_Clean_data/clean_aci_with_uniquecode.csv",
     mutate(Data_point = recode(Data_point, Before_DAT = "DAT", Traditional = "SS"),
            curv_meth = Data_point)
 
-
-## Save the data file
-###### too afraid to save this over Aci_no_out.csv in case I did something wrong
-
 write.csv(cmplt.rm_out, 
           file = here("3_Clean_data/clean_aci_noOutliers.csv"),
           row.names = FALSE)
