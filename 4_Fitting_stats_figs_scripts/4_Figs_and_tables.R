@@ -6,9 +6,9 @@ library(gridExtra)
 library(here)
 library(grid)
 library(ggpubr)
-library(ggmagnify) # for figure S1
+library(ggmagnify) # for figure S1; available at https://github.com/hughjonesd/ggmagnify
 
-theme_set(theme_classic(base_size = 12))
+theme_set(theme_classic(base_size = 12, base_family = "serif"))
 
 
 ###
@@ -44,7 +44,7 @@ all_diff_notpu_codes <- read.csv(here("5_Results/tree_diffs_summary_noTPU.csv"))
 
 
 ### ID codebook
-ids <- read.csv(here("3_Clean_data/id_codebook.csv")) %>% 
+ids <- read.csv(here("3_Clean_data/id_codebook.csv")) 
     rename(treeid = ï..treeid) # this line may not be needed, depending on computer encoding
 
 ###
@@ -91,8 +91,8 @@ k6717l1 <- ggplot(data = filter(cmplt.grp, unique_id == "K6717L1"),
                                 shape = curv_meth,
                                 fill = curv_meth, color = curv_meth)) +
     geom_point(size = 3) +
-    labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
-         x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1})),
+    labs(y = expression("A"[net]*" "*(mu*mol~m^{-2}~s^{-1})), 
+         x = expression("C"[i]*" "*(mu*mol~m^{-2}~s^{-1})),
          tag = "a",
          title = expression(italic("Aparisthmium cordatum")*", Leaf 1")) +
     theme(plot.title = element_text(hjust = 0.5),
@@ -111,8 +111,8 @@ k6707l2 <- ggplot(data = filter(cmplt.grp, unique_id == "K6707L2"),
                                 shape = curv_meth,
                                 fill = curv_meth, color = curv_meth)) +
     geom_point(size = 3) +
-    labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
-         x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1})),
+    labs(y = expression("A"[net]*" "*(mu*mol~m^{-2}~s^{-1})), 
+         x = expression("C"[i]*" "*(mu*mol~m^{-2}~s^{-1})),
          tag = "b",
          title = expression(italic("Tachigali chrysophylla")*", Leaf 2")) +
     theme(plot.title = element_text(hjust = 0.5),
@@ -131,7 +131,7 @@ g2 <- ggplotGrob(k6707l2)
 
 fig1 <- grid.arrange(arrangeGrob(cbind(g1, g2)))
 
-ggsave(plot = fig1, here("6_Figures/figure1.png"), width = 8, height = 3, dpi = 600)
+ggsave(plot = fig1, here("6_Figures/figure1.tif"), width = 8, height = 3, dpi = 600)
 
 
 ###
@@ -161,8 +161,8 @@ pho_1to1_vcmax_tpu <- ggplot(data = leaf_wide_vcmax_tpu,
                        xmax = vcmax_SS + vcmax_SS_se)) +
     geom_abline(intercept = 0, slope = 1, 
                 linetype = 5, linewidth = 0.6) +
-    labs(x = expression(italic("V")[italic("cmax-SS")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
-         y = expression(italic("V")[italic("cmax-DAT")]* " " *(mu*mol~m^{-2}~s^{-1})),
+    labs(x = expression("V"["cmax-SS"]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
+         y = expression("V"["cmax-DAT"]* " " *(mu*mol~m^{-2}~s^{-1})),
          tag = "a") +
     theme(aspect.ratio = 1,
           axis.text.x = element_text(size = 10, color = "gray10"),
@@ -199,8 +199,8 @@ pho_1to1_vcmax_NoTPU <- ggplot(data = leaf_wide_vcmax,
                        xmax = vcmax_SS + vcmax_SS_se)) +
     geom_abline(intercept = 0, slope = 1, 
                 linetype = 5, linewidth = 0.6) +
-    labs(x = expression(italic("V")[italic("cmax-SS")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
-         y = expression(italic("V")[italic("cmax-DAT")]* " " *(mu*mol~m^{-2}~s^{-1})),
+    labs(x = expression("V"["cmax-SS"]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
+         y = expression("V"["cmax-DAT"]* " " *(mu*mol~m^{-2}~s^{-1})),
         # col = "Unique Leaf",
          tag = "c") +
     theme(aspect.ratio = 1,
@@ -225,7 +225,7 @@ sp_diff_hist_vc_tpu <- diff_tpu_lf %>%
     geom_density(linewidth = 0.8) +
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
     geom_vline(xintercept = mean(diff_tpu_lf$vc_diff), color = "black", alpha = 0.4) +
-    labs(x = expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1})),
+    labs(x = expression("SS - DAT "*"V"["cmax"]* " " *(mu*mol~m^{-2}~s^{-1})),
          y = "Density",
          tag = "b") +
     xlim(-30, 65) +
@@ -255,7 +255,7 @@ sp_diff_hist_vc_notpu <- diff_notpu_lf %>%
     geom_density(linewidth = 0.8) +
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
     geom_vline(xintercept = mean(diff_notpu_lf$vc_diff), color = "black", alpha = 0.4) +
-    labs(x = expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1})),
+    labs(x = expression("SS - DAT "*"V"["cmax"]* " " *(mu*mol~m^{-2}~s^{-1})),
          y = "Density",
          tag = "d") +
     xlim(-30, 65) +
@@ -288,7 +288,7 @@ noTPU <- textGrob("Without TPU", rot = 90,
 fig2 <- grid.arrange(arrangeGrob(gQ, left = TPU), gR, arrangeGrob(gS, left = noTPU), gT, nrow = 2) 
 
 
-ggsave(plot = fig2, here("6_Figures/figure2.png"), width = 6.5, height = 5, dpi = 600)
+ggsave(plot = fig2, here("6_Figures/figure2.tif"), width = 6.5, height = 5, dpi = 600)
 
 ###
 
@@ -315,8 +315,8 @@ pho_1to1_jmax_noTPU <- ggplot(data = leaf_wide_jmax,
                        xmax = jmax_SS + jmax_SS_se)) +
     geom_abline(intercept = 0, slope = 1, 
                 linetype = 5, linewidth = 0.6) +
-    labs(x = expression(italic("J")[italic("max-SS")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
-         y = expression(italic("J")[italic("max-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
+    labs(x = expression("J"["max-SS"]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
+         y = expression("J"["max-DAT"]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
          tag = "c") +
     theme(aspect.ratio = 1,
           axis.text.x = element_text(size = 10, color = "grey10"),
@@ -347,8 +347,8 @@ pho_1to1_jmax_tpu <- ggplot(data = leaf_wide_jmax_tpu,
     geom_errorbar(aes(ymin = jmax_DAT - jmax_DAT_se, ymax = jmax_DAT + jmax_DAT_se)) + 
     geom_errorbarh(aes(xmin = jmax_SS - jmax_SS_se, xmax = jmax_SS + jmax_SS_se)) +
     geom_abline(intercept = 0, slope = 1, linetype = 5, linewidth = 0.6) +
-    labs(x = expression(italic("J")[italic("max-SS")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
-         y = expression(italic("J")[italic("max-DAT")]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
+    labs(x = expression("J"["max-SS"]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
+         y = expression("J"["max-DAT"]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
          tag = "a") +
     theme(aspect.ratio = 1,
           axis.text.x = element_text(size = 10, color = "grey10"),
@@ -371,7 +371,7 @@ sp_diff_hist_j_notpu <- diff_notpu_lf %>%
     geom_density(linewidth = 0.8) +
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
     geom_vline(xintercept = mean(diff_notpu_lf$j_diff), color = "black", alpha = 0.4) +
-    labs(x = expression("SS - DAT "*italic("J")[italic("max")]* " " * (mu*mol~m^{-2}~s^{-1})),
+    labs(x = expression("SS - DAT "*"J"["max"]* " " * (mu*mol~m^{-2}~s^{-1})),
          y = "Density",
          tag = "d") +
     xlim(-30, 65) +
@@ -402,7 +402,7 @@ sp_diff_hist_j_tpu <- diff_tpu_lf %>%
     geom_density(linewidth = 0.8) +
     geom_vline(xintercept = 0, color = "red", linetype = "dashed", alpha = 0.3) +
     geom_vline(xintercept = mean(diff_tpu_lf$j_diff), color = "black", alpha = 0.4) +
-    labs(x = expression("SS - DAT "*italic("J")[italic("max")]* " " * (mu*mol~m^{-2}~s^{-1})),
+    labs(x = expression("SS - DAT "*"J"["max"]* " " * (mu*mol~m^{-2}~s^{-1})),
          y = "Density",
          tag = "b") +
     xlim(-30, 65) +
@@ -437,7 +437,7 @@ noTPU <- textGrob("Without TPU", rot = 90,
 fig3 <- grid.arrange(arrangeGrob(gQ2, left = TPU), 
                      gR2, arrangeGrob(gS2, left = noTPU), gT2, nrow = 2) 
 
-ggsave(plot = fig3, "6_Figures/figure3.png", width = 6.5, height = 5, dpi = 600)
+ggsave(plot = fig3, "6_Figures/figure3.tif", width = 6.5, height = 5, dpi = 600)
 
 ###
 
@@ -516,7 +516,7 @@ hist_vc_se_notpu <- ggplot(mapping = aes(x = V_cmax_se)) +
              label = paste0(round(min(pho_SS$V_cmax_se), digits = 2), ", ", 
                             round(max(pho_SS$V_cmax_se), digits = 2)), 
              size = rel(2.7)) +
-    labs(x = expression(italic("V")[italic("cmax")]* " SE " *(mu*mol~m^{-2}~s^{-1})),
+    labs(x = expression(V[cmax]* " SE " *(mu*mol~m^{-2}~s^{-1})),
          y = "Density",
          title = "Without TPU",
          tag = "b") +
@@ -571,7 +571,7 @@ hist_vc_se_tpu <- ggplot(mapping = aes(x = V_cmax_se)) +
              label = paste0(round(min(pho_SS_tpu$V_cmax_se), digits = 2), ", ", 
                             round(max(pho_SS_tpu$V_cmax_se), digits = 2)), 
              size = rel(2.7)) +
-    labs(x = expression(italic("V")[italic("cmax")]* " SE " *(mu*mol~m^{-2}~s^{-1})),
+    labs(x = expression(V[cmax]* " SE " *(mu*mol~m^{-2}~s^{-1})),
          y = "Density",
          title = "With TPU",
          tag = "a") +
@@ -621,7 +621,7 @@ hist_j_se_notpu <- ggplot(mapping = aes(x = J_se)) +
              label = paste0(round(min(pho_SS$J_se), digits = 2), ", ", 
                             round(max(pho_SS$J_se), digits = 2)), 
              size = rel(2.7)) +
-    labs(x = expression(italic("J")[italic("max")]* " SE " *(mu*mol~m^{-2}~s^{-1})), 
+    labs(x = expression(J[max]* " SE " *(mu*mol~m^{-2}~s^{-1})), 
          y = "Density",
          tag = "d") +
     theme(plot.tag = element_text(size = rel(0.9))) +
@@ -667,7 +667,7 @@ hist_j_se_tpu <- ggplot(mapping = aes(x = J_se)) +
              label = paste0(round(min(pho_SS_tpu$J_se), digits = 2), ", ", 
                             round(max(pho_SS_tpu$J_se), digits = 2)), 
              size = rel(2.7)) +
-    labs(x = expression(italic("J")[italic("max")]* " SE " *(mu*mol~m^{-2}~s^{-1})), 
+    labs(x = expression(J[max]* " SE " *(mu*mol~m^{-2}~s^{-1})), 
          y = "Density",
          tag = "c") +
     theme(plot.tag = element_text(size = rel(0.9))) +
@@ -684,7 +684,7 @@ gP <- ggplotGrob(hist_j_se_notpu + rremove("ylab"))
 se_arranged <- grid.arrange(arrangeGrob(cbind(gM, gN)), arrangeGrob(cbind(gO, gP)),
                             heights = c(4.25,4))
 
-ggsave(plot = se_arranged, here("6_Figures/figureS3.png"), width = 6.5, height = 5,
+ggsave(plot = se_arranged, here("6_Figures/figure4.tif"), width = 6.5, height = 5,
        dpi = 600)
 
 ###
@@ -717,14 +717,14 @@ sorted_df <- ss_keyparams_tpu_codes[order(ss_keyparams_tpu_codes$rel_can_pos), ]
 k6715l1.1 <- ggplot(data = filter(cmplt.grp, unique_id == "K6715L1-1"), 
                   mapping = aes(x = Ci, y = A)) +
     geom_point(size = 3) +
-    labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
-         x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1}))) +
+    labs(y = expression("A"[net]*" "*(mu*mol~m^{-2}~s^{-1})), 
+         x = expression("C"[i]*" "*(mu*mol~m^{-2}~s^{-1}))) +
     theme(legend.position = "none") +
     geom_magnify(from = c(-5, 100, -1, 3), to = c(500, 1000, 0, 7), axes = "xy",
                  shadow = TRUE)
 k6715l1.1
 
-ggsave(plot = k6715l1.1, file = here("6_figures/figureS1.png"), dpi = 600,
+ggsave(plot = k6715l1.1, file = here("6_figures/figureS1.tif"), dpi = 600,
        height = 4, width = 4.5)
 
 
@@ -767,7 +767,7 @@ pho_1to1_tpu_tpu <- ggplot(data = only_tpu_fit,
     annotate(geom = "text", label = paste0("r = ", cor5), x = 4, y = 8, size = rel(3))
 pho_1to1_tpu_tpu
 
-ggsave(plot = pho_1to1_tpu_tpu, here("6_Figures/figureS2.png"), dpi = 600)
+ggsave(plot = pho_1to1_tpu_tpu, here("6_Figures/figureS2.tif"), dpi = 600)
 
 
 ###
@@ -789,7 +789,7 @@ vcmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>%
                       values = c("#31688EFF", "#FDE725FF")) +
     scale_x_discrete(labels = c("All", "No Overshoot")) +
     labs(x = "Fit Type",
-         y = expression(italic(V[cmax])*" "*(mu*mol~m^{-2}~s^{-1})),
+         y = expression("V"[cmax]*" "*(mu*mol~m^{-2}~s^{-1})),
          tag = "b",
          title = "Without TPU") +
     annotate("text", label = "**", x = 1, y = 120, color = "red") +
@@ -811,7 +811,7 @@ jmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>%
                       values = c("#31688EFF", "#FDE725FF")) +
     scale_x_discrete(labels = c("All", "No Overshoot")) +
     labs(x = "Fit Type",
-         y = expression(italic(J[max])*" "*(mu*mol~m^{-2}~s^{-1})),
+         y = expression(J[max]*" "*(mu*mol~m^{-2}~s^{-1})),
          tag = "d") +
     annotate("text", label = "****", x = 1, y = 120, color = "red") +
     annotate("text", label = "***", x = 2, y = 120, color = "red") +
@@ -841,7 +841,7 @@ vcmax_AllvNoOS_TPU <- all_and_nOS_TPU %>%
                       values = c("#31688EFF", "#FDE725FF")) +
     scale_x_discrete(labels = c("All", "No Overshoot")) +
     labs(x = "Fit Type",
-         y = expression(italic(V[cmax])*" "*(mu*mol~m^{-2}~s^{-1})),
+         y = expression(V[cmax]*" "*(mu*mol~m^{-2}~s^{-1})),
          title = "With TPU",
          tag = "a") +
     annotate("text", label = "*", x = 2, y = 120, color = "red") +
@@ -863,7 +863,7 @@ jmax_AllvNoOS_TPU <- all_and_nOS_TPU %>%
                       values = c("#31688EFF", "#FDE725FF")) +
     scale_x_discrete(labels = c("All", "No Overshoot")) +
     labs(x = "Fit Type",
-         y = expression(italic(J[max])*" "*(mu*mol~m^{-2}~s^{-1})),
+         y = expression(J[max]*" "*(mu*mol~m^{-2}~s^{-1})),
          tag = "c") +
     annotate("text", label = "****", x = 1, y = 120, color = "red") +
     annotate("text", label = "***", x = 2, y = 120, color = "red") +
@@ -883,20 +883,20 @@ fitType <- textGrob("Fit Type",
                 gp = gpar(fontfamily = "serif", fontface = "bold", 
                           cex = 1.2, hjust = 0.5))
 
-figS4_grid <- grid.arrange(arrangeGrob(cbind(gW, gX)), arrangeGrob(cbind(gY, gZ)),
+figS3_grid <- grid.arrange(arrangeGrob(cbind(gW, gX)), arrangeGrob(cbind(gY, gZ)),
                            heights = c(1.05, 0.95))
 
 legend <- cowplot::get_legend(vcmax_AllvNoOS_noTPU)
-figS4.1 <- grid.arrange(figS4_grid, fitType, heights = c(5,0.5))
-figS4 <- grid.arrange(
-    figS4.1,
+figS3.1 <- grid.arrange(figS4_grid, fitType, heights = c(5,0.5))
+figS3 <- grid.arrange(
+    figS3.1,
     legend,
    widths = c(4, 1)
 )
 
 
 
-ggsave(plot = figS4, here("6_Figures/figureS4.png"),
+ggsave(plot = figS3, here("6_Figures/figureS3.tif"),
        width = 6.5, height = 5, dpi = 600)
 
 ###
@@ -911,7 +911,7 @@ vc_diff_hist <- ggplot(data = all_diff_tpu_codes,
                            y = vc_diff)) +
     geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
-         y = expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1})),
+         y = expression("SS - DAT "*V[cmax]* " " *(mu*mol~m^{-2}~s^{-1})),
          title = "With TPU",
          tag = "a") +
     geom_errorbar(aes(x = gen_spec_id, 
@@ -934,7 +934,7 @@ j_diff_hist <- ggplot(data = all_diff_tpu_codes,
                           y = j_diff)) +
     geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
-         y = expression("SS - DAT "*italic("J")[italic("max")]*" "*(mu*mol~m^{-2}~s^{-1})),
+         y = expression("SS - DAT "*J[max]*" "*(mu*mol~m^{-2}~s^{-1})),
          tag = "c") +
     geom_errorbar(aes(x = gen_spec_id, 
                       ymin = j_diff - j_diff_se,
@@ -956,7 +956,7 @@ vc_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes,
                                  y = vc_diff)) +
     geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
-         y = expression("SS - DAT "*italic("V")[italic("cmax")]* " " *(mu*mol~m^{-2}~s^{-1})),
+         y = expression("SS - DAT "*V[cmax]* " " *(mu*mol~m^{-2}~s^{-1})),
          title = "Without TPU",
          tag = "b") +
     geom_errorbar(aes(x = gen_spec_id, 
@@ -978,7 +978,7 @@ j_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes,
                                 y = j_diff)) +
     geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
     labs(x = NULL,
-         y = expression("SS - DAT "*italic("J")[italic("max")]* " " *(mu*mol~m^{-2}~s^{-1})),
+         y = expression("SS - DAT "*J[max]* " " *(mu*mol~m^{-2}~s^{-1})),
          tag = "d") +
     geom_errorbar(aes(x = gen_spec_id, 
                       ymin = j_diff - j_diff_se,
@@ -999,10 +999,10 @@ gB <- ggplotGrob(vc_diff_hist_notpu + rremove("y.text"))
 gC <- ggplotGrob(j_diff_hist)
 gD <- ggplotGrob(j_diff_hist_notpu + rremove("y.text"))
 
-figS5 <- grid.arrange(arrangeGrob(cbind(gA, gB)), arrangeGrob(cbind(gC, gD)), 
+figS4 <- grid.arrange(arrangeGrob(cbind(gA, gB)), arrangeGrob(cbind(gC, gD)), 
                       heights = c(4.5,4))
 
-ggsave(plot = figS5, here("6_Figures/figureS5.png"), width = 8.3, height = 6,
+ggsave(plot = figS4, here("6_Figures/figureS4.tif"), width = 8.3, height = 6,
        dpi = 600)
 
 
