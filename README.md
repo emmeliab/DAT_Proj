@@ -1,20 +1,20 @@
 # DAT_Proj
 
-This repository contains the data and code to process 32 DAT and 27 steady-state A/Ci curves during a field campaign to the Tapajos National Forest in Para, Brazil during August of 2022.
+This repository contains the data and code to process 32 DAT and 27 steady-state A/C_{i} curves from 13 trees at K67 in the Tapajos National Forest in Para, Brazil during August of 2022.
 
 ## Data
-* A/Ci data were collected on 13 trees in the Tapajos National Forest accessible from the walkup tower at K67; 33 DAT curves and 28 SS curves (note that one pair of curves were not a matched set and were excluded from the analyses, totaling 32 DAT curves and 27 SS curves)
-* Data were collected using the LI-6800
-* DAT curves were collected with the DAT_continuous program and SS curves collected manually at each point
-* DAT curves were ran right before SS curves on the same leaves; two leaves per tree (typically)
-* Of note, MNG revisted MACA1 on 8/16 and measured new, different leaves than on the first day (8/6?). MNG recorded a Leaf_number of 2, which had already been recorded in the data. In a manual recording of data, CDS gave a unique identifier to each leaf, with the second leaf 2 recorded as leaf 8.
+* A/C_{i} data were collected from 13 trees in the Tapajos National Forest accessible from the walkup tower at K67; 33 DAT curves and 28 SS curves (note that one pair of curves were not a matched set and were excluded from the analyses, totaling 32 DAT curves and 27 SS curves)
+* Data were collected using the LI-6800 Portable Photosynthesis System
+|    * DAT curves were collected with the DAT_continuous program and SS curves collected manually at each point
+|    * DAT curves were ran right before SS curves on the same leaves; two leaves per tree (typically)
+|    * Of note, MNG revisted MACA1 on 8/16 and measured new, different leaves than on the first day (8/6?). MNG recorded a Leaf_number of 2, which had already been recorded in the data. In a manual recording of data, CDS gave a unique identifier to each leaf, with the second leaf 2 recorded as leaf 8.
 
 ## File Structure
 ### 0_Archive
 Contains results and scripts from our first pass-over with the data. Contains redundant data files and MNG scripts for processing curves. Files in here are likely not needed, but are being kept in case.
 
 ### 1_Raw_data
-Contains raw .xlsx files from the 6800, with added Data_QC column
+Contains raw .xlsx files from the LI-6800, with added Data_QC column, which was inputted manually
 
 ### 2_Cleaning_Scripts
 Contains the script (1_Tapajos_DAT_data_assembly.R) used to clean and assemble the raw data files. 
@@ -25,55 +25,46 @@ Contains the script (1_Tapajos_DAT_data_assembly.R) used to clean and assemble t
 ### 3_Clean_data
 Contains .csv of cleaned data as well as tree identification
 
+- Aci_no_out.csv (likely a relic; check this)
+- clean_aci_noOutliers.csv : All A/C_{i} data points with erroneous points and outliers removed
+- clean_aci_with_uniquecode.csv : Contains the same data as clean_aci_noOutliers, but with manual fixes to the IDs
+- id_codebook : contains the species names associated with each tree ID, as well as 
+- raw_combined_aci_data.csv : composite of all the data in the .xlsx files with added Data_QC column, but no points removed
+- rel_canopy_pos.csv : containts the relative canopy position for each tree
+- unique_ids.csv : contains the unique tree ID, K67 ID, and species code for internal use
+
 ### 4_Fitting_stats_figs_scripts
 Contains scripts for fitting curves, performing statistical analyses, and building figures for the manuscripts
+
+- 2_Tapajos_Fit_ACi.R : script for fitting the A/C_{i} curves with 'photosynthesis'. Takes clean_aci_with_uniquecode.csv as inputs and outputs temperature corrected fitted parameters and .RData files of the fits
+- 3_Photo_Stat_Analysis.R : scripts for running statistical analyses on the fitted parameters
+- 4_Figs_and_tables.R : scripts for making all in-text and supplementary tables and figures
 
 ### 5_Results
 Contains fitted parameters as well as .RData files of curve fits
 
+- .RData files:
+|     - DAT_photo_fits_TPU.RData : fits for DAT curves with TPU enabled
+|     - DAT_photo_fits_noTPU.RData : fits for DAT curves without TPU enabled
+|     - SS_photo_fits_TPU.RData : fits for SS curves with TPU enabled
+|     - SS_photo_fits_noTPU.RData : fits for SS curves without TPU enabled
+
+- .csv files
+|     - DAT_photo_pars_crct_TPU.csv : the fitted parameters for the DAT curves with TPU enabled
+|     - DAT_photo_pars_crct_noTPU.csv : the fitted parameters for the DAT curves without TPU enabled
+|     - lf_diffs_summ_TPU.csv : difference in SS and DAT fitted parameters with TPU enabled at the leaf level
+|     - lf_diffs_summ_noTPU.csv : difference in SS and DAT fitted paramters without TPU enabled at the leaf level
+|     - pars_ecophys_noTPU.csv : the fitted parameters on the DAT curves without TPU fitting using 'plantecophys.' Note that the pacakge was especially sensitve to noise in the data, and we elected not to proceed with this package.
+|     - pho_nd_stat.csv : relvant columns of DAT and SS curves fitted without TPU and without curves that displayed overshoot
+|     - pho_nd_stat_tpu.csv : relevant columns of DAT and SS curves fitted with TPU and without curves that displayd overshoot
+|     - pho_stat.csv : relevant columns of DAT and SS curves fitted without TPU
+|     - pho_stat_TPU.csv : relevant columns of DAT and SS curves fitted with TPU
+|     - SS_photo_pars_crct_noTPU.csv : the fitted paramters for the SS curves without TPU enabled
+|     - SS_photo_pars_crct_TPU.csv : the fitted parameters for the SS curves with TPU enabled
+|     - tree_diffs_summary_noTPU.csv : difference in SS and DAT fitted parameters wihout TPU enabled at the tree level
+|     - tree_diffs_summary_TPU.csv : difference in SS and DAT fitted paramters with TPU enabled at the tree level
+|     - tree_nOS_diffs_summary_TPU.csv : difference in SS and DAT fitted parameters with TPU enabled and without the curves with overshoot at the leaf level
+|     - tree_nOS_diffs_summary_noTPU.csv : difference in SS and DAT fitted parameters without TPU enables and without the curves with overshoot at the leaf level
+
 ### 6_Figures
 Contains plots of cleaned data, fitted figures, and figures for the manuscript
-
-
-
-# Old stuff - delete later
-### Results
-Contains results of A-ci.adj.MG.R
-* Fitted curves for each curve without back-filtering: A_ci_fit_DAT_Tapajos2.pdf
-* Parameters for the curve fits without back-filtering: A_ci_fit_DAT_Tapajos2.csv
-* Fitted curves for each DAT curve with back-filtering: A_ci_fit_DAT_Tapajos2_noback.pdf
-* Parameters for the DAT curve fits with back-filtering: A_ci_fit_DAT_Tapajos2_noback.csv
-* Compliled parameters of non-filtered and back-filtered data: curve_fitting_MG_out.csv
-
-Contains results of fits from photosynthesis package
-* Parameters of Trad curves with TPU: trad_fits_photo_pars.csv
-* Parameters of Trad curves without TPU: trad_fits_photo_pars_no_TPU.csv
-* Parameters of Trad fits without TPU with temperature correction: trad_fits_photo_pars_correct_no_TPU.csv
-* Parameters of DAT curves with TPU: dat_fits_photo_pars.csv
-* Parameters of DAT curves with backwards point removed: dat_fit_ex_photo_pars.csv
-* Parameters of DAT curves without TPU: dat_fits_photo_pars_filt_no_TPU.csv
-* Parameters of DAT fits without TPU with temperature correction: dat_fits_photo_pars_filt_correct_no_TPU.csv
-
-Contains results of fits from plantecophys package
-* Parameters with TPU: params_ecophys.csv
-* Parameters without TPU: params_ecophys_no_TPU.csv
-
-### Scripts
-#### 1_Tapajos_Data_Assembly.R
-This R file assembles all of the individual clean data files (in the Inputs Folder), filters by quality-controlled data, and outputs in to a data file titled clean_aci_data_one_file.csv
-
-#### 2_Tapajos_Fit_Aci.R
-Cleans outliers and contains script for back-filtering data. Fits curves with plantecophys and photosynthesis packages. Performs a temperature correction on photosynthesis results. Takes clean_aci_with_uniquecode.csv and Aci_no_out.csv as inputs. Outputs plots of fitted curves into Figures Folder and csvs of parameters in the Results folder. Previously charlie_playing.R
-
-#### 3_Tapajos_ACi_stat_analysis.R
-Takes parameters from MG code, photosynthesis, and plantecophys as inputs. Compares Vcmax, Jmax, and TPU results between packages. Performs statistical comparisons between DAT and Trad curves for each package and does preliminary visualizatiom. Outputs figures to Figures folder.
-
-#### A_ci_oldVersion.R
-Maquelle's A/Ci fitting code containing fitting for TPU. Takes Aci_no_out.csv as inputs. Outputs a pdf of fitted curves to Figures folder and a csv of parameters to Results folder.
-
-#### A_ci_in_progress.R
-Maquelle's A/Ci fitting code with TPU fitting removed. Takes Aci_no_out.csv as inputs. Outputs a pdf of fitted curves to Figures folder and a csv of parameters to Results folder.
-
-#### temp_correct_photo.R
-Charlie's code for performing temperature correction on photosynthesis results. This has been incorporated into 2_Tapajos_Fit_Aci.R. Plans to delete this later.
-
