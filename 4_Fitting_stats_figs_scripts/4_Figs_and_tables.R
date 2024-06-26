@@ -899,6 +899,9 @@ figS3 <- grid.arrange(
 ggsave(plot = figS3, here("6_Figures/figureS3.tif"),
        width = 6.5, height = 5, dpi = 600)
 
+
+
+
 ###
 
 # Figure S4 Histograms of differences by species, sorted by relative canopy height ----------
@@ -1092,3 +1095,28 @@ ggsave(plot = figS4, here("6_Figures/figureS4.tif"), width = 8.3, height = 6,
 # jmax_nOS_TPUvNoTPU
 # # ggsave(plot = jmax_nOS_TPUvNoTPU, here("6_Figures/box_jmax_nOS_TPUvNoTPU.png"))
 # 
+
+
+
+# DAT split curve ---------------------------------------------------------
+
+## Note have to copy and paste excel values as values, not formulas, for them to be read into R
+
+dat_test <- read_excel(path = "C:\\Users\\emmel\\Documents\\2022-07-07-1518_DAT_Insitu.xlsx", skip = 14, sheet = "Measurements")
+
+dat_test <- dat_test[-2,]
+
+dat_test$A <- as.numeric(dat_test$A)
+dat_test$Ci <- as.numeric(dat_test$Ci)
+
+
+# Make and save plots for each leaf
+ggplot(data = dat_test, 
+       mapping = aes(x = Ci, y = A)) +
+    geom_point(size = 3) +
+    theme_classic() +
+    labs(y = expression(italic("A"[net])*" "*(mu*mol~m^{-2}~s^{-1})), 
+         x = expression(italic("C"[i])*" "*(mu*mol~m^{-2}~s^{-1}))) +
+    
+    scale_color_manual(values = c(0, "black")) +
+    guides(color = "none")
