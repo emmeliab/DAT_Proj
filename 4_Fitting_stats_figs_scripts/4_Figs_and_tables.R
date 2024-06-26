@@ -18,7 +18,9 @@ theme_set(theme_classic(base_size = 12, base_family = "serif"))
 ## For the raw data plots, Fig 1, and Fig S1
 cmplt.rm_out <- read.csv(here("3_Clean_data/clean_aci_noOutliers.csv"),
                          header = TRUE,
-                         fileEncoding="latin1")
+                         fileEncoding="latin1") %>% 
+    # Remove K6709L3 since it was not a paired DAT-SS on the same leaf
+    subset(unique_id != "K6709L3")
 
 cmplt.grp <- group_by(cmplt.rm_out, unique_id)
 
