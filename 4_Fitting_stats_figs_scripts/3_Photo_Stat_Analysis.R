@@ -14,8 +14,8 @@ library(here)
 # Load and Subset the datasets -------------------------------------------
 
 ### Tree ids
-ids <- read.csv(here("3_Clean_data/id_codebook.csv")) %>% 
-    rename(treeid = ï..treeid)
+ids <- read.csv(here("3_Clean_data/id_codebook.csv")) #%>% 
+    #rename(treeid = ï..treeid)
 
 ### Excluding K6709L3 as the SS curve was not a matched pair with the DAT curve
 
@@ -163,6 +163,8 @@ notpu_results_grp <- pho_stat %>%
 
 ### Merge the summary tables together
 all_avg_lf_res <- rbind(tpu_results_grp, notpu_results_grp)
+all_avg_lf_res$curv_meth <- factor(all_avg_lf_res$curv_meth)
+all_avg_lf_res$fit_type <- factor(all_avg_lf_res$fit_type)
 
 
 
@@ -428,8 +430,8 @@ grp_pho_nd_all_tpu <- dat_nd_res_tpu_summ %>%
 
 
 nd_complete <- rbind(grp_pho_nd_all, grp_pho_nd_all_tpu)
-# nd_complete$curv_meth <- factor(nd_complete$curv_meth)
-# nd_complete$fit_type <- factor(nd_complete$fit_type)
+nd_complete$curv_meth <- factor(nd_complete$curv_meth)
+nd_complete$fit_type <- factor(nd_complete$fit_type)
 
 
 
@@ -467,7 +469,7 @@ grp_tpu_6dat <- pho_stat_tpu %>%
 
 
 tpu_just6_all <- rbind(grp_tpu_6SS, grp_tpu_6dat)
-#tpu_just6_all$curv_meth <- factor(tpu_just6_all$curv_meth)
+tpu_just6_all$curv_meth <- factor(tpu_just6_all$curv_meth)
 
 
 # Produce Summary statistics of results ----------------------
@@ -751,6 +753,191 @@ gghistogram(nd_diff_tpu_lf, x = "j_diff", bins = 10, add_density = TRUE)
 # We will run both Sign and Wilcoxon for both of these, and make a note of this.
 
 
+# Exploring rogme package (CDS added 6/27/24) -------------------------
+#install.packages("remotes")
+#remotes::install_github("GRousselet/rogme")
+library(rogme)
+
+#If the goal is to detect differences anywhere in the distributions, a systematic approach consists of quantifying differences at multiple quantiles. First, for each participant (tree) and each condition (curv_meth), the sample deciles are computed over trials (leaves). Second, for each participant, condition 2 deciles are subtracted from condition 1 deciles - we’re dealing with a within-subject (repeated-measure) design. Third, for each decile, the distribution of differences is subjected to a one-sample test. Fourth, a correction for multiple comparisons is applied across the 9 one-sample tests. We call this procedure a hierarchical shift function. 
+
+all_avg_lf_res$treeid <- factor(all_avg_lf_res$treeid)
+all_avg_lf_res$curv_meth <- factor(all_avg_lf_res$curv_meth)
+all_avg_lf_res$fit_type <- factor(all_avg_lf_res$fit_type)
+
+tpu_res <- all_avg_lf_res %>% filter(fit_type == 'tpu')
+notpu_res <- all_avg_lf_res %>% filter(fit_type == 'no_tpu')
+
+dat_res <- all_avg_lf_res %>% filter(curv_meth == 'DAT')
+ss_res <- all_avg_lf_res %>% filter(curv_meth == 'SS')
+
+np <- length(unique(tpu_res$treeid)) #Number of 'participants' (trees)
+
+#TPU vcmax hierarchical shift function
+set.seed(304)
+#sf_v1 <- shiftdhd_pbci(tpu_res, formula = vcmax ~ curv_meth + treeid, nboot = 500)
+#p_v1 <- plot_sf(sf_v1, plot_theme = 1)[[1]] + 
+#    theme(axis.text = element_text(size = 16, colour="black"))
+#p_v1
+
+hsf_v1 <- hsf(tpu_res, vcmax ~ curv_meth + treeid) 
+#Plot hierarchical shift function
+p_hsf_v1 <- plot_hsf(hsf_v1, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2)  + ylim(-20,20) + ggtitle("Vcmax, TPU, DAT - SS")
+p_hsf_v1
+
+hsf_v1$pvalues
+hsf_v1$adjusted_pvalues
+
+#stochastic dominance
+nq_v1 <- length(hsf_v1$quantiles)
+pdmt0_v1 <- apply(hsf_v1$individual_sf > 0, 2, sum)
+print(paste0('In ',sum(pdmt0_v1 == nq_v1),' trees (',round(100 * sum(pdmt0_v1 == nq_v1) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+
+pdlt0_v1 <- apply(hsf_v1$individual_sf < 0, 2, sum)
+print(paste0('In ',sum(pdlt0_v1 == nq_v1),' trees (',round(100 * sum(pdlt0_v1 == nq_v1) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+
+#percentile bootstrap hierarchical shift function
+#set.seed(304)
+#hsf_pb_v1 <- hsf_pb(tpu_res, vcmax ~ curv_meth + treeid)
+
+#plot_hsf_pb(hsf_pb_v1, interv = "hdi")
+#plot_hsf_pb_dist(hsf_pb_v1, point_interv = "median_ci", interval_width = .95, 
+#                 int_colour = "blue", fill_colour = "grey")
+
+
+#TPU jmax hierarchical shift function
+set.seed(304)
+
+hsf_j1 <- hsf(tpu_res, jmax ~ curv_meth + treeid)
+#Plot hierarchical shift function
+p_hsf_j1 <- plot_hsf(hsf_j1, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, TPU, DAT - SS")
+p_hsf_j1
+
+hsf_j1$pvalues
+hsf_j1$adjusted_pvalues
+
+#stochastic dominance
+nq_j1 <- length(hsf_j1$quantiles)
+pdmt0_j1 <- apply(hsf_j1$individual_sf > 0, 2, sum)
+print(paste0('In ',sum(pdmt0_j1 == nq_j1),' trees (',round(100 * sum(pdmt0_j1 == nq_j1) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+
+pdlt0_j1 <- apply(hsf_j1$individual_sf < 0, 2, sum)
+print(paste0('In ',sum(pdlt0_j1 == nq_j1),' trees (',round(100 * sum(pdlt0_j1 == nq_j1) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+
+#No TPU vcmax hierarchical shift function
+set.seed(304)
+hsf_v2 <- hsf(notpu_res, vcmax ~ curv_meth + treeid)
+#Plot hierarchical shift function
+p_hsf_v2 <- plot_hsf(hsf_v2, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2)+ ylim(-20,20) + ggtitle("Vcmax, no TPU, DAT - SS")
+p_hsf_v2
+
+hsf_v2$pvalues
+hsf_v2$adjusted_pvalues
+
+#stochastic dominance
+nq_v2 <- length(hsf_v2$quantiles)
+pdmt0_v2 <- apply(hsf_v2$individual_sf > 0, 2, sum)
+print(paste0('In ',sum(pdmt0_v2 == nq_v2),' trees (',round(100 * sum(pdmt0_v2 == nq_v2) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+
+pdlt0_v2 <- apply(hsf_v2$individual_sf < 0, 2, sum)
+print(paste0('In ',sum(pdlt0_v2 == nq_v2),' trees (',round(100 * sum(pdlt0_v2 == nq_v2) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+
+#No TPU jmax hierarchical shift function
+set.seed(304)
+hsf_j2 <- hsf(notpu_res, jmax ~ curv_meth + treeid)
+#Plot hierarchical shift function
+p_hsf_j2 <- plot_hsf(hsf_j2, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, no TPU, DAT - SS")
+p_hsf_j2
+
+hsf_j2$pvalues
+hsf_j2$adjusted_pvalues
+
+#stochastic dominance
+nq_j2 <- length(hsf_j2$quantiles)
+pdmt0_j2 <- apply(hsf_j2$individual_sf > 0, 2, sum)
+print(paste0('In ',sum(pdmt0_j2 == nq_j2),' trees (',round(100 * sum(pdmt0_j2 == nq_j2) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+
+pdlt0_j2 <- apply(hsf_j2$individual_sf < 0, 2, sum)
+print(paste0('In ',sum(pdlt0_j2 == nq_j2),' trees (',round(100 * sum(pdlt0_j2 == nq_j2) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+
+#DAT vcmax by fit type hierarchical shift function
+set.seed(304)
+hsf_v3 <- hsf(dat_res, vcmax ~ fit_type + treeid)
+#Plot hierarchical shift function
+p_hsf_v3 <- plot_hsf(hsf_v3, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-20,20) + ggtitle("Vcmax, DAT, no TPU - TPU")
+p_hsf_v3
+
+hsf_v3$pvalues
+hsf_v3$adjusted_pvalues
+
+#stochastic dominance
+nq_v3 <- length(hsf_v3$quantiles)
+pdmt0_v3 <- apply(hsf_v3$individual_sf > 0, 2, sum)
+print(paste0('In ',sum(pdmt0_v3 == nq_v3),' trees (',round(100 * sum(pdmt0_v3 == nq_v3) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+
+pdlt0_v3 <- apply(hsf_v3$individual_sf < 0, 2, sum)
+print(paste0('In ',sum(pdlt0_v3 == nq_v3),' trees (',round(100 * sum(pdlt0_v3 == nq_v3) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+
+#DAT Jmax by fit type hierarchical shift function
+set.seed(304)
+hsf_j3 <- hsf(dat_res, jmax ~ fit_type + treeid)
+#Plot hierarchical shift function
+p_hsf_j3 <- plot_hsf(hsf_j3, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, DAT, no TPU - TPU")
+p_hsf_j3
+
+hsf_j3$pvalues
+hsf_j3$adjusted_pvalues
+
+#stochastic dominance
+nq_j3 <- length(hsf_j3$quantiles)
+pdmt0_j3 <- apply(hsf_j3$individual_sf > 0, 2, sum)
+print(paste0('In ',sum(pdmt0_j3 == nq_j3),' trees (',round(100 * sum(pdmt0_j3 == nq_j3) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+
+pdlt0_j3 <- apply(hsf_j3$individual_sf < 0, 2, sum)
+print(paste0('In ',sum(pdlt0_j3 == nq_j3),' trees (',round(100 * sum(pdlt0_j3 == nq_j3) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+
+#SS Vcmax by fit type hierarchical shift function
+set.seed(304)
+hsf_v4 <- hsf(ss_res, vcmax ~ fit_type + treeid)
+#Plot hierarchical shift function
+p_hsf_v4 <- plot_hsf(hsf_v4, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-20,20)+ ggtitle("Vcmax, SS, no TPU - TPU")
+p_hsf_v4
+
+hsf_v4$pvalues
+hsf_v4$adjusted_pvalues
+
+#stochastic dominance
+nq_v4 <- length(hsf_v4$quantiles)
+pdmt0_v4 <- apply(hsf_v4$individual_sf > 0, 2, sum)
+print(paste0('In ',sum(pdmt0_v4 == nq_v4),' trees (',round(100 * sum(pdmt0_v4 == nq_v4) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+
+pdlt0_v4 <- apply(hsf_v4$individual_sf < 0, 2, sum)
+print(paste0('In ',sum(pdlt0_v4 == nq_v4),' trees (',round(100 * sum(pdlt0_v4 == nq_v4) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+
+#DAT Jmax by fit type hierarchical shift function
+set.seed(304)
+hsf_j4 <- hsf(ss_res, jmax ~ fit_type + treeid)
+#Plot hierarchical shift function
+p_hsf_j4 <- plot_hsf(hsf_j4, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, SS, no TPU - TPU")
+p_hsf_j4
+
+hsf_j4$pvalues
+hsf_j4$adjusted_pvalues
+
+#stochastic dominance
+nq_j4 <- length(hsf_j4$quantiles)
+pdmt0_j4 <- apply(hsf_j4$individual_sf > 0, 2, sum)
+print(paste0('In ',sum(pdmt0_j4 == nq_j4),' trees (',round(100 * sum(pdmt0_j4 == nq_j4) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+
+pdlt0_j4 <- apply(hsf_j4$individual_sf < 0, 2, sum)
+print(paste0('In ',sum(pdlt0_j4 == nq_j4),' trees (',round(100 * sum(pdlt0_j4 == nq_j4) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+
+library(patchwork)
+
+curv_meth_grid <- p_hsf_v1 + p_hsf_v2 + p_hsf_j1 + p_hsf_j2
+curv_meth_grid
+
+fit_type_grid <- p_hsf_v3 + p_hsf_v4 + p_hsf_j3 + p_hsf_j4
+fit_type_grid
 
 # Run Wilcoxon and Sign tests ------------------------------------------
 
