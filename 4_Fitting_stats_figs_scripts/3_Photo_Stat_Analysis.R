@@ -492,266 +492,79 @@ tpu_just6_all %>%
     get_summary_stats(vcmax, jmax, show = c("mean", "median", "sd", "min", "max"))
 
 
-# Checking Assumptions of t-tests -----------------------------------------
+# Checking Assumptions of paired t-tests -----------------------------------------
 
+# Levene's for homogeneity of variance is not necessary because the paired t-test cares only about the distribution of the difference between the two variables. The variances of the two variables separately is irrelevant.
 
-### Looking at histograms for normality: WITHOUT TPU, all data
+# Checking the symmetric distribution of the differences -----------------------------------------
 
-### Vcmax
-all_avg_lf_res %>% 
-    filter(fit_type == "no_tpu") %>%
-    ggplot(aes(x=vcmax)) + 
-    geom_histogram()
+# Includes Shapiro Wilk normality test for paired differences; no overshoot, WITHOUT TPU
 
-### Jmax
-all_avg_lf_res %>% 
-    filter(fit_type == "no_tpu") %>%
-    ggplot(aes(x=jmax)) + 
-    geom_histogram()
-
-
-
-# Levene's for homogeneity of variance; WITHOUT TPU, all data
-
-all_avg_lf_res %>%
-    filter(fit_type == "no_tpu") %>% 
-    leveneTest(vcmax ~ curv_meth, data = .)
-
-all_avg_lf_res %>% 
-    filter(fit_type == "no_tpu") %>% 
-    leveneTest(jmax ~ curv_meth, data = .)
-
-#### Both non-significant. The variances are not significantly different from one another. Therefore we have met the assumption of equal variances
-
-
-
-# Shapiro-Wilk test for normality; WITHOUT TPU, all data
-
-# Vcmax
-all_avg_lf_res %>%
-    filter(fit_type == "no_tpu") %>%
-    with(., shapiro.test(vcmax))
-
-all_avg_lf_res %>% 
-    filter(fit_type == "no_tpu") %>%
-    with(., shapiro.test(vcmax[curv_meth == "DAT"]))
-
-all_avg_lf_res %>%
-    filter(fit_type == "no_tpu") %>% 
-    with(., shapiro.test(vcmax[curv_meth == "SS"]))
-
-# Jmax
-all_avg_lf_res %>% 
-    filter(fit_type == "no_tpu") %>% 
-    with(., shapiro.test(jmax))
-
-all_avg_lf_res %>%
-    filter(fit_type == "no_tpu") %>%
-    with(., shapiro.test(jmax[curv_meth == "DAT"]))
-
-all_avg_lf_res %>% 
-    filter(fit_type == "no_tpu") %>% 
-    with(., shapiro.test(jmax[curv_meth == "SS"]))
-
-#All but one deviates from normal
-
-
-
-
-# Looking at histograms for normality, WITH TPU, all data
-
-all_avg_lf_res %>% 
-    filter(fit_type == "tpu") %>%
-    ggplot(aes(x=vcmax)) + 
-    geom_histogram()
-
-all_avg_lf_res %>% 
-    filter(fit_type == "tpu") %>%
-    ggplot(aes(x=jmax)) + 
-    geom_histogram()
-
-
-
-# Levene's for homogeneity of variance; WITH TPU, all data
-all_avg_lf_res %>% 
-    filter(fit_type == "tpu") %>% 
-    leveneTest(vcmax ~ curv_meth, data = .)
-
-all_avg_lf_res %>%
-    filter(fit_type == "tpu") %>% 
-    leveneTest(jmax ~ curv_meth, data = .)
-
-# Both non-significant. The variances are not significantly different from one another. Therefore we have met the assumption of equal variances
-
-
-
-# Shapiro-Wilk's test for normality, WITH TPU, all data
-
-### Vcmax
-all_avg_lf_res %>% 
-    filter(fit_type == "tpu") %>% 
-    with(., shapiro.test(vcmax))
-
-all_avg_lf_res %>%
-    filter(fit_type == "tpu") %>% 
-    with(., shapiro.test(vcmax[curv_meth == "DAT"]))
-
-all_avg_lf_res %>% 
-    filter(fit_type == "tpu") %>%
-    with(., shapiro.test(vcmax[curv_meth == "SS"]))
-
-### Jmax
-all_avg_lf_res %>% 
-    filter(fit_type == "tpu") %>%
-    with(., shapiro.test(jmax))
-
-all_avg_lf_res %>%
-    filter(fit_type == "tpu") %>% 
-    with(., shapiro.test(jmax[curv_meth == "DAT"]))
-
-all_avg_lf_res %>%
-    filter(fit_type == "tpu") %>%
-    with(., shapiro.test(jmax[curv_meth == "SS"]))
-#Most deviate from normal
-
-
-
-
-# Testing assumptions for No Overshoot data
-
-# Levene's test; no overshoot
-
-## WITH TPU
-nd_complete %>%
-    filter(fit_type == "tpu") %>% 
-    leveneTest(vcmax ~ curv_meth, data = .)
-
-nd_complete %>%
-    filter(fit_type == "tpu") %>%
-    leveneTest(jmax ~ curv_meth, data = .)
-
-# WITHOUT TPU
-nd_complete %>% 
-    filter(fit_type == "no_tpu") %>% 
-    leveneTest(vcmax ~ curv_meth, data = .)
-
-nd_complete %>%
-    filter(fit_type == "no_tpu") %>% 
-    leveneTest(jmax ~ curv_meth, data = .)
-
-# Met assumption of homogeneity of variances
-
-
-
-# Shapiro Wilk Test; no overshoot, WITHOUT TPU
-
-### Vcmax
-nd_complete %>%
-    filter(fit_type == "no_tpu") %>% 
-    with(., shapiro.test(vcmax))
-
-nd_complete %>% 
-    filter(fit_type == "no_tpu") %>%
-    with(., shapiro.test(vcmax[curv_meth == "DAT"]))
-
-nd_complete %>% 
-    filter(fit_type == "no_tpu") %>% 
-    with(., shapiro.test(vcmax[curv_meth == "SS"]))
-
-
-### Jmax
-nd_complete %>% 
-    filter(fit_type == "no_tpu") %>%
-    with(., shapiro.test(jmax))
-
-nd_complete %>% 
-    filter(fit_type == "no_tpu") %>%
-    with(., shapiro.test(jmax[curv_meth == "DAT"]))
-
-nd_complete %>% 
-    filter(fit_type == "no_tpu") %>% 
-    with(., shapiro.test(jmax[curv_meth == "SS"]))
-
-
-
-### Shapiro-Wilk test; no overshoot, WITH TPU
-
-### Vcmax
-nd_complete %>% 
-    filter(fit_type == "tpu") %>% 
-    with(., shapiro.test(vcmax))
-
-nd_complete %>%
-    filter(fit_type == "tpu") %>% 
-    with(., shapiro.test(vcmax[curv_meth == "DAT"]))
-
-nd_complete %>% 
-    filter(fit_type == "tpu") %>%
-    with(., shapiro.test(vcmax[curv_meth == "SS"]))
-
-### Jmax
-nd_complete %>%
-    filter(fit_type == "tpu") %>% 
-    with(., shapiro.test(jmax))
-
-nd_complete %>%
-    filter(fit_type == "tpu") %>%
-    with(., shapiro.test(jmax[curv_meth == "DAT"]))
-
-nd_complete %>% 
-    filter(fit_type == "tpu") %>% 
-    with(., shapiro.test(jmax[curv_meth == "SS"]))
-
-# They all deviate from normal.
-
-
-# Checking the symmetric distribution of Wilcoxon -----------------------------------------
-
-# To use wilcoxon paired, we assume the differences between paired samples are distributed symmetrically about the median
-
-
-### Combine the difference datasets
-#diff_lf <- rbind(diff_notpu_lf, diff_tpu_lf)
-
-
-
-gghistogram(diff_notpu_lf, x = "vc_diff", bins = 10, add_density = TRUE)
+gghistogram(diff_notpu_lf, x = "vc_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_notpu_lf$vc_diff), color = 'red')
 #That should be fine
 
-gghistogram(diff_tpu_lf, x = "vc_diff", bins = 10, add_density = TRUE)
-#okay
+diff_notpu_lf %>%
+    with(., shapiro.test(vc_diff))
 
+gghistogram(diff_tpu_lf, x = "vc_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_tpu_lf$vc_diff), color = 'red')
+
+diff_tpu_lf %>%
+    with(., shapiro.test(vc_diff))
+
+#Vcmax differences are approximately normally distributed.
 
 ### Jmax
-gghistogram(diff_notpu_lf, x = "j_diff", bins = 10, add_density = TRUE)
+gghistogram(diff_notpu_lf, x = "j_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_notpu_lf$j_diff), color = 'red')
 
-gghistogram(diff_tpu_lf, x = "j_diff", bins = 10, add_density = TRUE)
-#### not great!; far worse than Vcmax differences
+diff_notpu_lf %>%
+    with(., shapiro.test(j_diff))
+
+gghistogram(diff_tpu_lf, x = "j_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_tpu_lf$j_diff), color = 'red')
+
+diff_tpu_lf %>%
+    with(., shapiro.test(j_diff))
+
+#### Jmax not great! Differences not normally distributed; far worse than Vcmax differences.
+
+#Testing log transformation
+diff_notpu_lf$log_j_diff <- log(diff_notpu_lf$j_diff)
+diff_tpu_lf$log_j_diff <- log(diff_tpu_lf$j_diff)
 
 
 
 # No Overshoot data
 
-#nd_diff_lf <- rbind(nd_diff_notpu_lf, nd_diff_tpu_lf)
-
 ### Vcmax
 gghistogram(nd_diff_notpu_lf, x = "vc_diff", bins = 10, add_density = TRUE)
 #That should be fine
 
+nd_diff_notpu_lf %>%
+    with(., shapiro.test(vc_diff))
+
 gghistogram(nd_diff_tpu_lf, x = "vc_diff", bins = 10, add_density = TRUE)
 #okay
+
+nd_diff_tpu_lf %>%
+    with(., shapiro.test(vc_diff))
+# All no-overshoot Vcmax looks fine.
 
 
 ### Jmax
 gghistogram(nd_diff_notpu_lf, x = "j_diff", bins = 10, add_density = TRUE)
 
-gghistogram(nd_diff_tpu_lf, x = "j_diff", bins = 10, add_density = TRUE)
-#### not very good; Vcmax is much better
+nd_diff_notpu_lf %>%
+    with(., shapiro.test(j_diff))
 
+gghistogram(nd_diff_tpu_lf, x = "j_diff", bins = 10, add_density = TRUE)
+
+nd_diff_tpu_lf %>%
+    with(., shapiro.test(j_diff))
+# no-overshoot Jmax is only okay.
+
+# To use wilcoxon paired, we assume the differences between paired samples are distributed symmetrically about the median.
 
 # It's just Jmax where we don't totally meet the Wilcoxon assumptions. 
-# We will run both Sign and Wilcoxon for both of these, and make a note of this.
-
+# We will run both Sign test and Wilcoxon test on Jmax to see if their results agree.
 
 # Exploring rogme package (CDS added 6/27/24) -------------------------
 #install.packages("remotes")
