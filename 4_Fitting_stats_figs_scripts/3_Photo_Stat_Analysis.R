@@ -876,3 +876,41 @@ tpu_just6_all %>%
 tpu_just6_all %>% 
     wilcox_effsize(data = ., tpu ~ curv_meth, paired = TRUE)
 
+
+
+#Wilcoxon tests for the data grouped on a tree level. ---------------------------
+
+#Added 7/1/24 to appease the reviewers
+
+all_avg_tr_res <- all_avg_lf_res %>% 
+    group_by(fit_type, curv_meth, treeid) %>% 
+    summarize(vcmax = mean(vcmax),
+              jmax = mean(jmax))
+
+### Vcmax Wilcoxon by curve method 
+all_avg_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+### Vcmax Wilcoxon by TPU v. no TPU
+all_avg_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
+    add_significance()
+
+### Jmax Wilcoxon by curve method
+all_avg_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+### Jmax Wilcoxon by TPU v. no TPU
+all_avg_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+
+
+
