@@ -566,7 +566,80 @@ nd_diff_tpu_lf %>%
 # It's just Jmax where we don't totally meet the Wilcoxon assumptions. 
 # We will run both Sign test and Wilcoxon test on Jmax to see if their results agree.
 
+
+# Exploring random effect models ---------------------------------
+library(lme4)
+library(lmerTest)
+library(MuMIn)
+
+# Mixed model with random effect for intercept
+# Our leaves are nested within trees. Trees will be the random effect.
+diff_notpu_lf$treeid <- as.factor(diff_notpu_lf$treeid)
+diff_tpu_lf$treeid <- as.factor(diff_tpu_lf$treeid)
+
+mod_notpu_1 <- lmer(vc_diff ~ 1 + (1|treeid),
+                    data = diff_notpu_lf)
+
+plot(residuals(mod_notpu_1) ~ diff_notpu_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red")
+
+fixef(mod_notpu_1)
+summary(mod_notpu_1)
+
+coef(summary(mod_notpu_1))
+
+confint(mod_notpu_1, method = 'boot')
+
+VarCorr(mod_notpu_1) # this shows the standard deviation by default
+
+print(VarCorr(mod_notpu_1), comp = c("Variance", "Std.Dev.")) # this shows both variance and SD, both of which are presented in the standard model summary. This standard deviation can be interesting to interpret.
+
+# look at random effect coefficients
+ranef(mod_notpu_1)
+
+coef(mod_notpu_1) # these are the actual equations you would use to estimate values for each for the 13 treeids. You can see the intercept values have been changed for each tree.
+
+# Amount of explained variation. The marginal R2 is when we would not know the tree ID, and a conditional r-squared, which assumes we would KNOW the tree ID when predicting.
+library(MuMIn)
+
+r.squaredGLMM(mod_notpu_1)
+
+
+
+#Trying a different way ------------------------
+library(lme4)
+library(lmerTest)
+
+all_avg_lf_res$treeid <- factor(all_avg_lf_res$treeid)
+all_avg_lf_res$curv_meth <- factor(all_avg_lf_res$curv_meth)
+all_avg_lf_res$fit_type <- factor(all_avg_lf_res$fit_type)
+
+tpu_res <- all_avg_lf_res %>% filter(fit_type == 'tpu')
+notpu_res <- all_avg_lf_res %>% filter(fit_type == 'no_tpu')
+
+lmer_notpu_1 <- lmer(vcmax ~ curv_meth + (1 + curv_meth | treeid),
+                     data = notpu_res)
+
+plot(residuals(lmer_notpu_1) ~ notpu_res$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red")
+
+fixef(lmer_notpu_1)
+summary(lmer_notpu_1)
+
+coef(summary(lmer_notpu_1))
+
+confint(lmer_notpu_1, method = 'boot')
+
+VarCorr(lmer_notpu_1) # this shows the standard deviation by default
+
+r.squaredGLMM(lmer_notpu_1)
+
 # Exploring rogme package (CDS added 6/27/24) -------------------------
+#Need to use this to install the package:
 #install.packages("remotes")
 #remotes::install_github("GRousselet/rogme")
 library(rogme)
@@ -585,12 +658,12 @@ ss_res <- all_avg_lf_res %>% filter(curv_meth == 'SS')
 
 np <- length(unique(tpu_res$treeid)) #Number of 'participants' (trees)
 
-#TPU vcmax hierarchical shift function
+#TPU vcmax hierarchical shift function (COMPLETE)
 set.seed(304)
-#sf_v1 <- shiftdhd_pbci(tpu_res, formula = vcmax ~ curv_meth + treeid, nboot = 500)
-#p_v1 <- plot_sf(sf_v1, plot_theme = 1)[[1]] + 
-#    theme(axis.text = element_text(size = 16, colour="black"))
-#p_v1
+sf_v1 <- shiftdhd_pbci(tpu_res, formula = vcmax ~ curv_meth + treeid, nboot = 500)
+p_v1 <- plot_sf(sf_v1, plot_theme = 1)[[1]] + 
+    theme(axis.text = element_text(size = 16, colour="black"))
+p_v1
 
 hsf_v1 <- hsf(tpu_res, vcmax ~ curv_meth + treeid) 
 #Plot hierarchical shift function
@@ -609,15 +682,17 @@ pdlt0_v1 <- apply(hsf_v1$individual_sf < 0, 2, sum)
 print(paste0('In ',sum(pdlt0_v1 == nq_v1),' trees (',round(100 * sum(pdlt0_v1 == nq_v1) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
 
 #percentile bootstrap hierarchical shift function
-#set.seed(304)
-#hsf_pb_v1 <- hsf_pb(tpu_res, vcmax ~ curv_meth + treeid)
+set.seed(304)
+hsf_pb_v1 <- hsf_pb(tpu_res, vcmax ~ curv_meth + treeid)
 
-#plot_hsf_pb(hsf_pb_v1, interv = "hdi")
-#plot_hsf_pb_dist(hsf_pb_v1, point_interv = "median_ci", interval_width = .95, 
-#                 int_colour = "blue", fill_colour = "grey")
+plot_hsf_pb(hsf_pb_v1, interv = "hdi")
+plot_hsf_pb_dist(hsf_pb_v1, point_interv = "median_ci", interval_width = .95, 
+                 int_colour = "blue", fill_colour = "grey")
 
 
-#TPU jmax hierarchical shift function
+
+
+#TPU jmax hierarchical shift function (COMPLETE)
 set.seed(304)
 
 hsf_j1 <- hsf(tpu_res, jmax ~ curv_meth + treeid)
@@ -635,6 +710,17 @@ print(paste0('In ',sum(pdmt0_j1 == nq_j1),' trees (',round(100 * sum(pdmt0_j1 ==
 
 pdlt0_j1 <- apply(hsf_j1$individual_sf < 0, 2, sum)
 print(paste0('In ',sum(pdlt0_j1 == nq_j1),' trees (',round(100 * sum(pdlt0_j1 == nq_j1) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+
+#percentile bootstrap hierarchical shift function
+set.seed(304)
+hsf_pb_j1 <- hsf_pb(tpu_res, jmax ~ curv_meth + treeid)
+
+plot_hsf_pb(hsf_pb_j1, interv = "hdi")
+plot_hsf_pb_dist(hsf_pb_j1, point_interv = "median_ci", interval_width = .95, 
+                 int_colour = "blue", fill_colour = "grey")
+
+
+
 
 #No TPU vcmax hierarchical shift function
 set.seed(304)
