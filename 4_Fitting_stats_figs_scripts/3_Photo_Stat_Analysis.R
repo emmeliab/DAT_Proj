@@ -570,403 +570,105 @@ nd_diff_tpu_lf %>%
 # Exploring random effect models ---------------------------------
 library(lme4)
 library(lmerTest)
-library(MuMIn)
+library(performance)
 
 # Mixed model with random effect for intercept
 # Our leaves are nested within trees. Trees will be the random effect.
 diff_notpu_lf$treeid <- as.factor(diff_notpu_lf$treeid)
 diff_tpu_lf$treeid <- as.factor(diff_tpu_lf$treeid)
 
-mod_notpu_1 <- lmer(vc_diff ~ 1 + (1|treeid),
+mod_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
+                    data = diff_notpu_lf)
+mod_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                     data = diff_notpu_lf)
 
-plot(residuals(mod_notpu_1) ~ diff_notpu_lf$treeid)
+
+mod_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
+                    data = diff_tpu_lf)
+#This leads to a singularity
+mod_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
+                  data = diff_tpu_lf)
+
+
+#Trying to avoid the singularity
+nlme_tpu_v <- nlmer(vc_diff ~ 1 + (1|treeid),
+                  data = diff_tpu_lf)
+#Still no luck...
+nlme_tpu_1 <- nlme::nlme(vc_diff ~ 1,
+                         random = 1 | diff_tpu_lf$treeid,
+                         data = diff_tpu_lf)
+
+
+
+
+plot(residuals(mod_notpu_v) ~ diff_notpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
        col = "red")
 
-fixef(mod_notpu_1)
-summary(mod_notpu_1)
-
-coef(summary(mod_notpu_1))
-
-confint(mod_notpu_1, method = 'boot')
-
-VarCorr(mod_notpu_1) # this shows the standard deviation by default
-
-print(VarCorr(mod_notpu_1), comp = c("Variance", "Std.Dev.")) # this shows both variance and SD, both of which are presented in the standard model summary. This standard deviation can be interesting to interpret.
-
-# look at random effect coefficients
-ranef(mod_notpu_1)
-
-coef(mod_notpu_1) # these are the actual equations you would use to estimate values for each for the 13 treeids. You can see the intercept values have been changed for each tree.
-
-# Amount of explained variation. The marginal R2 is when we would not know the tree ID, and a conditional r-squared, which assumes we would KNOW the tree ID when predicting.
-library(MuMIn)
-
-r.squaredGLMM(mod_notpu_1)
-
-
-
-#Trying a different way ------------------------
-library(lme4)
-library(lmerTest)
-
-all_avg_lf_res$treeid <- factor(all_avg_lf_res$treeid)
-all_avg_lf_res$curv_meth <- factor(all_avg_lf_res$curv_meth)
-all_avg_lf_res$fit_type <- factor(all_avg_lf_res$fit_type)
-
-tpu_res <- all_avg_lf_res %>% filter(fit_type == 'tpu')
-notpu_res <- all_avg_lf_res %>% filter(fit_type == 'no_tpu')
-
-lmer_notpu_1 <- lmer(vcmax ~ curv_meth + (1 + curv_meth | treeid),
-                     data = notpu_res)
-
-plot(residuals(lmer_notpu_1) ~ notpu_res$treeid)
+plot(residuals(mod_notpu_j) ~ diff_notpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
        col = "red")
 
-fixef(lmer_notpu_1)
-summary(lmer_notpu_1)
+plot(residuals(mod_tpu_v) ~ diff_tpu_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red")
 
-coef(summary(lmer_notpu_1))
+plot(residuals(mod_tpu_j) ~ diff_tpu_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red")
 
-confint(lmer_notpu_1, method = 'boot')
 
-VarCorr(lmer_notpu_1) # this shows the standard deviation by default
+summary(mod_notpu_v)
+summary(mod_notpu_j)
 
-r.squaredGLMM(lmer_notpu_1)
+summary(mod_tpu_v)
+summary(mod_tpu_j)
 
-# Exploring rogme package (CDS added 6/27/24) -------------------------
-#Need to use this to install the package:
-#install.packages("remotes")
-#remotes::install_github("GRousselet/rogme")
-library(rogme)
+#Note the intercepts
+coef(summary(mod_notpu_v))
+coef(summary(mod_notpu_j))
 
-#If the goal is to detect differences anywhere in the distributions, a systematic approach consists of quantifying differences at multiple quantiles. First, for each participant (tree) and each condition (curv_meth), the sample deciles are computed over trials (leaves). Second, for each participant, condition 2 deciles are subtracted from condition 1 deciles - we’re dealing with a within-subject (repeated-measure) design. Third, for each decile, the distribution of differences is subjected to a one-sample test. Fourth, a correction for multiple comparisons is applied across the 9 one-sample tests. We call this procedure a hierarchical shift function. 
+coef(summary(mod_tpu_v))
+coef(summary(mod_tpu_j))
 
-all_avg_lf_res$treeid <- factor(all_avg_lf_res$treeid)
-all_avg_lf_res$curv_meth <- factor(all_avg_lf_res$curv_meth)
-all_avg_lf_res$fit_type <- factor(all_avg_lf_res$fit_type)
-
-tpu_res <- all_avg_lf_res %>% filter(fit_type == 'tpu')
-notpu_res <- all_avg_lf_res %>% filter(fit_type == 'no_tpu')
-
-dat_res <- all_avg_lf_res %>% filter(curv_meth == 'DAT')
-ss_res <- all_avg_lf_res %>% filter(curv_meth == 'SS')
-
-np <- length(unique(tpu_res$treeid)) #Number of 'participants' (trees)
-
-#TPU vcmax hierarchical shift function (COMPLETE)
+#Compute bootstrapped confidence intervals
 set.seed(304)
-sf_v1 <- shiftdhd_pbci(tpu_res, formula = vcmax ~ curv_meth + treeid, nboot = 500)
-p_v1 <- plot_sf(sf_v1, plot_theme = 1)[[1]] + 
-    theme(axis.text = element_text(size = 16, colour="black"))
-p_v1
-
-hsf_v1 <- hsf(tpu_res, vcmax ~ curv_meth + treeid) 
-#Plot hierarchical shift function
-p_hsf_v1 <- plot_hsf(hsf_v1, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2)  + ylim(-20,20) + ggtitle("Vcmax, TPU, DAT - SS")
-p_hsf_v1
-
-hsf_v1$pvalues
-hsf_v1$adjusted_pvalues
-
-#stochastic dominance
-nq_v1 <- length(hsf_v1$quantiles)
-pdmt0_v1 <- apply(hsf_v1$individual_sf > 0, 2, sum)
-print(paste0('In ',sum(pdmt0_v1 == nq_v1),' trees (',round(100 * sum(pdmt0_v1 == nq_v1) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
-
-pdlt0_v1 <- apply(hsf_v1$individual_sf < 0, 2, sum)
-print(paste0('In ',sum(pdlt0_v1 == nq_v1),' trees (',round(100 * sum(pdlt0_v1 == nq_v1) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
-
-#percentile bootstrap hierarchical shift function
+confint(mod_notpu_v, method = 'boot')
 set.seed(304)
-hsf_pb_v1 <- hsf_pb(tpu_res, vcmax ~ curv_meth + treeid)
-
-plot_hsf_pb(hsf_pb_v1, interv = "hdi")
-plot_hsf_pb_dist(hsf_pb_v1, point_interv = "median_ci", interval_width = .95, 
-                 int_colour = "blue", fill_colour = "grey")
-
-
-
-
-#TPU jmax hierarchical shift function (COMPLETE)
+confint(mod_notpu_j, method = 'boot')
 set.seed(304)
-
-hsf_j1 <- hsf(tpu_res, jmax ~ curv_meth + treeid)
-#Plot hierarchical shift function
-p_hsf_j1 <- plot_hsf(hsf_j1, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, TPU, DAT - SS")
-p_hsf_j1
-
-hsf_j1$pvalues
-hsf_j1$adjusted_pvalues
-
-#stochastic dominance
-nq_j1 <- length(hsf_j1$quantiles)
-pdmt0_j1 <- apply(hsf_j1$individual_sf > 0, 2, sum)
-print(paste0('In ',sum(pdmt0_j1 == nq_j1),' trees (',round(100 * sum(pdmt0_j1 == nq_j1) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
-
-pdlt0_j1 <- apply(hsf_j1$individual_sf < 0, 2, sum)
-print(paste0('In ',sum(pdlt0_j1 == nq_j1),' trees (',round(100 * sum(pdlt0_j1 == nq_j1) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
-
-#percentile bootstrap hierarchical shift function
+confint(mod_tpu_v, method = 'boot')
 set.seed(304)
-hsf_pb_j1 <- hsf_pb(tpu_res, jmax ~ curv_meth + treeid)
+confint(mod_tpu_j, method = 'boot')
 
-plot_hsf_pb(hsf_pb_j1, interv = "hdi")
-plot_hsf_pb_dist(hsf_pb_j1, point_interv = "median_ci", interval_width = .95, 
-                 int_colour = "blue", fill_colour = "grey")
+print(VarCorr(mod_notpu_v), comp = c("Variance", "Std.Dev.")) # this shows the standard deviation of the random-effects terms.
+print(VarCorr(mod_notpu_j), comp = c("Variance", "Std.Dev.")) # this shows the standard deviation of the random-effects terms.
 
+print(VarCorr(mod_tpu_v), comp = c("Variance", "Std.Dev.")) # this shows the standard deviation of the random-effects terms.
+print(VarCorr(mod_tpu_j), comp = c("Variance", "Std.Dev.")) # this shows the standard deviation of the random-effects terms.
 
+# Look at random effect coefficients
+ranef(mod_notpu_v)
+ranef(mod_notpu_j)
 
+ranef(mod_tpu_v) #This doesn't work because it's a singular model
+ranef(mod_tpu_j)
 
-#No TPU vcmax hierarchical shift function
-set.seed(304)
-hsf_v2 <- hsf(notpu_res, vcmax ~ curv_meth + treeid)
-#Plot hierarchical shift function
-p_hsf_v2 <- plot_hsf(hsf_v2, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2)+ ylim(-20,20) + ggtitle("Vcmax, no TPU, DAT - SS")
-p_hsf_v2
+# Compute intraclass correlation coefficient
+icc(mod_notpu_v)
+icc(mod_notpu_j)
 
-hsf_v2$pvalues
-hsf_v2$adjusted_pvalues
+icc(mod_tpu_v) #This doesn't work because it's a singular model
+icc(mod_tpu_j)
 
-#stochastic dominance
-nq_v2 <- length(hsf_v2$quantiles)
-pdmt0_v2 <- apply(hsf_v2$individual_sf > 0, 2, sum)
-print(paste0('In ',sum(pdmt0_v2 == nq_v2),' trees (',round(100 * sum(pdmt0_v2 == nq_v2) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
-
-pdlt0_v2 <- apply(hsf_v2$individual_sf < 0, 2, sum)
-print(paste0('In ',sum(pdlt0_v2 == nq_v2),' trees (',round(100 * sum(pdlt0_v2 == nq_v2) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
-
-#No TPU jmax hierarchical shift function
-set.seed(304)
-hsf_j2 <- hsf(notpu_res, jmax ~ curv_meth + treeid)
-#Plot hierarchical shift function
-p_hsf_j2 <- plot_hsf(hsf_j2, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, no TPU, DAT - SS")
-p_hsf_j2
-
-hsf_j2$pvalues
-hsf_j2$adjusted_pvalues
-
-#stochastic dominance
-nq_j2 <- length(hsf_j2$quantiles)
-pdmt0_j2 <- apply(hsf_j2$individual_sf > 0, 2, sum)
-print(paste0('In ',sum(pdmt0_j2 == nq_j2),' trees (',round(100 * sum(pdmt0_j2 == nq_j2) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
-
-pdlt0_j2 <- apply(hsf_j2$individual_sf < 0, 2, sum)
-print(paste0('In ',sum(pdlt0_j2 == nq_j2),' trees (',round(100 * sum(pdlt0_j2 == nq_j2) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
-
-#DAT vcmax by fit type hierarchical shift function
-set.seed(304)
-hsf_v3 <- hsf(dat_res, vcmax ~ fit_type + treeid)
-#Plot hierarchical shift function
-p_hsf_v3 <- plot_hsf(hsf_v3, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-20,20) + ggtitle("Vcmax, DAT, no TPU - TPU")
-p_hsf_v3
-
-hsf_v3$pvalues
-hsf_v3$adjusted_pvalues
-
-#stochastic dominance
-nq_v3 <- length(hsf_v3$quantiles)
-pdmt0_v3 <- apply(hsf_v3$individual_sf > 0, 2, sum)
-print(paste0('In ',sum(pdmt0_v3 == nq_v3),' trees (',round(100 * sum(pdmt0_v3 == nq_v3) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
-
-pdlt0_v3 <- apply(hsf_v3$individual_sf < 0, 2, sum)
-print(paste0('In ',sum(pdlt0_v3 == nq_v3),' trees (',round(100 * sum(pdlt0_v3 == nq_v3) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
-
-#DAT Jmax by fit type hierarchical shift function
-set.seed(304)
-hsf_j3 <- hsf(dat_res, jmax ~ fit_type + treeid)
-#Plot hierarchical shift function
-p_hsf_j3 <- plot_hsf(hsf_j3, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, DAT, no TPU - TPU")
-p_hsf_j3
-
-hsf_j3$pvalues
-hsf_j3$adjusted_pvalues
-
-#stochastic dominance
-nq_j3 <- length(hsf_j3$quantiles)
-pdmt0_j3 <- apply(hsf_j3$individual_sf > 0, 2, sum)
-print(paste0('In ',sum(pdmt0_j3 == nq_j3),' trees (',round(100 * sum(pdmt0_j3 == nq_j3) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
-
-pdlt0_j3 <- apply(hsf_j3$individual_sf < 0, 2, sum)
-print(paste0('In ',sum(pdlt0_j3 == nq_j3),' trees (',round(100 * sum(pdlt0_j3 == nq_j3) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
-
-#SS Vcmax by fit type hierarchical shift function
-set.seed(304)
-hsf_v4 <- hsf(ss_res, vcmax ~ fit_type + treeid)
-#Plot hierarchical shift function
-p_hsf_v4 <- plot_hsf(hsf_v4, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-20,20)+ ggtitle("Vcmax, SS, no TPU - TPU")
-p_hsf_v4
-
-hsf_v4$pvalues
-hsf_v4$adjusted_pvalues
-
-#stochastic dominance
-nq_v4 <- length(hsf_v4$quantiles)
-pdmt0_v4 <- apply(hsf_v4$individual_sf > 0, 2, sum)
-print(paste0('In ',sum(pdmt0_v4 == nq_v4),' trees (',round(100 * sum(pdmt0_v4 == nq_v4) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
-
-pdlt0_v4 <- apply(hsf_v4$individual_sf < 0, 2, sum)
-print(paste0('In ',sum(pdlt0_v4 == nq_v4),' trees (',round(100 * sum(pdlt0_v4 == nq_v4) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
-
-#DAT Jmax by fit type hierarchical shift function
-set.seed(304)
-hsf_j4 <- hsf(ss_res, jmax ~ fit_type + treeid)
-#Plot hierarchical shift function
-p_hsf_j4 <- plot_hsf(hsf_j4, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, SS, no TPU - TPU")
-p_hsf_j4
-
-hsf_j4$pvalues
-hsf_j4$adjusted_pvalues
-
-#stochastic dominance
-nq_j4 <- length(hsf_j4$quantiles)
-pdmt0_j4 <- apply(hsf_j4$individual_sf > 0, 2, sum)
-print(paste0('In ',sum(pdmt0_j4 == nq_j4),' trees (',round(100 * sum(pdmt0_j4 == nq_j4) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
-
-pdlt0_j4 <- apply(hsf_j4$individual_sf < 0, 2, sum)
-print(paste0('In ',sum(pdlt0_j4 == nq_j4),' trees (',round(100 * sum(pdlt0_j4 == nq_j4) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
-
-library(patchwork)
-
-curv_meth_grid <- p_hsf_v1 + p_hsf_v2 + p_hsf_j1 + p_hsf_j2
-curv_meth_grid
-
-fit_type_grid <- p_hsf_v3 + p_hsf_v4 + p_hsf_j3 + p_hsf_j4
-fit_type_grid
-
-# Run Wilcoxon and Sign tests ------------------------------------------
-
-
-# All data, Wilcoxon signed rank test on paired samples (and a few sign tests)
-
-### Vcmax Wilcoxon by curve method 
-all_avg_lf_res %>%
-    group_by(fit_type) %>%
-    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
-    add_significance()
-
-## Effect size
-all_avg_lf_res %>%
-    group_by(fit_type) %>% 
-    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
-
-
-### Vcmax Wilcoxon by TPU v. no TPU
-all_avg_lf_res %>%
-    group_by(curv_meth) %>%
-    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
-    add_significance()
-
-all_avg_lf_res %>%
-    group_by(curv_meth) %>% 
-    wilcox_effsize(data = ., vcmax ~ fit_type, paired = TRUE)
-
-
-
-
-
-### Jmax Wilcoxon by curve method
-all_avg_lf_res %>%
-    group_by(fit_type) %>%
-    wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
-    add_significance()
-
-# Note we're running the sign test here in addition!
-all_avg_lf_res %>%
-    group_by(fit_type) %>%
-    sign_test(data =., jmax ~ curv_meth, detailed = TRUE) %>%
-    add_significance()
-
-all_avg_lf_res %>%
-    group_by(fit_type) %>% 
-    wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
-
-
-
-### Jmax Wilcoxon by TPU v. no TPU
-all_avg_lf_res %>%
-    group_by(curv_meth) %>%
-    wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
-    add_significance()
-
-# Sign test here. Note we have a different result.
-all_avg_lf_res %>%
-    group_by(curv_meth) %>%
-    sign_test(data =., jmax ~ fit_type, detailed = TRUE) %>%
-    add_significance()
-
-all_avg_lf_res %>%
-    group_by(curv_meth) %>% 
-    wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
-
-
-
-
-# Wilcoxon Tests, no Overshoot subset
-
-
-### Vcmax Wilcoxon by curve method
-nd_complete %>%
-    group_by(fit_type) %>%
-    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
-    add_significance()
-
-nd_complete %>%
-    group_by(fit_type) %>% 
-    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
-
-
-### Vcmax Wilcoxon by TPU v. no TPU
-
-### Note that all the SS curves for which TPU was fit had overshoot, so the datasets are same
-nd_complete %>%
-    group_by(curv_meth) %>%
-    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
-    add_significance()
-
-
-
-
-### Jmax Wilcoxon by curve method
-nd_complete %>%
-    group_by(fit_type) %>%
-    wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
-    add_significance()
-
-nd_complete %>%
-    group_by(fit_type) %>%
-    wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
-
-
-### Jmax Wilcoxon by TPU v. no TPU
-
-### Note that all the SS curves for which TPU was fit had overshoot, so the datasets are same
-nd_complete %>%
-    group_by(curv_meth) %>%
-    wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
-    add_significance()
-
-#####
-
-
-# TPU Wilcoxon
-
-tpu_just6_all %>% 
-    wilcox_test(data = ., tpu ~ curv_meth, paired = TRUE, detailed = TRUE) %>% 
-    add_significance()
-
-tpu_just6_all %>% 
-    wilcox_effsize(data = ., tpu ~ curv_meth, paired = TRUE)
 
 
 
 #Wilcoxon tests for the data grouped on a tree level. ---------------------------
-
-#Added 7/1/24 to appease the reviewers
 
 all_avg_tr_res <- all_avg_lf_res %>% 
     group_by(fit_type, curv_meth, treeid) %>% 
@@ -978,25 +680,408 @@ all_avg_tr_res %>%
     group_by(fit_type) %>%
     wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
     add_significance()
-
-### Vcmax Wilcoxon by TPU v. no TPU
 all_avg_tr_res %>%
-    group_by(curv_meth) %>%
-    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
-    add_significance()
+    group_by(fit_type) %>%
+    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
 
 ### Jmax Wilcoxon by curve method
 all_avg_tr_res %>%
     group_by(fit_type) %>%
     wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
     add_significance()
+all_avg_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+
+### Vcmax Wilcoxon by TPU v. no TPU
+all_avg_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
+    add_significance()
+all_avg_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
 
 ### Jmax Wilcoxon by TPU v. no TPU
 all_avg_tr_res %>%
     group_by(curv_meth) %>%
     wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
     add_significance()
+all_avg_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
+
+
+# Wilcoxon Tests, no Overshoot subset ------------------------
+
+nd_tr_res <- nd_complete %>% 
+    group_by(fit_type, curv_meth, treeid) %>% 
+    summarize(vcmax = mean(vcmax),
+              jmax = mean(jmax))
+
+### Vcmax Wilcoxon by curve method
+nd_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+nd_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+
+### Jmax Wilcoxon by curve method
+nd_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+nd_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+
+### Vcmax Wilcoxon by TPU v. no TPU
+nd_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+### Jmax Wilcoxon by TPU v. no TPU
+nd_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+
+
+# TPU Wilcoxon
+tpu_tr_res <- tpu_just6_all %>% 
+    mutate(treeid = substring(leaf_unique, 1, 5)) %>% 
+    group_by(curv_meth, treeid) %>% 
+    summarize(vcmax = mean(vcmax),
+              jmax = mean(jmax),
+              tpu = mean(tpu))
+
+tpu_tr_res$curv_meth <- as.factor(tpu_tr_res$curv_meth)
+
+tpu_tr_res %>%
+    wilcox_test(data = ., tpu ~ curv_meth, paired = TRUE, detailed = TRUE) %>% 
+    add_significance()
+
+tpu_tr_res %>% 
+    wilcox_effsize(data = ., tpu ~ curv_meth, paired = TRUE)
 
 
 
 
+# Exploring rogme package (CDS added 6/27/24) -------------------------
+#Need to use this to install the package:
+#install.packages("remotes")
+#remotes::install_github("GRousselet/rogme")
+# library(rogme)
+# 
+# #If the goal is to detect differences anywhere in the distributions, a systematic approach consists of quantifying differences at multiple quantiles. First, for each participant (tree) and each condition (curv_meth), the sample deciles are computed over trials (leaves). Second, for each participant, condition 2 deciles are subtracted from condition 1 deciles - we’re dealing with a within-subject (repeated-measure) design. Third, for each decile, the distribution of differences is subjected to a one-sample test. Fourth, a correction for multiple comparisons is applied across the 9 one-sample tests. We call this procedure a hierarchical shift function. 
+# 
+# all_avg_lf_res$treeid <- factor(all_avg_lf_res$treeid)
+# all_avg_lf_res$curv_meth <- factor(all_avg_lf_res$curv_meth)
+# all_avg_lf_res$fit_type <- factor(all_avg_lf_res$fit_type)
+# 
+# tpu_res <- all_avg_lf_res %>% filter(fit_type == 'tpu')
+# notpu_res <- all_avg_lf_res %>% filter(fit_type == 'no_tpu')
+# 
+# dat_res <- all_avg_lf_res %>% filter(curv_meth == 'DAT')
+# ss_res <- all_avg_lf_res %>% filter(curv_meth == 'SS')
+# 
+# np <- length(unique(tpu_res$treeid)) #Number of 'participants' (trees)
+# 
+# #TPU vcmax hierarchical shift function (COMPLETE)
+# set.seed(304)
+# sf_v1 <- shiftdhd_pbci(tpu_res, formula = vcmax ~ curv_meth + treeid, nboot = 500)
+# p_v1 <- plot_sf(sf_v1, plot_theme = 1)[[1]] + 
+#     theme(axis.text = element_text(size = 16, colour="black"))
+# p_v1
+# 
+# hsf_v1 <- hsf(tpu_res, vcmax ~ curv_meth + treeid) 
+# #Plot hierarchical shift function
+# p_hsf_v1 <- plot_hsf(hsf_v1, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2)  + ylim(-20,20) + ggtitle("Vcmax, TPU, DAT - SS")
+# p_hsf_v1
+# 
+# hsf_v1$pvalues
+# hsf_v1$adjusted_pvalues
+# 
+# #stochastic dominance
+# nq_v1 <- length(hsf_v1$quantiles)
+# pdmt0_v1 <- apply(hsf_v1$individual_sf > 0, 2, sum)
+# print(paste0('In ',sum(pdmt0_v1 == nq_v1),' trees (',round(100 * sum(pdmt0_v1 == nq_v1) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+# 
+# pdlt0_v1 <- apply(hsf_v1$individual_sf < 0, 2, sum)
+# print(paste0('In ',sum(pdlt0_v1 == nq_v1),' trees (',round(100 * sum(pdlt0_v1 == nq_v1) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+# 
+# #percentile bootstrap hierarchical shift function
+# set.seed(304)
+# hsf_pb_v1 <- hsf_pb(tpu_res, vcmax ~ curv_meth + treeid)
+# 
+# plot_hsf_pb(hsf_pb_v1, interv = "hdi")
+# plot_hsf_pb_dist(hsf_pb_v1, point_interv = "median_ci", interval_width = .95, 
+#                  int_colour = "blue", fill_colour = "grey")
+# 
+# 
+# 
+# 
+# #TPU jmax hierarchical shift function (COMPLETE)
+# set.seed(304)
+# 
+# hsf_j1 <- hsf(tpu_res, jmax ~ curv_meth + treeid)
+# #Plot hierarchical shift function
+# p_hsf_j1 <- plot_hsf(hsf_j1, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, TPU, DAT - SS")
+# p_hsf_j1
+# 
+# hsf_j1$pvalues
+# hsf_j1$adjusted_pvalues
+# 
+# #stochastic dominance
+# nq_j1 <- length(hsf_j1$quantiles)
+# pdmt0_j1 <- apply(hsf_j1$individual_sf > 0, 2, sum)
+# print(paste0('In ',sum(pdmt0_j1 == nq_j1),' trees (',round(100 * sum(pdmt0_j1 == nq_j1) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+# 
+# pdlt0_j1 <- apply(hsf_j1$individual_sf < 0, 2, sum)
+# print(paste0('In ',sum(pdlt0_j1 == nq_j1),' trees (',round(100 * sum(pdlt0_j1 == nq_j1) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+# 
+# #percentile bootstrap hierarchical shift function
+# set.seed(304)
+# hsf_pb_j1 <- hsf_pb(tpu_res, jmax ~ curv_meth + treeid)
+# 
+# plot_hsf_pb(hsf_pb_j1, interv = "hdi")
+# plot_hsf_pb_dist(hsf_pb_j1, point_interv = "median_ci", interval_width = .95, 
+#                  int_colour = "blue", fill_colour = "grey")
+# 
+# 
+# 
+# 
+# #No TPU vcmax hierarchical shift function
+# set.seed(304)
+# hsf_v2 <- hsf(notpu_res, vcmax ~ curv_meth + treeid)
+# #Plot hierarchical shift function
+# p_hsf_v2 <- plot_hsf(hsf_v2, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2)+ ylim(-20,20) + ggtitle("Vcmax, no TPU, DAT - SS")
+# p_hsf_v2
+# 
+# hsf_v2$pvalues
+# hsf_v2$adjusted_pvalues
+# 
+# #stochastic dominance
+# nq_v2 <- length(hsf_v2$quantiles)
+# pdmt0_v2 <- apply(hsf_v2$individual_sf > 0, 2, sum)
+# print(paste0('In ',sum(pdmt0_v2 == nq_v2),' trees (',round(100 * sum(pdmt0_v2 == nq_v2) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+# 
+# pdlt0_v2 <- apply(hsf_v2$individual_sf < 0, 2, sum)
+# print(paste0('In ',sum(pdlt0_v2 == nq_v2),' trees (',round(100 * sum(pdlt0_v2 == nq_v2) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+# 
+# #No TPU jmax hierarchical shift function
+# set.seed(304)
+# hsf_j2 <- hsf(notpu_res, jmax ~ curv_meth + treeid)
+# #Plot hierarchical shift function
+# p_hsf_j2 <- plot_hsf(hsf_j2, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, no TPU, DAT - SS")
+# p_hsf_j2
+# 
+# hsf_j2$pvalues
+# hsf_j2$adjusted_pvalues
+# 
+# #stochastic dominance
+# nq_j2 <- length(hsf_j2$quantiles)
+# pdmt0_j2 <- apply(hsf_j2$individual_sf > 0, 2, sum)
+# print(paste0('In ',sum(pdmt0_j2 == nq_j2),' trees (',round(100 * sum(pdmt0_j2 == nq_j2) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+# 
+# pdlt0_j2 <- apply(hsf_j2$individual_sf < 0, 2, sum)
+# print(paste0('In ',sum(pdlt0_j2 == nq_j2),' trees (',round(100 * sum(pdlt0_j2 == nq_j2) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+# 
+# #DAT vcmax by fit type hierarchical shift function
+# set.seed(304)
+# hsf_v3 <- hsf(dat_res, vcmax ~ fit_type + treeid)
+# #Plot hierarchical shift function
+# p_hsf_v3 <- plot_hsf(hsf_v3, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-20,20) + ggtitle("Vcmax, DAT, no TPU - TPU")
+# p_hsf_v3
+# 
+# hsf_v3$pvalues
+# hsf_v3$adjusted_pvalues
+# 
+# #stochastic dominance
+# nq_v3 <- length(hsf_v3$quantiles)
+# pdmt0_v3 <- apply(hsf_v3$individual_sf > 0, 2, sum)
+# print(paste0('In ',sum(pdmt0_v3 == nq_v3),' trees (',round(100 * sum(pdmt0_v3 == nq_v3) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+# 
+# pdlt0_v3 <- apply(hsf_v3$individual_sf < 0, 2, sum)
+# print(paste0('In ',sum(pdlt0_v3 == nq_v3),' trees (',round(100 * sum(pdlt0_v3 == nq_v3) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+# 
+# #DAT Jmax by fit type hierarchical shift function
+# set.seed(304)
+# hsf_j3 <- hsf(dat_res, jmax ~ fit_type + treeid)
+# #Plot hierarchical shift function
+# p_hsf_j3 <- plot_hsf(hsf_j3, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, DAT, no TPU - TPU")
+# p_hsf_j3
+# 
+# hsf_j3$pvalues
+# hsf_j3$adjusted_pvalues
+# 
+# #stochastic dominance
+# nq_j3 <- length(hsf_j3$quantiles)
+# pdmt0_j3 <- apply(hsf_j3$individual_sf > 0, 2, sum)
+# print(paste0('In ',sum(pdmt0_j3 == nq_j3),' trees (',round(100 * sum(pdmt0_j3 == nq_j3) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+# 
+# pdlt0_j3 <- apply(hsf_j3$individual_sf < 0, 2, sum)
+# print(paste0('In ',sum(pdlt0_j3 == nq_j3),' trees (',round(100 * sum(pdlt0_j3 == nq_j3) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+# 
+# #SS Vcmax by fit type hierarchical shift function
+# set.seed(304)
+# hsf_v4 <- hsf(ss_res, vcmax ~ fit_type + treeid)
+# #Plot hierarchical shift function
+# p_hsf_v4 <- plot_hsf(hsf_v4, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-20,20)+ ggtitle("Vcmax, SS, no TPU - TPU")
+# p_hsf_v4
+# 
+# hsf_v4$pvalues
+# hsf_v4$adjusted_pvalues
+# 
+# #stochastic dominance
+# nq_v4 <- length(hsf_v4$quantiles)
+# pdmt0_v4 <- apply(hsf_v4$individual_sf > 0, 2, sum)
+# print(paste0('In ',sum(pdmt0_v4 == nq_v4),' trees (',round(100 * sum(pdmt0_v4 == nq_v4) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+# 
+# pdlt0_v4 <- apply(hsf_v4$individual_sf < 0, 2, sum)
+# print(paste0('In ',sum(pdlt0_v4 == nq_v4),' trees (',round(100 * sum(pdlt0_v4 == nq_v4) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+# 
+# #DAT Jmax by fit type hierarchical shift function
+# set.seed(304)
+# hsf_j4 <- hsf(ss_res, jmax ~ fit_type + treeid)
+# #Plot hierarchical shift function
+# p_hsf_j4 <- plot_hsf(hsf_j4, viridis_option = "D", ind_line_size = 0.8, gp_line_colour = "maroon3", gp_point_colour = "maroon3", gp_line_size = 1.2) + ylim(-50,20) + ggtitle("Jmax, SS, no TPU - TPU")
+# p_hsf_j4
+# 
+# hsf_j4$pvalues
+# hsf_j4$adjusted_pvalues
+# 
+# #stochastic dominance
+# nq_j4 <- length(hsf_j4$quantiles)
+# pdmt0_j4 <- apply(hsf_j4$individual_sf > 0, 2, sum)
+# print(paste0('In ',sum(pdmt0_j4 == nq_j4),' trees (',round(100 * sum(pdmt0_j4 == nq_j4) / np, digits = 1),'%), all quantile differences are more than zero at all points'))
+# 
+# pdlt0_j4 <- apply(hsf_j4$individual_sf < 0, 2, sum)
+# print(paste0('In ',sum(pdlt0_j4 == nq_j4),' trees (',round(100 * sum(pdlt0_j4 == nq_j4) / np, digits = 1),'%), all quantile differences are less than zero at all points'))
+# 
+# library(patchwork)
+# 
+# curv_meth_grid <- p_hsf_v1 + p_hsf_v2 + p_hsf_j1 + p_hsf_j2
+# curv_meth_grid
+# 
+# fit_type_grid <- p_hsf_v3 + p_hsf_v4 + p_hsf_j3 + p_hsf_j4
+# fit_type_grid
+
+# Run Wilcoxon and Sign tests ------------------------------------------
+
+
+# All data, Wilcoxon signed rank test on paired samples (and a few sign tests)
+
+# ### Vcmax Wilcoxon by curve method 
+# all_avg_lf_res %>%
+#     group_by(fit_type) %>%
+#     wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+#     add_significance()
+# 
+# ## Effect size
+# all_avg_lf_res %>%
+#     group_by(fit_type) %>% 
+#     wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+# 
+# 
+# ### Vcmax Wilcoxon by TPU v. no TPU
+# all_avg_lf_res %>%
+#     group_by(curv_meth) %>%
+#     wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
+#     add_significance()
+# 
+# all_avg_lf_res %>%
+#     group_by(curv_meth) %>% 
+#     wilcox_effsize(data = ., vcmax ~ fit_type, paired = TRUE)
+# 
+# 
+# ### Jmax Wilcoxon by curve method
+# all_avg_lf_res %>%
+#     group_by(fit_type) %>%
+#     wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+#     add_significance()
+# 
+# # Note we're running the sign test here in addition!
+# all_avg_lf_res %>%
+#     group_by(fit_type) %>%
+#     sign_test(data =., jmax ~ curv_meth, detailed = TRUE) %>%
+#     add_significance()
+# 
+# all_avg_lf_res %>%
+#     group_by(fit_type) %>% 
+#     wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+# 
+# 
+# 
+# ### Jmax Wilcoxon by TPU v. no TPU
+# all_avg_lf_res %>%
+#     group_by(curv_meth) %>%
+#     wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+#     add_significance()
+# 
+# # Sign test here. Note we have a different result.
+# all_avg_lf_res %>%
+#     group_by(curv_meth) %>%
+#     sign_test(data =., jmax ~ fit_type, detailed = TRUE) %>%
+#     add_significance()
+# 
+# all_avg_lf_res %>%
+#     group_by(curv_meth) %>% 
+#     wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
+# 
+# 
+# # Wilcoxon Tests, no Overshoot subset
+# 
+# ### Vcmax Wilcoxon by curve method
+# nd_complete %>%
+#     group_by(fit_type) %>%
+#     wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+#     add_significance()
+# 
+# nd_complete %>%
+#     group_by(fit_type) %>% 
+#     wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+# 
+# 
+# ### Vcmax Wilcoxon by TPU v. no TPU
+# 
+# ### Note that all the SS curves for which TPU was fit had overshoot, so the datasets are same
+# nd_complete %>%
+#     group_by(curv_meth) %>%
+#     wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+#     add_significance()
+# 
+# 
+# ### Jmax Wilcoxon by curve method
+# nd_complete %>%
+#     group_by(fit_type) %>%
+#     wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+#     add_significance()
+# 
+# nd_complete %>%
+#     group_by(fit_type) %>%
+#     wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+# 
+# 
+# ### Jmax Wilcoxon by TPU v. no TPU
+# 
+# ### Note that all the SS curves for which TPU was fit had overshoot, so the datasets are same
+# nd_complete %>%
+#     group_by(curv_meth) %>%
+#     wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+#     add_significance()
+# 
+# #####
+# 
+# 
+# # TPU Wilcoxon
+# 
+# tpu_just6_all %>% 
+#     wilcox_test(data = ., tpu ~ curv_meth, paired = TRUE, detailed = TRUE) %>% 
+#     add_significance()
+# 
+# tpu_just6_all %>% 
+#     wilcox_effsize(data = ., tpu ~ curv_meth, paired = TRUE)
