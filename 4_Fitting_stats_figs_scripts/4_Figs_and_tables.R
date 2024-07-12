@@ -151,7 +151,7 @@ leaf_wide_vcmax_tpu <- reshape(leaf_sub_vcmax_tpu,
                                idvar = "leaf_unique", 
                                timevar = "curv_meth",
                                direction = "wide") %>% 
-    select(-c(rel_can_pos.DAT))
+    select(-c(rel_can_pos.DAT)) 
 names(leaf_wide_vcmax_tpu)[2:6] = c("vcmax_DAT", "vcmax_DAT_se", 
                                     "vcmax_SS", "vcmax_SS_se",
                                     "rel_can_pos")
@@ -196,6 +196,7 @@ leaf_wide_vcmax <- reshape(leaf_sub_vcmax,
 names(leaf_wide_vcmax)[2:6] = c("vcmax_DAT", "vcmax_DAT_se", 
                                 "vcmax_SS", "vcmax_SS_se", 
                                 "rel_can_pos")
+leaf_wide_vcmax <- arrange(leaf_wide_vcmax, rel_can_pos)
 cor1 <- round(cor(leaf_wide_vcmax$vcmax_DAT, leaf_wide_vcmax$vcmax_SS), 3)
 
 
@@ -749,23 +750,25 @@ ggsave(plot = k6715l1.1, file = here("6_figures/figureS1.tif"), dpi = 600,
 # Figure S2: TPU 1:1 -------------------------------------------------------
 
 # TPU 1:1
-leaf_sub_tpu <- select(pho_stat_tpu, tpu, curv_meth, leaf_unique, V_TPU_se)
+leaf_sub_tpu <- select(pho_stat_tpu, tpu, curv_meth, leaf_unique, V_TPU_se, rel_can_pos)
 leaf_wide_tpu <- reshape(leaf_sub_tpu,
                          idvar = "leaf_unique",
                          timevar = "curv_meth", 
                          direction = "wide") %>% 
-    na.omit()
-names(leaf_wide_tpu)[2:5] = c("tpu_DAT", "tpu_DAT_se", "tpu_SS", "tpu_SS_se")
+    #na.omit() %>% 
+    select(-c("rel_can_pos.DAT"))
+names(leaf_wide_tpu)[2:6] = c("tpu_DAT", "tpu_DAT_se", "tpu_SS", "tpu_SS_se", "rel_can_pos")
 cor5 <- round(cor(leaf_wide_tpu$tpu_DAT, leaf_wide_tpu$tpu_SS), 3)
 only_tpu_fit <- filter(leaf_wide_tpu, !is.na(tpu_DAT) & !is.na(tpu_SS))
 only_tpu_fit$tpu_DAT_se <- as.numeric(only_tpu_fit$tpu_DAT_se)
 only_tpu_fit$tpu_SS_se <- as.numeric(only_tpu_fit$tpu_SS_se)
+only_tpu_fit <- arrange(only_tpu_fit, rel_can_pos)
 
 
 pho_1to1_tpu_tpu <- ggplot(data = only_tpu_fit,
                            mapping = aes(x = tpu_SS,
                                          y = tpu_DAT,
-                                         color = leaf_unique)) +
+                                         color = rel_can_pos)) +
     geom_point(cex = 2.5) +
     geom_errorbar(aes(ymin = tpu_DAT - tpu_DAT_se, ymax = tpu_DAT + tpu_DAT_se)) + 
     geom_errorbarh(aes(xmin = tpu_SS - tpu_SS_se, xmax = tpu_SS + tpu_SS_se)) +
@@ -782,7 +785,9 @@ pho_1to1_tpu_tpu <- ggplot(data = only_tpu_fit,
           legend.position = "none") +
     scale_x_continuous(limits = c(0, 12), breaks = c(0,3,6,9,12)) + 
     scale_y_continuous(limits = c(0, 12), breaks = c(0,3,6,9,12)) +
-    annotate(geom = "text", label = paste0("r = ", cor5), x = 4, y = 8, size = rel(3))
+    scale_color_continuous(type = "viridis") +
+    #geom_text(aes(label = rel_can_pos), hjust = 2) +
+    annotate(geom = "text", label = paste0("r = ", cor5), x = 3, y = 9, size = rel(3))
 pho_1to1_tpu_tpu
 
 ggsave(plot = pho_1to1_tpu_tpu, here("6_Figures/figureS2.tif"), dpi = 600)

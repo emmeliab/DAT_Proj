@@ -3,11 +3,6 @@ library(tidyverse)
 library(readxl)
 library(here)
 
-# wd <- "/Users/charlessouthwick/Documents/GitHub/DAT_Proj/"
-# setwd(wd)
-
-### The here package should work to replace the wd!
-
 
 # Load Data from Directory ------------------------------------------------
 aci_files_nm <- list.files(path = here("1_Raw_data"),
@@ -133,12 +128,9 @@ complete_sp <- all_aci.df %>%
     mutate(Ca = parse_number(Ca)) %>% 
     mutate(E = parse_number(E)) %>%
     mutate(Qin = parse_number(Qin)) %>%
-    mutate(Tleaf = parse_number(Tleaf)) %>%
-    # Filter out the excluded data and After_DAT points
-    filter(Data_QC == "OK") %>% 
-    filter(Data_point != "After_DAT") %>% 
+    mutate(Tleaf = parse_number(Tleaf))
     # make a new column for the tree_id using the K67 ID
-    mutate(tree_id = recode(complete_sp$Tree_Identifier,
+complete_sp <- mutate(complete_sp, tree_id = recode(complete_sp$Tree_Identifier,
                                          'Maca1' = 'k6709',
                                          'maca1' = 'k6709',
                                          '1' = 'k6707',
@@ -155,7 +147,7 @@ complete_sp <- all_aci.df %>%
                                          'tree12' = 'k6714',
                                          'tree22' = 'k6718'))
 unique(complete_sp$tree_id)
-## We should have 13 trees
+# Once the bad data is filtered out, there will be 13 trees
 
 
 # Save Complete Data File -------------------------------------------------
@@ -169,7 +161,7 @@ write.csv(x = complete_sp,
 
 
 
-#This file is not the final version we used because we had to go back and create a new 'unique_id' column with proper leaf numbers. This was done manually, but uses the above csv as its base.
+# This file is not the final version we used because we had to go back and create a new 'unique_id' column with proper leaf numbers. This was done manually, but uses the above csv as its base. Most of the excluded points are already filtered out.
 
 
 

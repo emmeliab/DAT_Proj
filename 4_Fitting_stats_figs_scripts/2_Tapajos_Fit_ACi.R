@@ -213,8 +213,8 @@ dat_fits_photo_pars_noTPU <- compile_data(dat_fits_photo_noTPU,
 # Make .pdf files with all fitted figures
 
 ### Add the species names back in
-ids <- read.csv(here("3_Clean_data/id_codebook.csv")) %>% 
-    rename(treeid = ï..treeid)
+ids <- read.csv(here("3_Clean_data/id_codebook.csv")) #%>% 
+    #rename(treeid = ï..treeid)
 
 dat_fits_photo_pars_noTPU <- dat_fits_photo_pars_noTPU %>% 
     mutate(treeid = substring(ID, 1, 5)) %>% 
