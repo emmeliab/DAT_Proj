@@ -1,14 +1,14 @@
 "","treeid","vc_diff","j_diff","vc_diff_se","j_diff_se","rel_can_pos.x","treename","family","gen_spec","gen_spec_id","overshoot","rel_can_pos.y"
-"1","K6714",-1.43541245369345,14.7877096163796,0.0437353290081993,2.43187746477394,12,14,"Annonaceae","Anaxagorea dolichocarpa","Anaxagorea dolichocarpa","1",12
-"2","K6702",-0.977589688510198,7.4520130612771,NA,NA,11,2,"Lecythidaceae","Couratari stellata","Couratari stellata","Partial",11
-"3","K6713",0.417790666458332,4.07284474412267,0.324637359461649,0.7135991785531,10,13,"Hypericaceae","Vismia cayennensis","Vismia cayennensis","0",10
-"4","K6717",2.87988853869115,2.10909022363364,0.191866627750466,0.314916061471575,9,17,"Euphorbiaceae","Aparisthmium cordatum","Aparisthmium cordatum","0",9
-"5","K6715",0.119660450377227,7.05994962175887,0.13089211643311,0.160862424094038,8,15,"Rubiaceae","Coussarea paniculata","Coussarea paniculata","0",8
-"6","K6716",1.5951578120277,7.21100998677275,0.113661016701759,0.506518841690066,7,16,"Melastomataceae","Miconia egensis","Miconia egensis","0",7
-"7","K6705",-0.499514540845725,-2.07486872094735,0.059387623735313,0.149903390346442,6,5,"Burseraceae","Protium apiculatum","Protium apiculatum","0",6
-"8","K6718",1.44927563907315,2.84244300383805,0.129132842517302,0.424451650528234,5.2,18,"Fabaceae","Abarema mataybifolia","Abarema mataybifolia #2","0",5.2
-"9","K6704",2.43621092830695,6.6938763200042,0.0636484859767112,0.780043737845445,5.1,4,"Fabaceae","Abarema mataybifolia","Abarema mataybifolia #1","0",5.1
-"10","K6706",2.11277949217355,8.71700849378789,0.156844734515894,1.21356323201233,4,6,"Lecythidaceae","Eschweilera sp. trufle1","Eschweilera sp. trufle1","1",4
-"11","K6708",-0.620508340051899,4.4316521526854,0.297435144772853,0.396387450446877,3,8,"Rubiaceae","Chimarrhis turbinata","Chimarrhis turbinata","0",3
-"12","K6707",-1.69524110684068,5.8019839400283,1.08603815186284,0.636127150606344,2,7,"Fabaceae","Tachigali chrysophylla","Tachigali chrysophylla","1",2
-"13","K6709",4.4097230121448,26.3316177865818,1.75994617648773,5.81346507507128,1,9,"Sapotaceae","Manilkara elata","Manilkara elata","1",1
+"1","K6714",2.09925474892165,16.0011057026808,0.270459566837934,2.24152080820272,12,14,"Annonaceae","Anaxagorea dolichocarpa","Anaxagorea dolichocarpa","1",12
+"2","K6702",-0.389363094941899,7.2567605332935,NA,NA,11,2,"Lecythidaceae","Couratari stellata","Couratari stellata","Partial",11
+"3","K6713",0.926284668828398,3.9963993984224,0.0685816706033432,0.720364763043856,10,13,"Hypericaceae","Vismia cayennensis","Vismia cayennensis","0",10
+"4","K6717",5.91618065161785,2.46592659782855,0.470332747760879,0.244414696168565,9,17,"Euphorbiaceae","Aparisthmium cordatum","Aparisthmium cordatum","0",9
+"5","K6715",0.246614335700077,7.00086133800507,0.0963396453325775,0.176944217979992,8,15,"Rubiaceae","Coussarea paniculata","Coussarea paniculata","0",8
+"6","K6716",2.2340017825409,7.2982695321731,0.232433962930184,0.53362441800401,7,16,"Melastomataceae","Miconia egensis","Miconia egensis","0",7
+"7","K6705",-0.356886006375225,-2.0778213477929,0.0295779176378163,0.151732702156368,6,5,"Burseraceae","Protium apiculatum","Protium apiculatum","0",6
+"8","K6718",1.57601345868775,2.91438020131615,0.0946390826899469,0.404871277655051,5.2,18,"Fabaceae","Abarema mataybifolia","Abarema mataybifolia #2","0",5.2
+"9","K6704",2.43971931916895,6.62256685178625,0.0661554022741528,0.77110364840749,5.1,4,"Fabaceae","Abarema mataybifolia","Abarema mataybifolia #1","0",5.1
+"10","K6706",2.08422106975985,8.66971744009325,0.207483468119761,1.20334941055779,4,6,"Lecythidaceae","Eschweilera sp. trufle1","Eschweilera sp. trufle1","1",4
+"11","K6708",-0.0894159165786998,4.43161912675245,0.130028250004471,0.41384319449899,3,8,"Rubiaceae","Chimarrhis turbinata","Chimarrhis turbinata","0",3
+"12","K6707",-0.769129990667032,5.8609577932348,0.990698711075783,0.636645408915205,2,7,"Fabaceae","Tachigali chrysophylla","Tachigali chrysophylla","1",2
+"13","K6709",4.18050584687914,28.4113872704522,1.7692261078943,5.58024651632385,1,9,"Sapotaceae","Manilkara elata","Manilkara elata","1",1
