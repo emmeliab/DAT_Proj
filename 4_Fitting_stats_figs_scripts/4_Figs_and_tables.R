@@ -17,7 +17,7 @@ theme_set(theme_classic(base_size = 12, base_family = "serif"))
 
 ### ID codebook
 ids <- read.csv(here("3_Clean_data/id_codebook.csv")) 
-rename(treeid = ï..treeid) # this line may not be needed, depending on computer encoding
+#rename(treeid = ï..treeid) # this line may not be needed, depending on computer encoding
 
 
 ## For the raw data plots, Fig 1, and Fig S1
@@ -53,6 +53,13 @@ all_diff_notpu_codes <- read.csv(here("5_Results/tree_diffs_summary_noTPU.csv"))
 
 
 ###
+
+
+test.grp <- group_by(cmplt.rm_out, curv_meth)
+ggplot(test.grp) +
+    geom_density(mapping = aes(Tleaf, fill = curv_meth), alpha = 0.5)
+
+
 
 # Plot Curves with Clean Data (not fit; exploratory) ---------------------------------
 
@@ -755,7 +762,7 @@ leaf_wide_tpu <- reshape(leaf_sub_tpu,
                          idvar = "leaf_unique",
                          timevar = "curv_meth", 
                          direction = "wide") %>% 
-    #na.omit() %>% 
+    na.omit() %>% 
     select(-c("rel_can_pos.DAT"))
 names(leaf_wide_tpu)[2:6] = c("tpu_DAT", "tpu_DAT_se", "tpu_SS", "tpu_SS_se", "rel_can_pos")
 cor5 <- round(cor(leaf_wide_tpu$tpu_DAT, leaf_wide_tpu$tpu_SS), 3)

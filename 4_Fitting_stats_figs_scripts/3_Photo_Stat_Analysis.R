@@ -568,8 +568,8 @@ nd_diff_tpu_lf %>%
 
 
 # Exploring random effect models ---------------------------------
-library(lme4)
 library(lmerTest)
+library(lme4)
 library(performance)
 
 # Mixed model with random effect for intercept
@@ -579,12 +579,18 @@ diff_tpu_lf$treeid <- as.factor(diff_tpu_lf$treeid)
 
 mod_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
                     data = diff_notpu_lf)
+no_tpu_res <- filter(all_results, fit_type == "no_tpu")
+mod_notpu_v2 <- lmer(vcmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = no_tpu_res)
+
+
 mod_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                     data = diff_notpu_lf)
 
 
 mod_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
                     data = diff_tpu_lf)
+tpu_res <- filter(all_results, fit_type == "tpu")
+mod_tpu_v2 <- lmer(vcmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = tpu_res)
 #This leads to a singularity
 mod_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                   data = diff_tpu_lf)
@@ -595,7 +601,7 @@ nlme_tpu_v <- nlmer(vc_diff ~ 1 + (1|treeid),
                   data = diff_tpu_lf)
 #Still no luck...
 nlme_tpu_1 <- nlme::nlme(vc_diff ~ 1,
-                         random = 1 | diff_tpu_lf$treeid,
+                         random = treeid ~ 1,
                          data = diff_tpu_lf)
 
 
