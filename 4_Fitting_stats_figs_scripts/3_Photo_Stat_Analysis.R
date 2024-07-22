@@ -1,7 +1,6 @@
 # Computing statistical analysis on the A/Ci curve fits from 2_Tapajos_Fit_ACi.R
 # Using the 'photosynthesis' package
 
-######### Check to see which of these packages we actually need
 library(tidyverse) 
 library(ggpubr) 
 library(car)
@@ -363,6 +362,7 @@ nd_diff_notpu_tree <- ungroup(nd_diff_notpu_lf) %>%
 
 
 
+
 ### Adding back in the relative canopy position and sorting by height
 rel_can_pos <- select(ids, treeid, rel_can_pos)
 nd_diff_notpu_tree <- left_join(nd_diff_notpu_tree, rel_can_pos, by = "treeid")
@@ -582,8 +582,8 @@ diff_notpu_lf$treeid <- as.factor(diff_notpu_lf$treeid)
 diff_tpu_lf$treeid <- as.factor(diff_tpu_lf$treeid)
 
 #Set up a dataframe to exclude Tachi (for testing). n = 25 pairs
-diff_notpu_notach_lf <- diff_notpu_lf %>% filter(treeid != 'K6707')
-diff_tpu_notach_lf <- diff_tpu_lf %>% filter(treeid != 'K6707')
+diff_notpu_notach_lf <- diff_notpu_lf %>% filter(leaf_unique != 'K6709L2')
+diff_tpu_notach_lf <- diff_tpu_lf %>% filter(leaf_unique != 'K6709L2')
 
 # correct nd_diff datasets. n = 19 pairs
 nd_diff_notpu_lf$treeid <- as.factor(nd_diff_notpu_lf$treeid)
@@ -595,48 +595,86 @@ nd_diff_tpu_lf <- nd_diff_tpu_lf %>% filter(!is.na(vc_diff))
 
 # Define models ----------------------
 #Models with full dataset
+
+## Vcmax without TPU
 mod_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
                     data = diff_notpu_lf)
 no_tpu_res <- filter(all_results, fit_type == "no_tpu")
 mod_notpu_v2 <- lmer(vcmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = no_tpu_res)
 
+summary(mod_notpu_v)
+### Sig diff, estimated diff 2.9 +- 0.9
 
+## Jmax without TPU
 mod_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                     data = diff_notpu_lf)
 
+summary(mod_notpu_j)
+### Sig diff, estimated diff 11 +- 2.9 
+
+
+## Vcmax with TPU
 mod_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
                     data = diff_tpu_lf)
 tpu_res <- filter(all_results, fit_type == "tpu")
 mod_tpu_v2 <- lmer(vcmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = tpu_res)
 #This leads to a singularity
 
-
-mod_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
-                  data = diff_tpu_lf)
-
-
+summary(mod_tpu_v)
+### Slightly sig, estimate diff 1.69 +- 0.65; gives singularity
 
 #Trying to avoid the singularity
 nlme_tpu_v <- nlmer(vc_diff ~ 1 + (1|treeid),
-                  data = diff_tpu_lf)
+                    data = diff_tpu_lf)
 #Still no luck...
 nlme_tpu_1 <- nlme::nlme(vc_diff ~ 1,
                          random = treeid ~ 1,
                          data = diff_tpu_lf)
 
-#Models without Tachi
+
+
+## Jmax with TPU
+mod_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
+                  data = diff_tpu_lf)
+
+summary(mod_tpu_j)
+### Sig, estimated differences 8.035 +- 2.492
+
+
+
+
+
+
+
+# Models without Tachi
+
+## Vcmax no TPU
 mod_notpu_notach_v <- lmer(vc_diff ~ 1 + (1|treeid),
                     data = diff_notpu_notach_lf)
+summary(mod_notpu_notach_v)
+### sig, estimated diff 2.134 +- 0.5
+
+## Jmax no TPU
 mod_notpu_notach_j <- lmer(j_diff ~ 1 + (1|treeid),
                     data = diff_notpu_notach_lf)
+summary(mod_notpu_notach_j)
+### sig, estimated diff 8.82 +-2.3
 
+## Vcmax with TPU
 mod_tpu_notach_v <- lmer(vc_diff ~ 1 + (1|treeid),
                   data = diff_tpu_notach_lf) #This leads to a singularity
+summary(mod_tpu_notach_v)
+### sig, estimated diff 1.88 +- 0.66
+
+
+## Jmax with TPU
 mod_tpu_notach_j <- lmer(j_diff ~ 1 + (1|treeid),
                   data = diff_tpu_notach_lf)
+summary(mod_tpu_notach_j)
+### sig, estimated diff 8.2 +- 2.6
 
 
-#Models with no-overshoot data
+# Models with no-overshoot data
 mod_nd_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
                     data = nd_diff_notpu_lf) #This leads to a singularity
 mod_nd_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
@@ -648,7 +686,7 @@ mod_nd_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                   data = nd_diff_tpu_lf)
 
 
-#Residuals for the full dataset
+# Residuals for the full dataset
 plot(residuals(mod_notpu_v) ~ diff_notpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 

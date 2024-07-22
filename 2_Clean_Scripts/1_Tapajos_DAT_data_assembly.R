@@ -130,22 +130,20 @@ complete_sp <- all_aci.df %>%
     mutate(Qin = parse_number(Qin)) %>%
     mutate(Tleaf = parse_number(Tleaf))
     # make a new column for the tree_id using the K67 ID
-complete_sp <- mutate(complete_sp, tree_id = recode(complete_sp$Tree_Identifier,
-                                         'Maca1' = 'k6709',
-                                         'maca1' = 'k6709',
-                                         '1' = 'k6707',
-                                         'Tree3' = 'k6708',
-                                         '4' = 'k6706', 
-                                         'Tree5' = 'k6704',
-                                         'Tree6' = 'k6705',
-                                         'Mela7' = 'k6716',
-                                         'tree8' = 'k6715',
-                                         'Tree8' = 'k6715',
-                                         'tree9' = 'k6717',
-                                         'Tree10' = 'k6713',
-                                         'tree11' = 'k6702',
-                                         'tree12' = 'k6714',
-                                         'tree22' = 'k6718'))
+complete_sp <- mutate(complete_sp, tree_id = case_match(complete_sp$Tree_Identifier,
+                                         c('Maca1', 'maca1') ~ 'k6709',
+                                         '1' ~ 'k6707',
+                                         'Tree3' ~ 'k6708',
+                                         '4' ~ 'k6706', 
+                                         'Tree5' ~ 'k6704',
+                                         'Tree6' ~ 'k6705',
+                                         'Mela7' ~ 'k6716',
+                                         c('tree8', 'Tree8') ~ 'k6715',
+                                         'tree9' ~ 'k6717',
+                                         'Tree10' ~ 'k6713',
+                                         'tree11' ~ 'k6702',
+                                         'tree12' ~ 'k6714',
+                                         'tree22' ~ 'k6718'))
 unique(complete_sp$tree_id)
 # Once the bad data is filtered out, there will be 13 trees
 
@@ -154,7 +152,7 @@ unique(complete_sp$tree_id)
 
 ## Save the assembled file as a .csv
 write.csv(x = complete_sp, 
-          file = "3_Clean_data/raw_combined_aci_data.csv", 
+          file = here("3_Clean_data/raw_combined_aci_data.csv"), 
           row.names = FALSE)
 
 
@@ -168,7 +166,7 @@ write.csv(x = complete_sp,
 # Clean and Filter the data -----------------------------------------------
 
 ## Load the data file with the fixed names
-cmplt.rm_out <- read.csv("3_Clean_data/clean_aci_with_uniquecode.csv",
+cmplt.rm_out <- read.csv(here("3_Clean_data/clean_aci_with_uniquecode.csv"),
                          sep = ",", header = TRUE,
                          fileEncoding="latin1") %>% 
     # Filter out excluded data
@@ -176,7 +174,8 @@ cmplt.rm_out <- read.csv("3_Clean_data/clean_aci_with_uniquecode.csv",
     # Filter out outliers (impossible values)
     filter(Ci > -5 & A < 40 & A > -1) %>% 
     # Fix curve method values and column name
-    mutate(Data_point = recode(Data_point, Before_DAT = "DAT", Traditional = "SS"),
+    mutate(Data_point = case_match(Data_point, 
+                                   'Before_DAT' ~ "DAT", 'Traditional' ~ "SS"),
            curv_meth = Data_point)
 
 write.csv(cmplt.rm_out, 

@@ -55,12 +55,6 @@ all_diff_notpu_codes <- read.csv(here("5_Results/tree_diffs_summary_noTPU.csv"))
 ###
 
 
-test.grp <- group_by(cmplt.rm_out, curv_meth)
-ggplot(test.grp) +
-    geom_density(mapping = aes(Tleaf, fill = curv_meth), alpha = 0.5)
-
-
-
 # Plot Curves with Clean Data (not fit; exploratory) ---------------------------------
 
 ## Plot all ACi curves on one graph by leaf
@@ -168,7 +162,7 @@ cor3 <- round(cor(leaf_wide_vcmax_tpu$vcmax_DAT, leaf_wide_vcmax_tpu$vcmax_SS), 
 pho_1to1_vcmax_tpu <- ggplot(data = leaf_wide_vcmax_tpu, 
                              mapping = aes(x = vcmax_SS,
                                            y = vcmax_DAT,
-                                           color = rel_can_pos)) +
+                                           color = desc(rel_can_pos))) +
     geom_point() +
     geom_errorbar(aes(ymin = vcmax_DAT - vcmax_DAT_se,
                       ymax = vcmax_DAT + vcmax_DAT_se)) + 
@@ -210,7 +204,7 @@ cor1 <- round(cor(leaf_wide_vcmax$vcmax_DAT, leaf_wide_vcmax$vcmax_SS), 3)
 pho_1to1_vcmax_NoTPU <- ggplot(data = leaf_wide_vcmax, 
                                mapping = aes(x = vcmax_SS,
                                              y = vcmax_DAT,
-                                             color = rel_can_pos)) +
+                                             color = desc(rel_can_pos))) +
     geom_point() +
     geom_errorbar(aes(ymin = vcmax_DAT - vcmax_DAT_se, 
                       ymax = vcmax_DAT + vcmax_DAT_se)) + 
@@ -329,7 +323,7 @@ cor2 <- round(cor(leaf_wide_jmax$jmax_DAT, leaf_wide_jmax$jmax_SS), 3)
 pho_1to1_jmax_noTPU <- ggplot(data = leaf_wide_jmax, 
                               mapping = aes(x = jmax_SS,
                                             y = jmax_DAT,
-                                            color = rel_can_pos))+
+                                            color = desc(rel_can_pos))) +
     geom_point() +
     geom_errorbar(aes(ymin = jmax_DAT - jmax_DAT_se, 
                       ymax = jmax_DAT + jmax_DAT_se)) + 
@@ -367,7 +361,7 @@ cor4 <- round(cor(leaf_wide_jmax_tpu$jmax_DAT, leaf_wide_jmax_tpu$jmax_SS), 3)
 pho_1to1_jmax_tpu <- ggplot(data = leaf_wide_jmax_tpu,
                             mapping = aes(x = jmax_SS,
                                           y = jmax_DAT,
-                                          color = rel_can_pos)) +
+                                          color = desc(rel_can_pos))) +
     geom_point() +
     geom_errorbar(aes(ymin = jmax_DAT - jmax_DAT_se, ymax = jmax_DAT + jmax_DAT_se)) + 
     geom_errorbarh(aes(xmin = jmax_SS - jmax_SS_se, xmax = jmax_SS + jmax_SS_se)) +
@@ -479,25 +473,28 @@ pho_dat <- read.csv(file = here("5_Results/DAT_photo_pars_crct_noTPU.csv"),
                     sep = ",", 
                     header = TRUE, na.strings = 1000) %>% 
     ## TPU values at 1000 are coded as NA
-    subset(ID != "K6709L3")
+    subset(ID != "K6709L3") %>% 
+    subset(ID != "K6709L2-2")
 
 pho_SS <- read.csv(file = here("5_Results/SS_photo_pars_crct_noTPU.csv"),
                    sep = ",", 
                    header = TRUE, na.strings = 1000) %>% 
-    subset(ID != "K6709L3")
-
+    subset(ID != "K6709L3") %>% 
+    subset(ID != "K6709L2-2")
 
 pho_dat_tpu <- read.csv(file = here("5_Results/DAT_photo_pars_crct_TPU.csv"),
                         sep = ",", 
                         header = TRUE, na.strings = 1000) %>% 
     ## TPU values at 1000 are coded as NA
-    subset(ID != "K6709L3")
+    subset(ID != "K6709L3")%>% 
+    subset(ID != "K6709L2-2")
 
 
 pho_SS_tpu <- read.csv(file = here("5_Results/SS_photo_pars_crct_TPU.csv"),
                        sep = ",", 
                        header = TRUE, na.strings = 1000) %>% 
-    subset(ID != "K6709L3")
+    subset(ID != "K6709L3")%>% 
+    subset(ID != "K6709L2-2")
 
 
 #### Vcmax WITHOUT TPU
@@ -775,7 +772,7 @@ only_tpu_fit <- arrange(only_tpu_fit, rel_can_pos)
 pho_1to1_tpu_tpu <- ggplot(data = only_tpu_fit,
                            mapping = aes(x = tpu_SS,
                                          y = tpu_DAT,
-                                         color = rel_can_pos)) +
+                                         color = desc(rel_can_pos))) +
     geom_point(cex = 2.5) +
     geom_errorbar(aes(ymin = tpu_DAT - tpu_DAT_se, ymax = tpu_DAT + tpu_DAT_se)) + 
     geom_errorbarh(aes(xmin = tpu_SS - tpu_SS_se, xmax = tpu_SS + tpu_SS_se)) +
