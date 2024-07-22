@@ -581,7 +581,7 @@ library(performance)
 diff_notpu_lf$treeid <- as.factor(diff_notpu_lf$treeid)
 diff_tpu_lf$treeid <- as.factor(diff_tpu_lf$treeid)
 
-#Set up a dataframe to exclude Tachi (for testing). n = 25 pairs
+#Set up a dataframe to exclude K6709L2 (for testing). n = 25 pairs
 diff_notpu_notach_lf <- diff_notpu_lf %>% filter(leaf_unique != 'K6709L2')
 diff_tpu_notach_lf <- diff_tpu_lf %>% filter(leaf_unique != 'K6709L2')
 
@@ -620,16 +620,18 @@ tpu_res <- filter(all_results, fit_type == "tpu")
 mod_tpu_v2 <- lmer(vcmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = tpu_res)
 #This leads to a singularity
 
+
 summary(mod_tpu_v)
 ### Slightly sig, estimate diff 1.69 +- 0.65; gives singularity
 
 #Trying to avoid the singularity
-nlme_tpu_v <- nlmer(vc_diff ~ 1 + (1|treeid),
-                    data = diff_tpu_lf)
-#Still no luck...
-nlme_tpu_1 <- nlme::nlme(vc_diff ~ 1,
-                         random = treeid ~ 1,
-                         data = diff_tpu_lf)
+# nlme_tpu_v <- nlmer(vc_diff ~ 1 + (1|treeid),
+#                   data = diff_tpu_lf)
+# #Still no luck...
+# nlme_tpu_1 <- nlme::nlme(vc_diff ~ 1,
+#                          random = treeid ~ 1,
+#                          data = diff_tpu_lf)
+
 
 
 
@@ -646,7 +648,7 @@ summary(mod_tpu_j)
 
 
 
-# Models without Tachi
+# Models without K6709L2
 
 ## Vcmax no TPU
 mod_notpu_notach_v <- lmer(vc_diff ~ 1 + (1|treeid),
@@ -686,7 +688,9 @@ mod_nd_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                   data = nd_diff_tpu_lf)
 
 
+
 # Residuals for the full dataset
+
 plot(residuals(mod_notpu_v) ~ diff_notpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
@@ -730,82 +734,94 @@ summary(mod_nd_notpu_j)
 summary(mod_nd_tpu_v)
 summary(mod_nd_tpu_j)
 
+# Pulls out key coefficients of interest
+set.seed(304)
+mod_coefs <- list(
+    "mod_notpu_v",
+    "mod_tpu_v",
+    "mod_notpu_j",
+    "mod_tpu_j",
+    "mod_notpu_notach_v",
+    "mod_tpu_notach_v",
+    "mod_notpu_notach_j",
+    "mod_tpu_notach_j",
+    "mod_nd_notpu_v",
+    "mod_nd_tpu_v",
+    "mod_nd_notpu_j",
+    "mod_nd_tpu_j"
+) %>%
+    map_dfr(~ {
+        model_name <- .x
+        model <- get(model_name)
+        coeff <- lmerTest:::get_coefmat(model) %>% 
+            as.data.frame() %>% 
+            rownames_to_column()
+         confints <- confint(model, method = 'boot', oldNames = FALSE) %>%
+             as.data.frame() %>%
+             rownames_to_column() %>% 
+             filter(rowname == '(Intercept)') %>% #These are the fixed effect CIs
+             select(-rowname)
+        icc_value <- icc(model) %>%
+            as.data.frame() %>% 
+            rownames_to_column()
+        st.d.ranef <- as.data.frame(VarCorr(model)) %>%
+            rename(Ranef.Var = vcov, Ranef.StdDev = sdcor) %>% 
+            rownames_to_column() %>% 
+            filter(rowname == 1) %>% 
+            select(-c(var1,var2, rowname))
+        
+        tibble(
+            model = model_name,
+            coeff = list(coeff),
+            conf = confints,
+            icc = icc_value[2],
+            stdranef = std.d.ranef
+        )
+    }) %>%
+    unnest_wider(coeff)
 
-#Note the intercepts. 'Estimate' is the mean difference between DAT and SS??
-# Full dataset
-coef(summary(mod_notpu_v))
-coef(summary(mod_notpu_j))
 
-coef(summary(mod_tpu_v))
-coef(summary(mod_tpu_j))
+print(mod_coefs)
 
-# No tachi dataset
-coef(summary(mod_notpu_notach_v))
-coef(summary(mod_notpu_notach_j))
-
-coef(summary(mod_tpu_notach_v))
-coef(summary(mod_tpu_notach_j))
-
-# No overshoot dataset
-coef(summary(mod_nd_notpu_v))
-coef(summary(mod_nd_notpu_j))
-
-coef(summary(mod_nd_tpu_v))
-coef(summary(mod_nd_tpu_j))
+#
+write.csv(x = mod_coefs, 
+          file = here("5_Results/model_output.csv"),
+          row.names = FALSE)
 
 #Compute bootstrapped confidence intervals
-# Complete datset
+# Complete dataset
+#sd_(Intercept)|treeid: CI for random intercept
+# sigma: CI for random residuals
+#(Intercept): CI for the fixed effects
+
 set.seed(304)
-confint(mod_notpu_v, method = 'boot')
+confint(mod_notpu_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_notpu_j, method = 'boot')
+confint(mod_notpu_j, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_tpu_v, method = 'boot')
+confint(mod_tpu_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_tpu_j, method = 'boot')
+confint(mod_tpu_j, method = 'boot', oldNames = FALSE)
 
 #No Tachi dataset
 set.seed(304)
-confint(mod_notpu_notach_v, method = 'boot')
+confint(mod_notpu_notach_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_notpu_notach_j, method = 'boot')
+confint(mod_notpu_notach_j, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_tpu_notach_v, method = 'boot')
+confint(mod_tpu_notach_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_tpu_notach_j, method = 'boot')
+confint(mod_tpu_notach_j, method = 'boot', oldNames = FALSE)
 
 # No overshoot dataset
 set.seed(304)
-confint(mod_nd_notpu_v, method = 'boot')
+confint(mod_nd_notpu_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_nd_notpu_j, method = 'boot')
+confint(mod_nd_notpu_j, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_nd_tpu_v, method = 'boot')
+confint(mod_nd_tpu_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_nd_tpu_j, method = 'boot')
-
-
-# Standard deviation of the random-effects terms.
-# Full dataset
-print(VarCorr(mod_notpu_v), comp = c("Variance", "Std.Dev."))
-print(VarCorr(mod_notpu_j), comp = c("Variance", "Std.Dev."))
-
-print(VarCorr(mod_tpu_v), comp = c("Variance", "Std.Dev."))
-print(VarCorr(mod_tpu_j), comp = c("Variance", "Std.Dev."))
-
-# No tachi dataset
-print(VarCorr(mod_notpu_notach_v), comp = c("Variance", "Std.Dev."))
-print(VarCorr(mod_notpu_notach_j), comp = c("Variance", "Std.Dev."))
-
-print(VarCorr(mod_tpu_notach_v), comp = c("Variance", "Std.Dev."))
-print(VarCorr(mod_tpu_notach_j), comp = c("Variance", "Std.Dev."))
-
-# No overshoot dataset
-print(VarCorr(mod_nd_notpu_v), comp = c("Variance", "Std.Dev."))
-print(VarCorr(mod_nd_notpu_j), comp = c("Variance", "Std.Dev."))
-
-print(VarCorr(mod_nd_tpu_v), comp = c("Variance", "Std.Dev."))
-print(VarCorr(mod_nd_tpu_j), comp = c("Variance", "Std.Dev."))
+confint(mod_nd_tpu_j, method = 'boot', oldNames = FALSE)
 
 
 # Look at random effect coefficients
@@ -830,29 +846,74 @@ ranef(mod_nd_notpu_j)
 ranef(mod_nd_tpu_v)
 ranef(mod_nd_tpu_j)
 
-
-# Compute intraclass correlation coefficient
+#Note the intercepts. 'Estimate' is the mean difference between DAT and SS??
 # Full dataset
-icc(mod_notpu_v)
-icc(mod_notpu_j)
+# coef(summary(mod_notpu_v))
+# coef(summary(mod_notpu_j))
+# 
+# coef(summary(mod_tpu_v))
+# coef(summary(mod_tpu_j))
+# 
+# # No tachi dataset
+# coef(summary(mod_notpu_notach_v))
+# coef(summary(mod_notpu_notach_j))
+# 
+# coef(summary(mod_tpu_notach_v))
+# coef(summary(mod_tpu_notach_j))
+# 
+# # No overshoot dataset
+# coef(summary(mod_nd_notpu_v))
+# coef(summary(mod_nd_notpu_j))
+# 
+# coef(summary(mod_nd_tpu_v))
+# coef(summary(mod_nd_tpu_j))
 
-icc(mod_tpu_v) #This doesn't work because it's a singular model
-icc(mod_tpu_j)
+# 
+# # Standard deviation of the random-effects terms.
+# # Full dataset
+# print(VarCorr(mod_notpu_v), comp = c("Variance", "Std.Dev."))
+# print(VarCorr(mod_notpu_j), comp = c("Variance", "Std.Dev."))
+# 
+# print(VarCorr(mod_tpu_v), comp = c("Variance", "Std.Dev."))
+# print(VarCorr(mod_tpu_j), comp = c("Variance", "Std.Dev."))
+# 
+# # No tachi dataset
+# print(VarCorr(mod_notpu_notach_v), comp = c("Variance", "Std.Dev."))
+# print(VarCorr(mod_notpu_notach_j), comp = c("Variance", "Std.Dev."))
+# 
+# print(VarCorr(mod_tpu_notach_v), comp = c("Variance", "Std.Dev."))
+# print(VarCorr(mod_tpu_notach_j), comp = c("Variance", "Std.Dev."))
+# 
+# # No overshoot dataset
+# print(VarCorr(mod_nd_notpu_v), comp = c("Variance", "Std.Dev."))
+# print(VarCorr(mod_nd_notpu_j), comp = c("Variance", "Std.Dev."))
+# 
+# print(VarCorr(mod_nd_tpu_v), comp = c("Variance", "Std.Dev."))
+# print(VarCorr(mod_nd_tpu_j), comp = c("Variance", "Std.Dev."))
 
-# No tachi dataset
-icc(mod_notpu_notach_v)
-icc(mod_notpu_notach_j)
 
-icc(mod_tpu_notach_v) #This doesn't work because it's a singular model
-icc(mod_tpu_notach_j)
-
-# no overshoot dataset
-icc(mod_nd_notpu_v) #This doesn't work because it's a singular model
-icc(mod_nd_notpu_j)
-
-icc(mod_nd_tpu_v)
-icc(mod_nd_tpu_j)
-
+# # Compute intraclass correlation coefficient
+# # Full dataset
+# icc(mod_notpu_v)
+# icc(mod_notpu_j)
+# 
+# icc(mod_tpu_v) #This doesn't work because it's a singular model
+# icc(mod_tpu_j)
+# 
+# # No tachi dataset
+# icc(mod_notpu_notach_v)
+# icc(mod_notpu_notach_j)
+# 
+# icc(mod_tpu_notach_v) #This doesn't work because it's a singular model
+# icc(mod_tpu_notach_j)
+# 
+# # no overshoot dataset
+# icc(mod_nd_notpu_v) #This doesn't work because it's a singular model
+# icc(mod_nd_notpu_j)
+# 
+# icc(mod_nd_tpu_v)
+# icc(mod_nd_tpu_j)
+# 
 
 
 #Wilcoxon tests for the data grouped on a tree level. ---------------------------
