@@ -7,6 +7,7 @@ library(here)
 library(grid)
 library(ggpubr)
 library(ggmagnify) # for figure S1; available at https://github.com/hughjonesd/ggmagnify
+library(readxl)
 
 theme_set(theme_classic(base_size = 12, base_family = "serif"))
 
@@ -99,16 +100,18 @@ k6717l1 <- ggplot(data = filter(cmplt.grp, unique_id == "K6717L1"),
     geom_point(size = 3) +
     labs(y = expression("A"[net]*" "*(mu*mol~m^{-2}~s^{-1})), 
          x = expression("C"[i]*" "*(mu*mol~m^{-2}~s^{-1})),
-         tag = "a",
+         tag = "(a)",
          title = expression(italic("Aparisthmium cordatum")*", Leaf 1")) +
     theme(plot.title = element_text(hjust = 0.5),
           legend.position = "none",
-          plot.tag = element_text(size = rel(0.9))) +
+          plot.tag = element_text(size = rel(1)),
+          title = element_text(size = 10),
+          plot.tag.position = c(0.05, 1)) +
     scale_fill_viridis_d(begin = 0.3, name = "Method", 
-                          labels = c("DAT", "Steady-State")) +
+                          labels = c("DAT", "SS")) +
     scale_color_manual(values = c(0, "black")) +
     scale_shape_manual(name = "Method", 
-                       labels = c("DAT", "Steady-State"), values = c(21, 24))
+                       labels = c("DAT", "SS"), values = c(21, 24))
 
 plot(k6717l1)
 
@@ -119,15 +122,17 @@ k6707l2 <- ggplot(data = filter(cmplt.grp, unique_id == "K6707L2"),
     geom_point(size = 3) +
     labs(y = expression("A"[net]*" "*(mu*mol~m^{-2}~s^{-1})), 
          x = expression("C"[i]*" "*(mu*mol~m^{-2}~s^{-1})),
-         tag = "b",
+         tag = "(b)",
          title = expression(italic("Tachigali chrysophylla")*", Leaf 2")) +
     theme(plot.title = element_text(hjust = 0.5),
-          plot.tag = element_text(size = rel(0.9))) +
+          plot.tag = element_text(size = rel(1)),
+          title = element_text(size = 10),
+          plot.tag.position = c(0.05, 1)) +
     scale_color_manual(values = c(0, "black")) +
     scale_fill_viridis_d(begin = 0.3, name = "Method", 
-                          labels = c("DAT", "Steady-State")) +
+                          labels = c("DAT", "SS")) +
     scale_shape_manual(name = "Method",
-                       labels = c("DAT", "Steady-State"), values = c(21, 24)) +
+                       labels = c("DAT", "SS"), values = c(21, 24)) +
     guides(color = "none")
 plot(k6707l2)
 
@@ -137,7 +142,8 @@ g2 <- ggplotGrob(k6707l2)
 
 fig1 <- grid.arrange(arrangeGrob(cbind(g1, g2)))
 
-ggsave(plot = fig1, here("6_Figures/figure1.tif"), width = 8, height = 3, dpi = 600)
+
+ggsave(plot = fig1, here("6_Figures/figure1.tif"), width = 17, height = 7, units = "cm", dpi = 600)
 
 
 ###
@@ -172,18 +178,18 @@ pho_1to1_vcmax_tpu <- ggplot(data = leaf_wide_vcmax_tpu,
                 linetype = 5, linewidth = 0.6) +
     labs(x = expression("V"["cmax-SS"]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
          y = expression("V"["cmax-DAT"]* " " *(mu*mol~m^{-2}~s^{-1})),
-         tag = "a") +
+         tag = "(a)") +
     theme(aspect.ratio = 1,
-          axis.text.x = element_text(size = 10, color = "gray10"),
-          axis.text.y = element_text(size = 10, color = "gray10"),
+          axis.text.x = element_text(size = 12, color = "gray10"),
+          axis.text.y = element_text(size = 12, color = "gray10"),
           legend.position = "none",
-          plot.tag = element_text(size = rel(0.9)),
+          plot.tag = element_text(size = rel(1)),
           plot.tag.position = c(-0.05, 1)) +
     scale_x_continuous(limits = c(1, 100)) + 
     scale_y_continuous(limits = c(1, 100)) +
     scale_color_continuous(type = "viridis") +
     annotate(geom = "text", label = paste0("r = ", cor3),
-             x = 25, y = 75, size = rel(3))
+             x = 25, y = 75, size = rel(4))
 pho_1to1_vcmax_tpu
 
 
@@ -215,18 +221,18 @@ pho_1to1_vcmax_NoTPU <- ggplot(data = leaf_wide_vcmax,
     labs(x = expression("V"["cmax-SS"]* " " *(mu*mol~m^{-2}~s^{-1} *"")),
          y = expression("V"["cmax-DAT"]* " " *(mu*mol~m^{-2}~s^{-1})),
         # col = "Unique Leaf",
-         tag = "c") +
+         tag = "(c)") +
     theme(aspect.ratio = 1,
-          axis.text.x = element_text(size = 10, color = "gray10"),
-          axis.text.y = element_text(size = 10, color = "gray10"),
+          axis.text.x = element_text(size = 12, color = "gray10"),
+          axis.text.y = element_text(size = 12, color = "gray10"),
           legend.position = "none",
-          plot.tag = element_text(size = rel(0.9)),
+          plot.tag = element_text(size = rel(1)),
           plot.tag.position = c(-0.05, 1)) +
     scale_x_continuous(limits = c(1, 100)) + 
     scale_y_continuous(limits = c(1, 100)) +
     scale_color_continuous(type = "viridis") +
     annotate(geom = "text", label = paste0("r = ", cor1), 
-             x = 25, y = 75, size = rel(3))
+             x = 25, y = 75, size = rel(4))
 pho_1to1_vcmax_NoTPU
 
 
@@ -241,22 +247,22 @@ sp_diff_hist_vc_tpu <- diff_tpu_lf %>%
     geom_vline(xintercept = mean(diff_tpu_lf$vc_diff), color = "black", alpha = 0.4) +
     labs(x = expression("SS - DAT "*"V"["cmax"]* " " *(mu*mol~m^{-2}~s^{-1})),
          y = "Density",
-         tag = "b") +
+         tag = "(b)") +
     xlim(-30, 65) +
     ylim(0, 0.25) +
-    theme(axis.text.x = element_text(size = 10, color = "gray10"),
-          axis.text.y = element_text(size = 10, color = "gray10"),
-          plot.tag = element_text(size = rel(0.9))) +
+    theme(axis.text.x = element_text(size = 12, color = "gray10"),
+          axis.text.y = element_text(size = 12, color = "gray10"),
+          plot.tag = element_text(size = rel(1))) +
     annotate("text", x = 30, y = 0.18, 
              label = paste0("Mean = ", round(mean(diff_tpu_lf$vc_diff), digits = 2)), 
-             size = rel(3)) +
+             size = rel(4)) +
     annotate("text", x = 30, y = 0.15, 
              label = paste0("Median = ", round(median(diff_tpu_lf$vc_diff),
                                                digits = 2)),
-             size = rel(3)) +
+             size = rel(4)) +
     annotate("text", x = 30, y = 0.12, 
              label = paste0("SD = ", round(sd(diff_tpu_lf$vc_diff), digits = 2)), 
-             size = rel(3))
+             size = rel(4))
 sp_diff_hist_vc_tpu
 
 
@@ -271,21 +277,21 @@ sp_diff_hist_vc_notpu <- diff_notpu_lf %>%
     geom_vline(xintercept = mean(diff_notpu_lf$vc_diff), color = "black", alpha = 0.4) +
     labs(x = expression("SS - DAT "*"V"["cmax"]* " " *(mu*mol~m^{-2}~s^{-1})),
          y = "Density",
-         tag = "d") +
+         tag = "(d)") +
     xlim(-30, 65) +
     ylim(0, 0.25) +
-    theme(axis.text.x = element_text(size = 10, color = "gray10"),
-          axis.text.y = element_text(size = 10, color = "gray10"),
-          plot.tag = element_text(size = rel(0.9))) +
+    theme(axis.text.x = element_text(size = 12, color = "gray10"),
+          axis.text.y = element_text(size = 12, color = "gray10"),
+          plot.tag = element_text(size = rel(1))) +
     annotate("text", x = 30, y = 0.18, 
              label = paste0("Mean = ", round(mean(diff_notpu_lf$vc_diff), digits = 2)), 
-             size = rel(3)) +
+             size = rel(4)) +
     annotate("text", x = 30, y = 0.15, 
              label = paste0("Median = ", round(median(diff_notpu_lf$vc_diff), digits = 2)),
-             size = rel(3)) +
+             size = rel(4)) +
     annotate("text", x = 30, y = 0.12, 
              label = paste0("SD = ", round(sd(diff_notpu_lf$vc_diff), digits = 2)), 
-             size = rel(3))
+             size = rel(4))
 sp_diff_hist_vc_notpu
 
 
@@ -302,7 +308,7 @@ noTPU <- textGrob("Without TPU", rot = 90,
 fig2 <- grid.arrange(arrangeGrob(gQ, left = TPU), gR, arrangeGrob(gS, left = noTPU), gT, nrow = 2) 
 
 
-ggsave(plot = fig2, here("6_Figures/figure2.tif"), width = 6.5, height = 5, dpi = 600)
+ggsave(plot = fig2, here("6_Figures/figure2.tif"), width = 17.16, height = 14, units = "cm", dpi = 600)
 
 ###
 
@@ -938,8 +944,9 @@ ggsave(plot = figS3, here("6_Figures/figureS3.tif"),
 ## Vcmax WITH TPU
 vc_diff_hist <- ggplot(data = all_diff_tpu_codes, 
                        aes(x = reorder(gen_spec_id, desc(rel_can_pos.x)),
-                           y = vc_diff)) +
-    geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
+                           y = vc_diff,
+                           fill = desc(rel_can_pos.x))) +
+    geom_bar(stat = "identity", color = "grey20") +
     labs(x = NULL,
          y = expression("SS - DAT "*V[cmax]* " " *(mu*mol~m^{-2}~s^{-1})),
          title = "With TPU",
@@ -949,11 +956,13 @@ vc_diff_hist <- ggplot(data = all_diff_tpu_codes,
                       ymax = vc_diff + vc_diff_se),
                   width = 0.3, colour = "#CA0068", alpha = 0.9, linewidth = 0.5) +
     geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.8) +
-    ylim(-20, 50) +
+    ylim(-5, 45) +
     theme(axis.text.y = element_text(face = "italic"),
           plot.title = element_text(face = "bold", hjust = 0.5),
           plot.tag = element_text(size = rel(0.9)),
-          plot.tag.position = c(0.35, 0.9)) +
+          plot.tag.position = c(0.35, 0.9),
+          legend.position = "none") +
+    scale_fill_continuous(type = "viridis") +
     coord_flip()
 vc_diff_hist
 
@@ -961,8 +970,9 @@ vc_diff_hist
 # Jmax WITH TPU
 j_diff_hist <- ggplot(data = all_diff_tpu_codes, 
                       aes(x = reorder(gen_spec_id, desc(rel_can_pos.x)),
-                          y = j_diff)) +
-    geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
+                          y = j_diff,
+                          fill = desc(rel_can_pos.x))) +
+    geom_bar(stat = "identity", color = "grey20") +
     labs(x = NULL,
          y = expression("SS - DAT "*J[max]*" "*(mu*mol~m^{-2}~s^{-1})),
          tag = "c") +
@@ -971,10 +981,12 @@ j_diff_hist <- ggplot(data = all_diff_tpu_codes,
                       ymax = j_diff + j_diff_se),
                   width = 0.3, colour = "#CA0068", alpha = 0.9, linewidth = 0.5) +
     geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.8) +
-    ylim(-20, 50) +
+    ylim(-5, 45) +
     theme(axis.text.y = element_text(face = "italic"),
           plot.tag = element_text(size = rel(0.9)),
-          plot.tag.position = c(0.35, 0.95)) +
+          plot.tag.position = c(0.35, 0.95),
+          legend.position = "none") +
+    scale_fill_continuous(type = "viridis") +
     coord_flip()
 j_diff_hist
 
@@ -983,8 +995,9 @@ j_diff_hist
 ## Vcmax WITHOUT TPU
 vc_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes, 
                              aes(x = reorder(gen_spec_id, desc(rel_can_pos.x)),
-                                 y = vc_diff)) +
-    geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
+                                 y = vc_diff,
+                                 fill = desc(rel_can_pos.x))) +
+    geom_bar(stat = "identity", color = "grey20") +
     labs(x = NULL,
          y = expression("SS - DAT "*V[cmax]* " " *(mu*mol~m^{-2}~s^{-1})),
          title = "Without TPU",
@@ -994,19 +1007,22 @@ vc_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes,
                       ymax = vc_diff + vc_diff_se),
                   width = 0.3, colour = "#CA0068", alpha = 0.9, linewidth = 0.5) +
     geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.8) +
-    ylim(-20, 50) +
+    ylim(-5, 45) +
     theme(axis.text.y = element_text(face = "italic"),
           plot.title = element_text(face = "bold", hjust = 0.5),
           plot.tag = element_text(size = rel(0.9)),
-          plot.tag.position = c(0.1, 0.9)) +
+          plot.tag.position = c(0.05, 0.9),
+          legend.position = "none") +
+    scale_fill_continuous(type = "viridis") +
     coord_flip()
 vc_diff_hist_notpu
 
 ## Jmax WITHOUT TPU
 j_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes,
                             aes(x = reorder(gen_spec_id, desc(rel_can_pos.x)),
-                                y = j_diff)) +
-    geom_bar(stat = "identity", fill = "cadetblue2", color = "grey20") +
+                                y = j_diff,
+                                fill = desc(rel_can_pos.x))) +
+    geom_bar(stat = "identity", color = "grey20") +
     labs(x = NULL,
          y = expression("SS - DAT "*J[max]* " " *(mu*mol~m^{-2}~s^{-1})),
          tag = "d") +
@@ -1015,10 +1031,12 @@ j_diff_hist_notpu <- ggplot(data = all_diff_notpu_codes,
                       ymax = j_diff + j_diff_se), 
                   width = 0.3, colour = "#CA0068", alpha = 0.9, linewidth = 0.5) +
     geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.8) +
-    ylim(-20, 50) +
+    ylim(-5, 45) +
     theme(axis.text.y = element_text(face = "italic"),
           plot.tag = element_text(size = rel(0.9)),
-          plot.tag.position = c(0.1, 0.95)) +
+          plot.tag.position = c(0.05, 0.95),
+          legend.position = "none") +
+    scale_fill_continuous(type = "viridis") +
     coord_flip()
 j_diff_hist_notpu
 

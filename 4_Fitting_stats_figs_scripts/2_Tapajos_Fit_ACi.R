@@ -298,8 +298,8 @@ saveRDS(dat_fits_photo_TPU, file = here("5_Results/DAT_photo_fits_TPU.RData"))
 # Make .pdf files with all fitted figures
 
 ### Add the species names back in
-ids <- read.csv(here("3_Clean_data/id_codebook.csv")) %>% 
-    rename(treeid = ï..treeid)
+ids <- read.csv(here("3_Clean_data/id_codebook.csv")) #%>% 
+   # rename(treeid = ï..treeid)
 
 dat_fits_photo_pars_TPU <- dat_fits_photo_pars_TPU %>% 
     mutate(treeid = substring(ID, 1, 5)) %>% 

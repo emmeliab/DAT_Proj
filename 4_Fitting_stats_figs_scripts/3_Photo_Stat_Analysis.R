@@ -582,8 +582,8 @@ diff_notpu_lf$treeid <- as.factor(diff_notpu_lf$treeid)
 diff_tpu_lf$treeid <- as.factor(diff_tpu_lf$treeid)
 
 #Set up a dataframe to exclude K6709L2 (for testing). n = 25 pairs
-diff_notpu_notach_lf <- diff_notpu_lf %>% filter(leaf_unique != 'K6709L2')
-diff_tpu_notach_lf <- diff_tpu_lf %>% filter(leaf_unique != 'K6709L2')
+diff_notpu_notach_lf <- diff_notpu_lf %>% filter(leaf_unique != 'K6709L6')
+diff_tpu_notach_lf <- diff_tpu_lf %>% filter(leaf_unique != 'K6709L6')
 
 # correct nd_diff datasets. n = 19 pairs
 nd_diff_notpu_lf$treeid <- as.factor(nd_diff_notpu_lf$treeid)
