@@ -581,9 +581,9 @@ library(performance)
 diff_notpu_lf$treeid <- as.factor(diff_notpu_lf$treeid)
 diff_tpu_lf$treeid <- as.factor(diff_tpu_lf$treeid)
 
-#Set up a dataframe to exclude K6709L2 (for testing). n = 25 pairs
-diff_notpu_notach_lf <- diff_notpu_lf %>% filter(leaf_unique != 'K6709L6')
-diff_tpu_notach_lf <- diff_tpu_lf %>% filter(leaf_unique != 'K6709L6')
+#Set up a dataframe to exclude K6709L6 (for testing; the one with the big diff). n = 25 pairs
+diff_notpu_nol6_lf <- diff_notpu_lf %>% filter(leaf_unique != 'K6709L6')
+diff_tpu_nol6_lf <- diff_tpu_lf %>% filter(leaf_unique != 'K6709L6')
 
 # correct nd_diff datasets. n = 19 pairs
 nd_diff_notpu_lf$treeid <- as.factor(nd_diff_notpu_lf$treeid)
@@ -648,31 +648,31 @@ summary(mod_tpu_j)
 
 
 
-# Models without K6709L2
+# Models without K6709L6
 
 ## Vcmax no TPU
-mod_notpu_notach_v <- lmer(vc_diff ~ 1 + (1|treeid),
-                    data = diff_notpu_notach_lf)
-summary(mod_notpu_notach_v)
+mod_notpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
+                    data = diff_notpu_nol6_lf)
+summary(mod_notpu_nol6_v)
 ### sig, estimated diff 2.134 +- 0.5
 
 ## Jmax no TPU
-mod_notpu_notach_j <- lmer(j_diff ~ 1 + (1|treeid),
-                    data = diff_notpu_notach_lf)
-summary(mod_notpu_notach_j)
+mod_notpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
+                    data = diff_notpu_nol6_lf)
+summary(mod_notpu_nol6_j)
 ### sig, estimated diff 8.82 +-2.3
 
 ## Vcmax with TPU
-mod_tpu_notach_v <- lmer(vc_diff ~ 1 + (1|treeid),
-                  data = diff_tpu_notach_lf) #This leads to a singularity
-summary(mod_tpu_notach_v)
+mod_tpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
+                  data = diff_tpu_nol6_lf) #This leads to a singularity
+summary(mod_tpu_nol6_v)
 ### sig, estimated diff 1.88 +- 0.66
 
 
 ## Jmax with TPU
-mod_tpu_notach_j <- lmer(j_diff ~ 1 + (1|treeid),
-                  data = diff_tpu_notach_lf)
-summary(mod_tpu_notach_j)
+mod_tpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
+                  data = diff_tpu_nol6_lf)
+summary(mod_tpu_nol6_j)
 ### sig, estimated diff 8.2 +- 2.6
 
 
@@ -721,11 +721,11 @@ summary(mod_tpu_v)
 summary(mod_tpu_j)
 
 #No Tachi dataset summary
-summary(mod_notpu_notach_v)
-summary(mod_notpu_notach_j)
+summary(mod_notpu_nol6_v)
+summary(mod_notpu_nol6_j)
 
-summary(mod_tpu_notach_v)
-summary(mod_tpu_notach_j)
+summary(mod_tpu_nol6_v)
+summary(mod_tpu_nol6_j)
 
 #No overshoot dataset summary
 summary(mod_nd_notpu_v)
@@ -741,10 +741,10 @@ mod_coefs <- list(
     "mod_tpu_v",
     "mod_notpu_j",
     "mod_tpu_j",
-    "mod_notpu_notach_v",
-    "mod_tpu_notach_v",
-    "mod_notpu_notach_j",
-    "mod_tpu_notach_j",
+    "mod_notpu_nol6_v",
+    "mod_tpu_nol6_v",
+    "mod_notpu_nol6_j",
+    "mod_tpu_nol6_j",
     "mod_nd_notpu_v",
     "mod_nd_tpu_v",
     "mod_nd_notpu_j",
@@ -805,13 +805,13 @@ confint(mod_tpu_j, method = 'boot', oldNames = FALSE)
 
 #No Tachi dataset
 set.seed(304)
-confint(mod_notpu_notach_v, method = 'boot', oldNames = FALSE)
+confint(mod_notpu_nol6_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_notpu_notach_j, method = 'boot', oldNames = FALSE)
+confint(mod_notpu_nol6_j, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_tpu_notach_v, method = 'boot', oldNames = FALSE)
+confint(mod_tpu_nol6_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
-confint(mod_tpu_notach_j, method = 'boot', oldNames = FALSE)
+confint(mod_tpu_nol6_j, method = 'boot', oldNames = FALSE)
 
 # No overshoot dataset
 set.seed(304)
@@ -832,12 +832,12 @@ ranef(mod_notpu_j)
 ranef(mod_tpu_v) #This doesn't work because it's a singular model
 ranef(mod_tpu_j)
 
-# No Tachi dataset
-ranef(mod_notpu_notach_v)
-ranef(mod_notpu_notach_j)
+# No K6709L6 dataset
+ranef(mod_notpu_nol6_v)
+ranef(mod_notpu_nol6_j)
 
-ranef(mod_tpu_notach_v) #This doesn't work because it's a singular model
-ranef(mod_tpu_notach_j)
+ranef(mod_tpu_nol6_v) #This doesn't work because it's a singular model
+ranef(mod_tpu_nol6_j)
 
 # No overshoot dataset
 ranef(mod_nd_notpu_v) #This doesn't work because it's a singular model
@@ -854,12 +854,12 @@ ranef(mod_nd_tpu_j)
 # coef(summary(mod_tpu_v))
 # coef(summary(mod_tpu_j))
 # 
-# # No tachi dataset
-# coef(summary(mod_notpu_notach_v))
-# coef(summary(mod_notpu_notach_j))
+# # No K6709L6 dataset
+# coef(summary(mod_notpu_nol6_v))
+# coef(summary(mod_notpu_nol6_j))
 # 
-# coef(summary(mod_tpu_notach_v))
-# coef(summary(mod_tpu_notach_j))
+# coef(summary(mod_tpu_nol6_v))
+# coef(summary(mod_tpu_nol6_j))
 # 
 # # No overshoot dataset
 # coef(summary(mod_nd_notpu_v))
@@ -877,12 +877,12 @@ ranef(mod_nd_tpu_j)
 # print(VarCorr(mod_tpu_v), comp = c("Variance", "Std.Dev."))
 # print(VarCorr(mod_tpu_j), comp = c("Variance", "Std.Dev."))
 # 
-# # No tachi dataset
-# print(VarCorr(mod_notpu_notach_v), comp = c("Variance", "Std.Dev."))
-# print(VarCorr(mod_notpu_notach_j), comp = c("Variance", "Std.Dev."))
+# # No K6709L6 dataset
+# print(VarCorr(mod_notpu_nol6_v), comp = c("Variance", "Std.Dev."))
+# print(VarCorr(mod_notpu_nol6_j), comp = c("Variance", "Std.Dev."))
 # 
-# print(VarCorr(mod_tpu_notach_v), comp = c("Variance", "Std.Dev."))
-# print(VarCorr(mod_tpu_notach_j), comp = c("Variance", "Std.Dev."))
+# print(VarCorr(mod_tpu_nol6_v), comp = c("Variance", "Std.Dev."))
+# print(VarCorr(mod_tpu_nol6_j), comp = c("Variance", "Std.Dev."))
 # 
 # # No overshoot dataset
 # print(VarCorr(mod_nd_notpu_v), comp = c("Variance", "Std.Dev."))
@@ -901,11 +901,11 @@ ranef(mod_nd_tpu_j)
 # icc(mod_tpu_j)
 # 
 # # No tachi dataset
-# icc(mod_notpu_notach_v)
-# icc(mod_notpu_notach_j)
+# icc(mod_notpu_nol6_v)
+# icc(mod_notpu_nol6_j)
 # 
-# icc(mod_tpu_notach_v) #This doesn't work because it's a singular model
-# icc(mod_tpu_notach_j)
+# icc(mod_tpu_nol6_v) #This doesn't work because it's a singular model
+# icc(mod_tpu_nol6_j)
 # 
 # # no overshoot dataset
 # icc(mod_nd_notpu_v) #This doesn't work because it's a singular model
