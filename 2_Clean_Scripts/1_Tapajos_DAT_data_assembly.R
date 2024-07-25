@@ -152,7 +152,7 @@ unique(complete_sp$tree_id)
 
 ## Save the assembled file as a .csv
 write.csv(x = complete_sp, 
-          file = here("3_Clean_data/raw_combined_aci_data.csv"), 
+          file = here("1_Raw_data/raw_combined_aci_data.csv"), 
           row.names = FALSE)
 
 
