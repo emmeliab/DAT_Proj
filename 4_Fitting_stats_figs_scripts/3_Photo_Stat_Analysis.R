@@ -645,9 +645,6 @@ summary(mod_tpu_j)
 
 
 
-
-
-
 # Models without K6709L6
 
 ## Vcmax no TPU
@@ -737,18 +734,18 @@ summary(mod_nd_tpu_j)
 # Pulls out key coefficients of interest
 set.seed(304)
 mod_coefs <- list(
-    "mod_notpu_v",
     "mod_tpu_v",
-    "mod_notpu_j",
     "mod_tpu_j",
-    "mod_notpu_nol6_v",
-    "mod_tpu_nol6_v",
-    "mod_notpu_nol6_j",
-    "mod_tpu_nol6_j",
-    "mod_nd_notpu_v",
+    "mod_notpu_v",
+    "mod_notpu_j",
     "mod_nd_tpu_v",
+    "mod_nd_tpu_j",
+    "mod_nd_notpu_v",
     "mod_nd_notpu_j",
-    "mod_nd_tpu_j"
+    "mod_tpu_nol6_v",
+    "mod_tpu_nol6_j",
+    "mod_notpu_nol6_v",
+    "mod_notpu_nol6_j"
 ) %>%
     map_dfr(~ {
         model_name <- .x
@@ -764,7 +761,7 @@ mod_coefs <- list(
         icc_value <- icc(model) %>%
             as.data.frame() %>% 
             rownames_to_column()
-        st.d.ranef <- as.data.frame(VarCorr(model)) %>%
+        std.d.ranef <- as.data.frame(VarCorr(model)) %>%
             rename(Ranef.Var = vcov, Ranef.StdDev = sdcor) %>% 
             rownames_to_column() %>% 
             filter(rowname == 1) %>% 
@@ -780,8 +777,19 @@ mod_coefs <- list(
     }) %>%
     unnest_wider(coeff)
 
+mod_coefs$Estimate <- round(mod_coefs$Estimate, 1)
+mod_coefs$'Std. Error' <- round(mod_coefs$'Std. Error', 1)
+mod_coefs$df <- round(mod_coefs$df, 1)
+mod_coefs$'t value' <- round(mod_coefs$'t value', 2)
+mod_coefs$'Pr(>|t|)' <- round(mod_coefs$'Pr(>|t|)', 4)
+mod_coefs$conf$`2.5 %` <- round(mod_coefs$conf$`2.5 %`, 2)
+mod_coefs$conf$`97.5 %` <- round(mod_coefs$conf$`97.5 %`, 2)
+mod_coefs$icc$ICC_adjusted <- round(mod_coefs$icc$ICC_adjusted, 2)
+mod_coefs$stdranef$Ranef.Var <- round(mod_coefs$stdranef$Ranef.Var, 1)
+mod_coefs$stdranef$Ranef.StdDev <- round(mod_coefs$stdranef$Ranef.StdDev, 1)
 
 print(mod_coefs)
+
 
 #
 write.csv(x = mod_coefs, 
@@ -789,6 +797,8 @@ write.csv(x = mod_coefs,
           row.names = FALSE)
 
 #Compute bootstrapped confidence intervals
+# This allows for additional confidence intervals to the ones pulled out in the code above.
+
 # Complete dataset
 #sd_(Intercept)|treeid: CI for random intercept
 # sigma: CI for random residuals
@@ -846,75 +856,6 @@ ranef(mod_nd_notpu_j)
 ranef(mod_nd_tpu_v)
 ranef(mod_nd_tpu_j)
 
-#Note the intercepts. 'Estimate' is the mean difference between DAT and SS??
-# Full dataset
-# coef(summary(mod_notpu_v))
-# coef(summary(mod_notpu_j))
-# 
-# coef(summary(mod_tpu_v))
-# coef(summary(mod_tpu_j))
-# 
-# # No K6709L6 dataset
-# coef(summary(mod_notpu_nol6_v))
-# coef(summary(mod_notpu_nol6_j))
-# 
-# coef(summary(mod_tpu_nol6_v))
-# coef(summary(mod_tpu_nol6_j))
-# 
-# # No overshoot dataset
-# coef(summary(mod_nd_notpu_v))
-# coef(summary(mod_nd_notpu_j))
-# 
-# coef(summary(mod_nd_tpu_v))
-# coef(summary(mod_nd_tpu_j))
-
-# 
-# # Standard deviation of the random-effects terms.
-# # Full dataset
-# print(VarCorr(mod_notpu_v), comp = c("Variance", "Std.Dev."))
-# print(VarCorr(mod_notpu_j), comp = c("Variance", "Std.Dev."))
-# 
-# print(VarCorr(mod_tpu_v), comp = c("Variance", "Std.Dev."))
-# print(VarCorr(mod_tpu_j), comp = c("Variance", "Std.Dev."))
-# 
-# # No K6709L6 dataset
-# print(VarCorr(mod_notpu_nol6_v), comp = c("Variance", "Std.Dev."))
-# print(VarCorr(mod_notpu_nol6_j), comp = c("Variance", "Std.Dev."))
-# 
-# print(VarCorr(mod_tpu_nol6_v), comp = c("Variance", "Std.Dev."))
-# print(VarCorr(mod_tpu_nol6_j), comp = c("Variance", "Std.Dev."))
-# 
-# # No overshoot dataset
-# print(VarCorr(mod_nd_notpu_v), comp = c("Variance", "Std.Dev."))
-# print(VarCorr(mod_nd_notpu_j), comp = c("Variance", "Std.Dev."))
-# 
-# print(VarCorr(mod_nd_tpu_v), comp = c("Variance", "Std.Dev."))
-# print(VarCorr(mod_nd_tpu_j), comp = c("Variance", "Std.Dev."))
-
-
-# # Compute intraclass correlation coefficient
-# # Full dataset
-# icc(mod_notpu_v)
-# icc(mod_notpu_j)
-# 
-# icc(mod_tpu_v) #This doesn't work because it's a singular model
-# icc(mod_tpu_j)
-# 
-# # No tachi dataset
-# icc(mod_notpu_nol6_v)
-# icc(mod_notpu_nol6_j)
-# 
-# icc(mod_tpu_nol6_v) #This doesn't work because it's a singular model
-# icc(mod_tpu_nol6_j)
-# 
-# # no overshoot dataset
-# icc(mod_nd_notpu_v) #This doesn't work because it's a singular model
-# icc(mod_nd_notpu_j)
-# 
-# icc(mod_nd_tpu_v)
-# icc(mod_nd_tpu_j)
-# 
-
 
 #Wilcoxon tests for the data grouped on a tree level. ---------------------------
 
@@ -924,43 +865,108 @@ all_avg_tr_res <- all_avg_lf_res %>%
               jmax = mean(jmax))
 
 ### Vcmax Wilcoxon by curve method 
-all_avg_tr_res %>%
+w_vc_cm <- all_avg_tr_res %>%
     group_by(fit_type) %>%
     wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
     add_significance()
-all_avg_tr_res %>%
+wes_vc_cm <- all_avg_tr_res %>%
     group_by(fit_type) %>%
     wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+w_vc_cm_full <- left_join(w_vc_cm, wes_vc_cm)
+w_vc_cm_full
 
 ### Jmax Wilcoxon by curve method
-all_avg_tr_res %>%
+w_j_cm <- all_avg_tr_res %>%
     group_by(fit_type) %>%
     wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
     add_significance()
-all_avg_tr_res %>%
+wes_j_cm <- all_avg_tr_res %>%
     group_by(fit_type) %>%
     wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+w_j_cm_full <- left_join(w_j_cm, wes_j_cm)
+w_j_cm_full
 
 ### Vcmax Wilcoxon by TPU v. no TPU
-all_avg_tr_res %>%
+w_vc_ft <- all_avg_tr_res %>%
     group_by(curv_meth) %>%
     wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
     add_significance()
-all_avg_tr_res %>%
+wes_vc_ft <- all_avg_tr_res %>%
     group_by(curv_meth) %>%
-    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+    wilcox_effsize(data = ., vcmax ~ fit_type, paired = TRUE)
+w_vc_ft_full <- left_join(w_vc_ft, wes_vc_ft)
+w_vc_ft_full
 
 ### Jmax Wilcoxon by TPU v. no TPU
-all_avg_tr_res %>%
+w_j_ft <- all_avg_tr_res %>%
     group_by(curv_meth) %>%
     wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
     add_significance()
-all_avg_tr_res %>%
+wes_j_ft <- all_avg_tr_res %>%
     group_by(curv_meth) %>%
     wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
+w_j_ft_full <- left_join(w_j_ft, wes_j_ft)
+w_j_ft_full
+
+
+#Wilcoxon tests for the data grouped on a tree level, without MAEL Leaf 6 (testing for influence). ---------------------------
+
+all_nol6_tr_res <- all_avg_lf_res %>% 
+    filter(leaf_unique != 'K6709L6') %>% 
+    group_by(fit_type, curv_meth, treeid) %>% 
+    summarize(vcmax = mean(vcmax),
+              jmax = mean(jmax))
+
+### Vcmax Wilcoxon by curve method 
+w_nol6_vc_cm <- all_nol6_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+wes_nol6_vc_cm <- all_nol6_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+w_nol6_vc_cm_full <- left_join(w_nol6_vc_cm, wes_nol6_vc_cm)
+w_nol6_vc_cm_full
+
+### Jmax Wilcoxon by curve method
+w_nol6_j_cm <- all_nol6_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+wes_nol6_j_cm <- all_nol6_tr_res %>%
+    group_by(fit_type) %>%
+    wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+w_nol6_j_cm_full <- left_join(w_nol6_j_cm, wes_nol6_j_cm)
+w_nol6_j_cm_full
+
+### Vcmax Wilcoxon by TPU v. no TPU
+w_nol6_vc_ft <- all_nol6_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>% 
+    add_significance()
+wes_nol6_vc_ft <- all_nol6_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_effsize(data = ., vcmax ~ fit_type, paired = TRUE)
+w_nol6_vc_ft_full <- left_join(w_nol6_vc_ft, wes_nol6_vc_ft)
+w_nol6_vc_ft_full
+
+### Jmax Wilcoxon by TPU v. no TPU
+w_nol6_j_ft <- all_nol6_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
+    add_significance()
+wes_nol6_j_ft <- all_nol6_tr_res %>%
+    group_by(curv_meth) %>%
+    wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
+w_nol6_j_ft_full <- left_join(w_nol6_j_ft, wes_nol6_j_ft)
+w_nol6_j_ft_full
+
 
 
 # Wilcoxon Tests, no Overshoot subset ------------------------
+
+### Note that all the SS curves for which TPU was fit also had overshoot, so the SS TPU and noTPU datasets are actually the same.
+# Therefore, no steady-state-specific TPU vs noTPU comparisons are conducted here.
 
 nd_tr_res <- nd_complete %>% 
     group_by(fit_type, curv_meth, treeid) %>% 
@@ -968,54 +974,119 @@ nd_tr_res <- nd_complete %>%
               jmax = mean(jmax))
 
 ### Vcmax Wilcoxon by curve method
-nd_tr_res %>%
+w_nd_vc_cm <- nd_tr_res %>%
     group_by(fit_type) %>%
     wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
     add_significance()
-nd_tr_res %>%
+wes_nd_vc_cm <- nd_tr_res %>%
     group_by(fit_type) %>%
     wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+w_nd_vc_cm_full <- left_join(w_nd_vc_cm, wes_nd_vc_cm)
+w_nd_vc_cm_full
 
 ### Jmax Wilcoxon by curve method
-nd_tr_res %>%
+w_nd_j_cm <- nd_tr_res %>%
     group_by(fit_type) %>%
     wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
     add_significance()
-nd_tr_res %>%
+wes_nd_j_cm <-nd_tr_res %>%
     group_by(fit_type) %>%
     wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+w_nd_j_cm_full <- left_join(w_nd_j_cm, wes_nd_j_cm)
+w_nd_j_cm_full
 
 ### Vcmax Wilcoxon by TPU v. no TPU
-nd_tr_res %>%
-    group_by(curv_meth) %>%
+# The SS TPU and noTPU datasets are actually the same.
+w_nd_vc_ft <- nd_tr_res %>%
+    filter(curv_meth == 'DAT') %>%
+    group_by(curv_meth) %>% 
     wilcox_test(data =., vcmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
     add_significance()
+wes_nd_vc_ft <- nd_tr_res %>%
+    filter(curv_meth == 'DAT') %>%
+    group_by(curv_meth) %>%
+    wilcox_effsize(data = ., vcmax ~ fit_type, paired = TRUE)
+w_nd_vc_ft_full <- left_join(w_nd_vc_ft, wes_nd_vc_ft)
+w_nd_vc_ft_full
 
 ### Jmax Wilcoxon by TPU v. no TPU
-nd_tr_res %>%
+w_nd_j_ft <- nd_tr_res %>%
+    filter(curv_meth == 'DAT') %>%
     group_by(curv_meth) %>%
     wilcox_test(data =., jmax ~ fit_type, paired = TRUE, detailed = TRUE) %>%
     add_significance()
+wes_nd_j_ft <- nd_tr_res %>%
+    filter(curv_meth == 'DAT') %>%
+    group_by(curv_meth) %>%
+    wilcox_effsize(data = ., jmax ~ fit_type, paired = TRUE)
+w_nd_j_ft_full <- left_join(w_nd_j_ft, wes_nd_j_ft)
+w_nd_j_ft_full
 
 
-# TPU Wilcoxon
+# TPU comparisons, Wilcoxon ---------------------
+# Note this is a very small sample size and should be interpreted cautiously!
 tpu_tr_res <- tpu_just6_all %>% 
     mutate(treeid = substring(leaf_unique, 1, 5)) %>% 
     group_by(curv_meth, treeid) %>% 
     summarize(vcmax = mean(vcmax),
               jmax = mean(jmax),
-              tpu = mean(tpu))
+              tpu = mean(tpu)) %>%
+    ungroup()
 
-tpu_tr_res$curv_meth <- as.factor(tpu_tr_res$curv_meth)
+#tpu_tr_res$curv_meth <- as.factor(tpu_tr_res$curv_meth)
 
-tpu_tr_res %>%
+w_tpu_cm <- tpu_tr_res %>%
     wilcox_test(data = ., tpu ~ curv_meth, paired = TRUE, detailed = TRUE) %>% 
     add_significance()
-
-tpu_tr_res %>% 
+wes_tpu_cm <- tpu_tr_res %>% 
     wilcox_effsize(data = ., tpu ~ curv_meth, paired = TRUE)
+w_tpu_full <- left_join(w_tpu_cm, wes_tpu_cm) %>%
+    mutate(fit_type = 'tpu') %>% 
+    select(fit_type, everything())
+w_tpu_full$fit_type <- factor(w_tpu_full$fit_type)
+w_tpu_full
 
 
+# List of models
+wil_cm <- list(
+    w_vc_cm_full,
+    w_j_cm_full,
+    w_tpu_full) %>%
+    do.call(rbind, .) %>% 
+    mutate(dataset = 'all_data') %>% 
+    arrange(desc(fit_type))
+
+wil_nd_cm <- list(
+    w_nd_vc_cm_full,
+    w_nd_j_cm_full) %>%
+    do.call(rbind, .) %>%
+    mutate(dataset = 'nd') %>% 
+    arrange(desc(fit_type))
+
+wil_nolf6_cm <- list(
+    w_nol6_vc_cm_full,
+    w_nol6_j_cm_full) %>%
+    do.call(rbind, .) %>% 
+    mutate(dataset = 'nolf6') %>% 
+    arrange(desc(fit_type))
+
+wilcox_cm_tab <- rbind(wil_cm, wil_nd_cm, wil_nolf6_cm) %>% 
+    select(dataset, fit_type, .y., n1, n2, group1, group2, estimate, statistic, p, p.signif, effsize, conf.low, conf.high, magnitude)
+wilcox_cm_tab
+
+write.csv(x = wilcox_cm_tab, 
+          file = here("5_Results/wilcox_table.csv"),
+          row.names = FALSE)
+
+wilcox_ft_tab <- list(
+    w_vc_ft_full,
+    w_j_ft_full,
+    w_nol6_vc_ft_full,
+    w_nol6_j_ft_full,
+    w_nd_vc_ft_full,
+    w_nd_j_ft_full
+) %>% do.call(rbind, .)
+wilcox_ft_tab
 
 
 # Exploring rogme package (CDS added 6/27/24) -------------------------
