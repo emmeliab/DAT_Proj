@@ -568,6 +568,31 @@ summary(mod_tpu_j)
 ### Sig, estimated differences 7.9 +- 2.46
 
 
+## TPU with TPU enabled
+tpu_comparison <- pho_stat_tpu %>%
+    group_by(curv_meth, leaf_unique) %>% 
+    summarise(tpu = mean(tpu)) %>% 
+    mutate(fit_type = "tpu",
+           treeid = substring(leaf_unique, 1, 5))
+
+## Pull out the DAT results
+dat_res_tpu_comparison <- filter(tpu_comparison, curv_meth == "DAT") %>% 
+    rename(dat_tpu = tpu)
+
+## Pull out the SS results
+ss_res_tpu_comparison <- filter(tpu_comparison, curv_meth == "SS") %>% 
+    rename(ss_tpu = tpu)
+
+## Join datasets, calculate diff and SE
+diff_tpu_comparison <- full_join(dat_res_tpu_comparison, ss_res_tpu_comparison, 
+                         by = c("leaf_unique", "treeid", "fit_type")) %>% 
+    mutate(tpu_diff = ss_tpu - dat_tpu) %>% 
+    filter(!is.na(tpu_diff))
+
+tpu_only_mod <- lmer(tpu_diff ~ 1 + (1|treeid),
+                         data = diff_tpu_comparison)
+summary(tpu_only_mod)
+
 
 # Models without K6709L6 -- Testing the effects of this potentially influential point.
 
@@ -664,6 +689,7 @@ set.seed(304)
 mod_coefs <- list(
     "mod_tpu_v",
     "mod_tpu_j",
+    "tpu_only_mod",
     "mod_notpu_v",
     "mod_notpu_j",
     "mod_nd_tpu_v",
@@ -740,6 +766,10 @@ set.seed(304)
 confint(mod_tpu_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
 confint(mod_tpu_j, method = 'boot', oldNames = FALSE)
+
+#TPU vs TPU
+set.seed(304)
+confint(tpu_only_mod, method = 'boot', oldNames = FALSE)
 
 #No Tachi dataset
 set.seed(304)
