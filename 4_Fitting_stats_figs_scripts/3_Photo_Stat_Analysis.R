@@ -492,80 +492,6 @@ tpu_just6_all %>%
     get_summary_stats(vcmax, jmax, show = c("mean", "median", "sd", "min", "max"))
 
 
-# Checking Assumptions of paired t-tests -----------------------------------------
-
-# Levene's for homogeneity of variance is not necessary because the paired t-test cares only about the distribution of the difference between the two variables. The variances of the two variables separately is irrelevant.
-
-# Checking the symmetric distribution of the differences -----------------------------------------
-
-# Includes Shapiro Wilk normality test for paired differences; no overshoot, WITHOUT TPU
-
-gghistogram(diff_notpu_lf, x = "vc_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_notpu_lf$vc_diff), color = 'red')
-#That should be fine
-
-diff_notpu_lf %>%
-    with(., shapiro.test(vc_diff))
-
-gghistogram(diff_tpu_lf, x = "vc_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_tpu_lf$vc_diff), color = 'red')
-
-diff_tpu_lf %>%
-    with(., shapiro.test(vc_diff))
-
-#Vcmax differences are approximately normally distributed.
-
-### Jmax
-gghistogram(diff_notpu_lf, x = "j_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_notpu_lf$j_diff), color = 'red')
-
-diff_notpu_lf %>%
-    with(., shapiro.test(j_diff))
-
-gghistogram(diff_tpu_lf, x = "j_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_tpu_lf$j_diff), color = 'red')
-
-diff_tpu_lf %>%
-    with(., shapiro.test(j_diff))
-
-#### Jmax not great! Differences not normally distributed; far worse than Vcmax differences.
-
-#Testing log transformation
-diff_notpu_lf$log_j_diff <- log(diff_notpu_lf$j_diff)
-diff_tpu_lf$log_j_diff <- log(diff_tpu_lf$j_diff)
-
-
-
-# No Overshoot data
-
-### Vcmax
-gghistogram(nd_diff_notpu_lf, x = "vc_diff", bins = 10, add_density = TRUE)
-#That should be fine
-
-nd_diff_notpu_lf %>%
-    with(., shapiro.test(vc_diff))
-
-gghistogram(nd_diff_tpu_lf, x = "vc_diff", bins = 10, add_density = TRUE)
-#okay
-
-nd_diff_tpu_lf %>%
-    with(., shapiro.test(vc_diff))
-# All no-overshoot Vcmax looks fine.
-
-
-### Jmax
-gghistogram(nd_diff_notpu_lf, x = "j_diff", bins = 10, add_density = TRUE)
-
-nd_diff_notpu_lf %>%
-    with(., shapiro.test(j_diff))
-
-gghistogram(nd_diff_tpu_lf, x = "j_diff", bins = 10, add_density = TRUE)
-
-nd_diff_tpu_lf %>%
-    with(., shapiro.test(j_diff))
-# no-overshoot Jmax is only okay.
-
-# To use wilcoxon paired, we assume the differences between paired samples are distributed symmetrically about the median.
-
-# It's just Jmax where we don't totally meet the Wilcoxon assumptions. 
-# We will run both Sign test and Wilcoxon test on Jmax to see if their results agree.
-
 
 # Exploring random effect models ---------------------------------
 library(lmerTest)
@@ -603,14 +529,14 @@ no_tpu_res <- filter(all_results, fit_type == "no_tpu")
 mod_notpu_v2 <- lmer(vcmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = no_tpu_res)
 
 summary(mod_notpu_v)
-### Sig diff, estimated diff 2.9 +- 0.9
+### Slightly sig diff, estimated diff 2.1 +- 0.92
 
 ## Jmax without TPU
 mod_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                     data = diff_notpu_lf)
 
 summary(mod_notpu_j)
-### Sig diff, estimated diff 11 +- 2.9 
+### Sig diff, estimated diff 10.8 +- 3.0 
 
 
 ## Vcmax with TPU
@@ -622,7 +548,7 @@ mod_tpu_v2 <- lmer(vcmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data
 
 
 summary(mod_tpu_v)
-### Slightly sig, estimate diff 1.69 +- 0.65; gives singularity
+### Not sig, estimate diff 1.00 +- 0.67; gives singularity
 
 #Trying to avoid the singularity
 # nlme_tpu_v <- nlmer(vc_diff ~ 1 + (1|treeid),
@@ -634,56 +560,58 @@ summary(mod_tpu_v)
 
 
 
-
 ## Jmax with TPU
 mod_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                   data = diff_tpu_lf)
 
 summary(mod_tpu_j)
-### Sig, estimated differences 8.035 +- 2.492
+### Sig, estimated differences 7.9 +- 2.46
 
 
 
-
-# Models without K6709L6
+# Models without K6709L6 -- Testing the effects of this potentially influential point.
 
 ## Vcmax no TPU
 mod_notpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
                     data = diff_notpu_nol6_lf)
 summary(mod_notpu_nol6_v)
-### sig, estimated diff 2.134 +- 0.5
+### almost sig, estimated diff 1.9 +- 0.06
 
 ## Jmax no TPU
 mod_notpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
                     data = diff_notpu_nol6_lf)
 summary(mod_notpu_nol6_j)
-### sig, estimated diff 8.82 +-2.3
+### sig, estimated diff 10.2 +-2.8
 
 ## Vcmax with TPU
 mod_tpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
                   data = diff_tpu_nol6_lf) #This leads to a singularity
 summary(mod_tpu_nol6_v)
-### sig, estimated diff 1.88 +- 0.66
+### sig, estimated diff 0.5 +- 0.43
 
 
 ## Jmax with TPU
 mod_tpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
                   data = diff_tpu_nol6_lf)
 summary(mod_tpu_nol6_j)
-### sig, estimated diff 8.2 +- 2.6
+### sig, estimated diff 6.1 +- 1.2
 
 
-# Models with no-overshoot data
+# Models with no-overshoot data. Just a quick check
 mod_nd_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
                     data = nd_diff_notpu_lf) #This leads to a singularity
 mod_nd_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                     data = nd_diff_notpu_lf)
+summary(mod_nd_notpu_v)
+summary(mod_nd_notpu_j)
+
 
 mod_nd_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
                   data = nd_diff_tpu_lf)
 mod_nd_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                   data = nd_diff_tpu_lf)
-
+summary(mod_nd_tpu_v)
+summary(mod_nd_tpu_j)
 
 
 # Residuals for the full dataset
@@ -857,6 +785,83 @@ ranef(mod_nd_tpu_v)
 ranef(mod_nd_tpu_j)
 
 
+
+# Checking Assumptions of paired t-tests -----------------------------------------
+
+# Levene's for homogeneity of variance is not necessary because the paired t-test cares only about the distribution of the difference between the two variables. The variances of the two variables separately is irrelevant.
+
+# Checking the symmetric distribution of the differences -----------------------------------------
+
+# Includes Shapiro Wilk normality test for paired differences; no overshoot, WITHOUT TPU
+
+gghistogram(diff_notpu_lf, x = "vc_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_notpu_lf$vc_diff), color = 'red')
+#That should be fine
+
+diff_notpu_lf %>%
+    with(., shapiro.test(vc_diff))
+
+gghistogram(diff_tpu_lf, x = "vc_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_tpu_lf$vc_diff), color = 'red')
+
+diff_tpu_lf %>%
+    with(., shapiro.test(vc_diff))
+
+#Vcmax differences are approximately normally distributed.
+
+### Jmax
+gghistogram(diff_notpu_lf, x = "j_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_notpu_lf$j_diff), color = 'red')
+
+diff_notpu_lf %>%
+    with(., shapiro.test(j_diff))
+
+gghistogram(diff_tpu_lf, x = "j_diff", bins = 10, add_density = TRUE) + geom_vline(xintercept = median(diff_tpu_lf$j_diff), color = 'red')
+
+diff_tpu_lf %>%
+    with(., shapiro.test(j_diff))
+
+#### Jmax not great! Differences not normally distributed; far worse than Vcmax differences.
+
+#Testing log transformation
+diff_notpu_lf$log_j_diff <- log(diff_notpu_lf$j_diff)
+diff_tpu_lf$log_j_diff <- log(diff_tpu_lf$j_diff)
+
+
+
+# No Overshoot data
+
+### Vcmax
+gghistogram(nd_diff_notpu_lf, x = "vc_diff", bins = 10, add_density = TRUE)
+#That should be fine
+
+nd_diff_notpu_lf %>%
+    with(., shapiro.test(vc_diff))
+
+gghistogram(nd_diff_tpu_lf, x = "vc_diff", bins = 10, add_density = TRUE)
+#okay
+
+nd_diff_tpu_lf %>%
+    with(., shapiro.test(vc_diff))
+# All no-overshoot Vcmax looks fine.
+
+
+### Jmax
+gghistogram(nd_diff_notpu_lf, x = "j_diff", bins = 10, add_density = TRUE)
+
+nd_diff_notpu_lf %>%
+    with(., shapiro.test(j_diff))
+
+gghistogram(nd_diff_tpu_lf, x = "j_diff", bins = 10, add_density = TRUE)
+
+nd_diff_tpu_lf %>%
+    with(., shapiro.test(j_diff))
+# no-overshoot Jmax is only okay.
+
+# To use wilcoxon paired, we assume the differences between paired samples are distributed symmetrically about the median.
+
+# It's just Jmax where we don't totally meet the Wilcoxon assumptions. 
+# We will run both Sign test and Wilcoxon test on Jmax to see if their results agree.
+
+
+
 #Wilcoxon tests for the data grouped on a tree level. ---------------------------
 
 all_avg_tr_res <- all_avg_lf_res %>% 
@@ -867,22 +872,22 @@ all_avg_tr_res <- all_avg_lf_res %>%
 ### Vcmax Wilcoxon by curve method 
 w_vc_cm <- all_avg_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    wilcox_test(data =., vcmax ~ curv_meth, ref.group = 'SS', paired = TRUE, detailed = TRUE) %>%
     add_significance()
 wes_vc_cm <- all_avg_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+    wilcox_effsize(data = ., vcmax ~ curv_meth, ref.group = 'SS', paired = TRUE)
 w_vc_cm_full <- left_join(w_vc_cm, wes_vc_cm)
 w_vc_cm_full
 
 ### Jmax Wilcoxon by curve method
 w_j_cm <- all_avg_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    wilcox_test(data =., jmax ~ curv_meth, ref.group = 'SS', paired = TRUE, detailed = TRUE) %>%
     add_significance()
 wes_j_cm <- all_avg_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+    wilcox_effsize(data = ., jmax ~ curv_meth, ref.group = 'SS', paired = TRUE)
 w_j_cm_full <- left_join(w_j_cm, wes_j_cm)
 w_j_cm_full
 
@@ -920,22 +925,22 @@ all_nol6_tr_res <- all_avg_lf_res %>%
 ### Vcmax Wilcoxon by curve method 
 w_nol6_vc_cm <- all_nol6_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    wilcox_test(data =., vcmax ~ curv_meth, ref.group = 'SS', paired = TRUE, detailed = TRUE) %>%
     add_significance()
 wes_nol6_vc_cm <- all_nol6_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+    wilcox_effsize(data = ., vcmax ~ curv_meth, ref.group = 'SS', paired = TRUE)
 w_nol6_vc_cm_full <- left_join(w_nol6_vc_cm, wes_nol6_vc_cm)
 w_nol6_vc_cm_full
 
 ### Jmax Wilcoxon by curve method
 w_nol6_j_cm <- all_nol6_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    wilcox_test(data =., jmax ~ curv_meth, ref.group = 'SS', paired = TRUE, detailed = TRUE) %>%
     add_significance()
 wes_nol6_j_cm <- all_nol6_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+    wilcox_effsize(data = ., jmax ~ curv_meth, ref.group = 'SS', paired = TRUE)
 w_nol6_j_cm_full <- left_join(w_nol6_j_cm, wes_nol6_j_cm)
 w_nol6_j_cm_full
 
@@ -976,22 +981,22 @@ nd_tr_res <- nd_complete %>%
 ### Vcmax Wilcoxon by curve method
 w_nd_vc_cm <- nd_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_test(data =., vcmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    wilcox_test(data =., vcmax ~ curv_meth, ref.group = 'SS', paired = TRUE, detailed = TRUE) %>%
     add_significance()
 wes_nd_vc_cm <- nd_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_effsize(data = ., vcmax ~ curv_meth, paired = TRUE)
+    wilcox_effsize(data = ., vcmax ~ curv_meth, ref.group = 'SS', paired = TRUE)
 w_nd_vc_cm_full <- left_join(w_nd_vc_cm, wes_nd_vc_cm)
 w_nd_vc_cm_full
 
 ### Jmax Wilcoxon by curve method
 w_nd_j_cm <- nd_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_test(data =., jmax ~ curv_meth, paired = TRUE, detailed = TRUE) %>%
+    wilcox_test(data =., jmax ~ curv_meth, ref.group = 'SS', paired = TRUE, detailed = TRUE) %>%
     add_significance()
 wes_nd_j_cm <-nd_tr_res %>%
     group_by(fit_type) %>%
-    wilcox_effsize(data = ., jmax ~ curv_meth, paired = TRUE)
+    wilcox_effsize(data = ., jmax ~ curv_meth, ref.group = 'SS', paired = TRUE)
 w_nd_j_cm_full <- left_join(w_nd_j_cm, wes_nd_j_cm)
 w_nd_j_cm_full
 
@@ -1036,10 +1041,10 @@ tpu_tr_res <- tpu_just6_all %>%
 #tpu_tr_res$curv_meth <- as.factor(tpu_tr_res$curv_meth)
 
 w_tpu_cm <- tpu_tr_res %>%
-    wilcox_test(data = ., tpu ~ curv_meth, paired = TRUE, detailed = TRUE) %>% 
+    wilcox_test(data = ., tpu ~ curv_meth, ref.group = 'SS', paired = TRUE, detailed = TRUE) %>% 
     add_significance()
 wes_tpu_cm <- tpu_tr_res %>% 
-    wilcox_effsize(data = ., tpu ~ curv_meth, paired = TRUE)
+    wilcox_effsize(data = ., tpu ~ curv_meth, ref.group = 'SS', paired = TRUE)
 w_tpu_full <- left_join(w_tpu_cm, wes_tpu_cm) %>%
     mutate(fit_type = 'tpu') %>% 
     select(fit_type, everything())
