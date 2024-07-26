@@ -493,25 +493,26 @@ tpu_just6_all %>%
 
 
 
-# Exploring random effect models ---------------------------------
+# Linear mixed effects models ---------------------------------
 library(lmerTest)
 library(lme4)
 library(performance)
 
 # Mixed model with random effect for intercept
 # Our leaves are nested within trees. Trees will be the random effect.
-# These models have the difference between DAT/SS vcmax or jmax as the independent variable.
+# These models have the difference (SS - DAT) Vcmax or Jmax as the response variable.
 
-#Set up datasets ------------------------
-#Convert to factor. n = 27 pairs
+# Set up datasets for mixed models ------------------------
+
+## Convert tree id to factor. n = 27 pairs
 diff_notpu_lf$treeid <- as.factor(diff_notpu_lf$treeid)
 diff_tpu_lf$treeid <- as.factor(diff_tpu_lf$treeid)
 
-#Set up a dataframe to exclude K6709L6 (for testing; the one with the big diff). n = 25 pairs
+## Set up a dataframe to exclude K6709L6 (for testing; the one with the big diff). n = 26 pairs
 diff_notpu_nol6_lf <- diff_notpu_lf %>% filter(leaf_unique != 'K6709L6')
 diff_tpu_nol6_lf <- diff_tpu_lf %>% filter(leaf_unique != 'K6709L6')
 
-# correct nd_diff datasets. n = 19 pairs
+## Convert tree id in no Overshoot subset to factor. n = 19 pairs
 nd_diff_notpu_lf$treeid <- as.factor(nd_diff_notpu_lf$treeid)
 nd_diff_tpu_lf$treeid <- as.factor(nd_diff_tpu_lf$treeid)
 
@@ -519,33 +520,35 @@ nd_diff_notpu_lf <- nd_diff_notpu_lf %>% filter(!is.na(vc_diff))
 nd_diff_tpu_lf <- nd_diff_tpu_lf %>% filter(!is.na(vc_diff))
 
 
-# Define models ----------------------
-#Models with full dataset
+# Define linear mixed effects models ----------------------
+
+
+
+
+# Models with full dataset
 
 ## Vcmax without TPU
 mod_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
                     data = diff_notpu_lf)
-no_tpu_res <- filter(all_results, fit_type == "no_tpu")
-mod_notpu_v2 <- lmer(vcmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = no_tpu_res)
 
 summary(mod_notpu_v)
-### Slightly sig diff, estimated diff 2.1 +- 0.92
+### Slightly sig diff, estimated diff 2.08 +- 0.92
+
 
 ## Jmax without TPU
 mod_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                     data = diff_notpu_lf)
 
+mod_notpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_stat)
+
 summary(mod_notpu_j)
-### Sig diff, estimated diff 10.8 +- 3.0 
+### Sig diff, estimated diff 10.88 +- 3.0 
 
 
 ## Vcmax with TPU
 mod_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
                     data = diff_tpu_lf)
-tpu_res <- filter(all_results, fit_type == "tpu")
-mod_tpu_v2 <- lmer(vcmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = tpu_res)
-#This leads to a singularity
-
+### This leads to a singularity
 
 summary(mod_tpu_v)
 ### Not sig, estimate diff 1.00 +- 0.67; gives singularity
@@ -564,34 +567,47 @@ summary(mod_tpu_v)
 mod_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
                   data = diff_tpu_lf)
 
+mod_tpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_stat_tpu)
+
+
 summary(mod_tpu_j)
 ### Sig, estimated differences 7.9 +- 2.46
 
 
-## TPU with TPU enabled
-tpu_comparison <- pho_stat_tpu %>%
-    group_by(curv_meth, leaf_unique) %>% 
-    summarise(tpu = mean(tpu)) %>% 
-    mutate(fit_type = "tpu",
-           treeid = substring(leaf_unique, 1, 5))
 
-## Pull out the DAT results
-dat_res_tpu_comparison <- filter(tpu_comparison, curv_meth == "DAT") %>% 
-    rename(dat_tpu = tpu)
 
-## Pull out the SS results
-ss_res_tpu_comparison <- filter(tpu_comparison, curv_meth == "SS") %>% 
-    rename(ss_tpu = tpu)
+## TPU SS - TPU DAT comparison
+# tpu_comparison <- pho_stat_tpu %>%
+#     group_by(curv_meth, leaf_unique) %>%
+#     summarise(tpu = mean(tpu)) %>%
+#     mutate(fit_type = "tpu",
+#            treeid = substring(leaf_unique, 1, 5))
+# 
+# ### Pull out the DAT results
+# dat_res_tpu_comparison <- filter(tpu_comparison, curv_meth == "DAT") %>%
+#     rename(dat_tpu = tpu)
+# 
+# ### Pull out the SS results
+# ss_res_tpu_comparison <- filter(tpu_comparison, curv_meth == "SS") %>%
+#     rename(ss_tpu = tpu)
+# 
+# ### Join datasets, calculate diff and SE
+# diff_tpu_comparison <- full_join(dat_res_tpu_comparison, ss_res_tpu_comparison,
+#                          by = c("leaf_unique", "treeid", "fit_type")) %>%
+#     mutate(tpu_diff = ss_tpu - dat_tpu) %>%
+#     filter(!is.na(tpu_diff))
 
-## Join datasets, calculate diff and SE
-diff_tpu_comparison <- full_join(dat_res_tpu_comparison, ss_res_tpu_comparison, 
-                         by = c("leaf_unique", "treeid", "fit_type")) %>% 
-    mutate(tpu_diff = ss_tpu - dat_tpu) %>% 
-    filter(!is.na(tpu_diff))
+### Pivot the dataframe wider for comparisons
+diff_tpu_comparison <- pivot_wider(tpu_just6_all, 
+                                   id_cols = leaf_unique, 
+                                   names_from = curv_meth, values_from = tpu) %>% 
+    mutate(tpu_diff = SS - DAT, treeid = substring(test$leaf_unique, 1, 5))
+
 
 tpu_only_mod <- lmer(tpu_diff ~ 1 + (1|treeid),
                          data = diff_tpu_comparison)
 summary(tpu_only_mod)
+
 
 
 # Models without K6709L6 -- Testing the effects of this potentially influential point.
@@ -602,11 +618,13 @@ mod_notpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
 summary(mod_notpu_nol6_v)
 ### almost sig, estimated diff 1.9 +- 0.06
 
+
 ## Jmax no TPU
 mod_notpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
                     data = diff_notpu_nol6_lf)
 summary(mod_notpu_nol6_j)
 ### sig, estimated diff 10.2 +-2.8
+
 
 ## Vcmax with TPU
 mod_tpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
@@ -620,6 +638,8 @@ mod_tpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
                   data = diff_tpu_nol6_lf)
 summary(mod_tpu_nol6_j)
 ### sig, estimated diff 6.1 +- 1.2
+
+
 
 
 # Models with no-overshoot data. Just a quick check
@@ -639,50 +659,158 @@ summary(mod_nd_tpu_v)
 summary(mod_nd_tpu_j)
 
 
+
+
+# Check the model residuals -----------------------------------------------
+
 # Residuals for the full dataset
 
+## Vcmax without TPU
+plot(mod_notpu_v)
 plot(residuals(mod_notpu_v) ~ diff_notpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
-       col = "red")
+       col = "red") ## ok
+hist(residuals(mod_notpu_v)) # ok
 
+
+
+plot(mod_notpu_j)
 plot(residuals(mod_notpu_j) ~ diff_notpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
-       col = "red")
+       col = "red") # ok
+hist(residuals(mod_notpu_j)) # ok
 
+
+plot(mod_tpu_v) ### singular
 plot(residuals(mod_tpu_v) ~ diff_tpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
-       col = "red")
+       col = "red")# ok
+hist(residuals(mod_tpu_v)) # ok
 
+
+plot(mod_tpu_j) ## yeesh homoskedasticity and non-linear
 plot(residuals(mod_tpu_j) ~ diff_tpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
+       col = "red") # ok
+hist(residuals(mod_tpu_j)) # not symmetric
+
+
+
+
+## Residuals for no-overshoot subset
+
+plot(mod_nd_notpu_v) ### singular
+plot(residuals(mod_nd_notpu_v) ~ nd_diff_tpu_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # ok
+hist(residuals(mod_nd_notpu_v)) # okayish?
+
+
+plot(mod_nd_notpu_j) ### non-linear, homoskedasticity
+plot(residuals(mod_nd_notpu_j) ~ nd_diff_tpu_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # ok
+hist(residuals(mod_nd_notpu_j)) # okayish
+
+mod_nd_notpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_nd_stat)
+
+plot(mod_nd_tpu_v) ### singular
+plot(residuals(mod_nd_tpu_v) ~ nd_diff_tpu_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # ok
+hist(residuals(mod_nd_tpu_v)) # ok
+
+
+plot(mod_nd_tpu_j) ## non-linear, homoskedasticity
+plot(residuals(mod_nd_tpu_j) ~ nd_diff_tpu_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # ok
+hist(residuals(mod_nd_tpu_j)) # ok
+
+mod_nd_tpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_nd_stat_tpu)
+
+## Residuals for models without K6709L6
+
+plot(mod_notpu_nol6_v)
+plot(residuals(mod_notpu_nol6_v) ~ diff_notpu_nol6_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # ok
+hist(residuals(mod_notpu_nol6_v)) # ok
+
+
+plot(mod_notpu_nol6_j) # ok
+plot(residuals(mod_notpu_nol6_j) ~ diff_notpu_nol6_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # ok
+hist(residuals(mod_notpu_nol6_j)) # ok
+
+
+plot(mod_tpu_nol6_v) ### singular
+plot(residuals(mod_tpu_nol6_v) ~ diff_tpu_nol6_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # not great, but still fine
+hist(residuals(mod_tpu_nol6_v)) # skew
+
+
+plot(mod_tpu_nol6_j) ## non-linear, homoskedasticity
+plot(residuals(mod_tpu_nol6_j) ~ diff_tpu_nol6_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # not great, but still fine?
+hist(residuals(mod_tpu_nol6_j)) # okayish
+
+
+
+
+## Resdiuals for TPU vs TPU comparisons (Note small sample sizes!)
+
+plot(tpu_only_mod) ## non-linear
+plot(residuals(tpu_only_mod) ~ diff_tpu_comparison$treeid) ### doesn't work??
+abline(h = 0, 
+       lty = 2, 
        col = "red")
+hist(residuals(tpu_only_mod)) # not great, but also tiny sample size
 
 
-#Summary of the models ------------------
-#Complete dataset summary
+
+
+# Summary of the models ------------------
+
+# Complete dataset summary
 summary(mod_notpu_v)
 summary(mod_notpu_j)
 
 summary(mod_tpu_v)
 summary(mod_tpu_j)
 
-#No Tachi dataset summary
+# No K6709L6 dataset summary
 summary(mod_notpu_nol6_v)
 summary(mod_notpu_nol6_j)
 
 summary(mod_tpu_nol6_v)
 summary(mod_tpu_nol6_j)
 
-#No overshoot dataset summary
+# No overshoot dataset summary
 summary(mod_nd_notpu_v)
 summary(mod_nd_notpu_j)
 
 summary(mod_nd_tpu_v)
 summary(mod_nd_tpu_j)
+
+# Only TPU comparison dataset summary
+summary(tpu_only_mod)
+
 
 # Pulls out key coefficients of interest
 set.seed(304)
@@ -699,7 +827,8 @@ mod_coefs <- list(
     "mod_tpu_nol6_v",
     "mod_tpu_nol6_j",
     "mod_notpu_nol6_v",
-    "mod_notpu_nol6_j"
+    "mod_notpu_nol6_j",
+    "tpu_only_mod"
 ) %>%
     map_dfr(~ {
         model_name <- .x
@@ -735,7 +864,7 @@ mod_coefs$Estimate <- round(mod_coefs$Estimate, 1)
 mod_coefs$'Std. Error' <- round(mod_coefs$'Std. Error', 1)
 mod_coefs$df <- round(mod_coefs$df, 1)
 mod_coefs$'t value' <- round(mod_coefs$'t value', 2)
-mod_coefs$'Pr(>|t|)' <- round(mod_coefs$'Pr(>|t|)', 4)
+mod_coefs$'Pr(>|t|)' <- round(mod_coefs$'Pr(>|t|)', 2)
 mod_coefs$conf$`2.5 %` <- round(mod_coefs$conf$`2.5 %`, 2)
 mod_coefs$conf$`97.5 %` <- round(mod_coefs$conf$`97.5 %`, 2)
 mod_coefs$icc$ICC_adjusted <- round(mod_coefs$icc$ICC_adjusted, 2)
@@ -750,7 +879,8 @@ write.csv(x = mod_coefs,
           file = here("5_Results/model_output.csv"),
           row.names = FALSE)
 
-#Compute bootstrapped confidence intervals
+
+# Compute bootstrapped confidence intervals
 # This allows for additional confidence intervals to the ones pulled out in the code above.
 
 # Complete dataset
@@ -758,7 +888,7 @@ write.csv(x = mod_coefs,
 # sigma: CI for random residuals
 #(Intercept): CI for the fixed effects
 
-set.seed(304)
+set.seed(304) ######## Don't we only need to set the seed once?
 confint(mod_notpu_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
 confint(mod_notpu_j, method = 'boot', oldNames = FALSE)
@@ -771,7 +901,7 @@ confint(mod_tpu_j, method = 'boot', oldNames = FALSE)
 set.seed(304)
 confint(tpu_only_mod, method = 'boot', oldNames = FALSE)
 
-#No Tachi dataset
+#No K6709L6 dataset
 set.seed(304)
 confint(mod_notpu_nol6_v, method = 'boot', oldNames = FALSE)
 set.seed(304)
