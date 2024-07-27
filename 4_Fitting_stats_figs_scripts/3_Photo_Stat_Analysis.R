@@ -666,7 +666,7 @@ summary(mod_nd_tpu_j)
 # Residuals for the full dataset
 
 ## Vcmax without TPU
-plot(mod_notpu_v)
+plot(mod_notpu_v) # ok
 plot(residuals(mod_notpu_v) ~ diff_notpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
@@ -781,6 +781,82 @@ abline(h = 0,
        lty = 2, 
        col = "red")
 hist(residuals(tpu_only_mod)) # not great, but also tiny sample size
+
+
+
+
+### Messing with stuff
+library(nlme)
+
+mod_tpu_j_nlme <- lme(j_diff ~ 1,
+                      random = ~ 1 | treeid,
+                      weights = varIdent(form = ~ 1 | treeid),
+                      data = diff_tpu_lf)
+
+test.df <- mutate(diff_tpu_lf, resids_j_tpu = residuals(mod_tpu_j_nlme, type = "pearson"))
+
+plot(mod_tpu_j)
+plot(test.df$resids_j_tpu, fitted(mod_tpu_j_nlme))
+summary(mod_tpu_j)
+summary(mod_tpu_j_nlme)
+
+
+plot(test.df$treeid, test.df$resids_j_tpu)
+
+
+
+
+mod_notpu_j_nlme <- lme(j_diff ~ 1,
+                      random = ~ 1 | treeid,
+                      weights = varIdent(form = ~ 1 | treeid),
+                      data = diff_notpu_lf)
+
+test.df2 <- mutate(diff_notpu_lf, resids_j_notpu = residuals(mod_notpu_j_nlme, type = "pearson"))
+
+plot(mod_notpu_j)
+plot(test.df2$resids_j_notpu, fitted(mod_notpu_j_nlme))
+summary(mod_notpu_j)
+summary(mod_notpu_j_nlme)
+
+
+plot(test.df2$treeid, test.df2$resids_j_tpu)
+
+
+
+
+mod_tpu_v_nlme <- lme(vc_diff ~ 1,
+                      random = ~ 1 | treeid,
+                      weights = varIdent(form = ~ 1 | treeid),
+                      data = diff_tpu_lf)
+
+test.df <- mutate(diff_tpu_lf, resids_v_tpu = residuals(mod_tpu_v_nlme, type = "pearson"))
+
+plot(mod_tpu_v)
+plot(test.df$resids_v_tpu, fitted(mod_tpu_v_nlme))
+summary(mod_tpu_v)
+summary(mod_tpu_v_nlme)
+
+
+plot(test.df$treeid, test.df$resids_v_tpu)
+
+
+
+
+mod_notpu_v_nlme <- lme(vc_diff ~ 1,
+                      random = ~ 1 | treeid,
+                      weights = varIdent(form = ~ 1 | treeid),
+                      data = diff_notpu_lf)
+
+test.df2 <- mutate(diff_tpu_lf, resids_v_notpu = residuals(mod_notpu_v_nlme, type = "pearson"))
+
+plot(mod_notpu_v)
+plot(test.df2$resids_v_notpu, fitted(mod_notpu_v_nlme))
+summary(mod_notpu_v)
+summary(mod_notpu_v_nlme)
+
+
+plot(test.df2$treeid, test.df2$resids_v_notpu)
+
 
 
 
