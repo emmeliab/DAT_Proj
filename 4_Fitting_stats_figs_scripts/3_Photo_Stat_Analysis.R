@@ -7,6 +7,8 @@ library(car)
 library(rstatix)
 library(reshape2) 
 library(here) 
+library(nlme)
+library(performance)
 
 ###
 
@@ -209,7 +211,7 @@ diff_tpu_tree_codes <- left_join(diff_tpu_tree, ids, by = "treeid")
 
 ### Write .csv file of WITH TPU differences
 write.csv(diff_tpu_tree_codes, here("5_Results/tree_diffs_summary_TPU.csv"))
-write.csv(diff_tpu_lf, here("3_Clean_data/lf_diffs_summ_TPU.csv"))
+write.csv(diff_tpu_lf, here("5_Results/lf_diffs_summ_TPU.csv"))
 
 
 
@@ -493,14 +495,30 @@ tpu_just6_all %>%
 
 
 
-# Linear mixed effects models ---------------------------------
-library(lmerTest)
-library(lme4)
-library(performance)
+# Look at data structure ---------------------------------
+# library(lmerTest)
+# library(lme4)
+# library(performance)
 
-# Mixed model with random effect for intercept
-# Our leaves are nested within trees. Trees will be the random effect.
-# These models have the difference (SS - DAT) Vcmax or Jmax as the response variable.
+plot(factor(diff_tpu_lf$treeid), diff_tpu_lf$vc_diff)
+plot(factor(diff_tpu_lf$treeid), diff_tpu_lf$j_diff)
+
+plot(factor(diff_notpu_lf$treeid), diff_notpu_lf$vc_diff)
+plot(factor(diff_notpu_lf$treeid), diff_notpu_lf$j_diff)
+
+
+
+plot(factor(all_results$curv_meth), all_results$vcmax)
+plot(factor(all_results$curv_meth), all_results$jmax)
+
+
+plot(factor(pho_both$curv_meth), pho_both$V_cmax)
+plot(factor(pho_both$curv_meth), pho_both$J_max)
+
+plot(factor(pho_both_tpu$curv_meth), pho_both_tpu$V_cmax)
+plot(factor(pho_both_tpu$curv_meth), pho_both_tpu$J_max)
+
+###
 
 # Set up datasets for mixed models ------------------------
 
@@ -519,59 +537,81 @@ nd_diff_tpu_lf$treeid <- as.factor(nd_diff_tpu_lf$treeid)
 nd_diff_notpu_lf <- nd_diff_notpu_lf %>% filter(!is.na(vc_diff))
 nd_diff_tpu_lf <- nd_diff_tpu_lf %>% filter(!is.na(vc_diff))
 
+###
 
 # Define linear mixed effects models ----------------------
 
+### Mixed model with random effect for intercept
+### Our leaves are nested within trees. Trees will be the random effect.
+### These models have the difference (SS - DAT) Vcmax or Jmax as the response variable.
 
+set.seed(304)
+
+mod_list <- list()
 
 
 # Models with full dataset
 
 ## Vcmax without TPU
-mod_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
-                    data = diff_notpu_lf)
+mod_list[["mod_notpu_v"]] <- mod_notpu_v <- lme(vc_diff ~ 1,
+                   random = ~ 1 | treeid,
+                   weights = varIdent(form = ~ 1 | treeid),
+                   data = diff_notpu_lf)
 
-summary(mod_notpu_v)
-### Slightly sig diff, estimated diff 2.08 +- 0.92
+
+# mod_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
+#                     data = diff_notpu_lf)
+# 
+# summary(mod_notpu_v)
+# ### Slightly sig diff, estimated diff 2.08 +- 0.92
 
 
 ## Jmax without TPU
-mod_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
-                    data = diff_notpu_lf)
+mod_list[["mod_notpu_j"]] <- mod_notpu_j <- lme(j_diff ~ 1,
+                   random = ~ 1 | treeid,
+                   weights = varIdent(form = ~ 1 | treeid),
+                   data = diff_notpu_lf)
 
-mod_notpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_stat)
+# mod_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
+#                     data = diff_notpu_lf)
+# 
+# mod_notpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_stat)
+# 
+# summary(mod_notpu_j)
+# ### Sig diff, estimated diff 10.88 +- 3.0 
 
-summary(mod_notpu_j)
-### Sig diff, estimated diff 10.88 +- 3.0 
 
 
 ## Vcmax with TPU
-mod_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
-                    data = diff_tpu_lf)
-### This leads to a singularity
+mod_list[["mod_tpu_v"]] <- mod_tpu_v <- lme(vc_diff ~ 1,
+                 random = ~ 1 | treeid,
+                 weights = varIdent(form = ~ 1 | treeid),
+                 data = diff_tpu_lf)
 
-summary(mod_tpu_v)
-### Not sig, estimate diff 1.00 +- 0.67; gives singularity
 
-#Trying to avoid the singularity
-# nlme_tpu_v <- nlmer(vc_diff ~ 1 + (1|treeid),
-#                   data = diff_tpu_lf)
-# #Still no luck...
-# nlme_tpu_1 <- nlme::nlme(vc_diff ~ 1,
-#                          random = treeid ~ 1,
-#                          data = diff_tpu_lf)
+# mod_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
+#                     data = diff_tpu_lf)
+# ### This leads to a singularity
+# 
+# summary(mod_tpu_v)
+# ### Not sig, estimate diff 1.00 +- 0.67; gives singularity
 
 
 
 ## Jmax with TPU
-mod_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
-                  data = diff_tpu_lf)
+mod_list[["mod_tpu_j"]] <- mod_tpu_j <- lme(j_diff ~ 1,
+                 random = ~ 1 | treeid,
+                 weights = varIdent(form = ~ 1 | treeid),
+                 data = diff_tpu_lf)
 
-mod_tpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_stat_tpu)
-
-
-summary(mod_tpu_j)
-### Sig, estimated differences 7.9 +- 2.46
+# mod_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
+#                   data = diff_tpu_lf)
+# 
+# mod_tpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_stat_tpu)
+# 
+# 
+# summary(mod_tpu_j)
+# ### Sig, estimated differences 7.9 +- 2.46
 
 
 
@@ -601,182 +641,224 @@ summary(mod_tpu_j)
 diff_tpu_comparison <- pivot_wider(tpu_just6_all, 
                                    id_cols = leaf_unique, 
                                    names_from = curv_meth, values_from = tpu) %>% 
-    mutate(tpu_diff = SS - DAT, treeid = substring(test$leaf_unique, 1, 5))
+    mutate(tpu_diff = SS - DAT, treeid = substring(.$leaf_unique, 1, 5))
 
 
-tpu_only_mod <- lmer(tpu_diff ~ 1 + (1|treeid),
-                         data = diff_tpu_comparison)
-summary(tpu_only_mod)
+### Should we go with the unequal variance model for TPU??
+# 
+# tpu_only_mod <- lmer(tpu_diff ~ 1 + (1|treeid),
+#                          data = diff_tpu_comparison)
+
+
+
+mod_list[["tpu_only_mod"]] <- tpu_only_mod <- lme(tpu_diff ~ 1,
+                 random = ~ 1 | treeid,
+                # weights = varIdent(form = ~ 1 | treeid), ## small sample size, so not doing unequal variances
+                 data = diff_tpu_comparison)
+
 
 
 
 # Models without K6709L6 -- Testing the effects of this potentially influential point.
 
 ## Vcmax no TPU
-mod_notpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
-                    data = diff_notpu_nol6_lf)
-summary(mod_notpu_nol6_v)
-### almost sig, estimated diff 1.9 +- 0.06
+mod_list[["mod_notpu_nol6_v"]] <- mod_notpu_nol6_v <- lme(vc_diff ~ 1,
+                 random = ~ 1 | treeid,
+                 weights = varIdent(form = ~ 1 | treeid),
+                 control = lmeControl(opt = "optim"),
+                 data = diff_notpu_nol6_lf)
+
+# mod_notpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
+#                     data = diff_notpu_nol6_lf)
 
 
 ## Jmax no TPU
-mod_notpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
-                    data = diff_notpu_nol6_lf)
-summary(mod_notpu_nol6_j)
-### sig, estimated diff 10.2 +-2.8
+mod_list[["mod_notpu_nol6_j"]] <- mod_notpu_nol6_j <- lme(j_diff ~ 1,
+                                         random = ~ 1 | treeid,
+                                         weights = varIdent(form = ~ 1 | treeid),
+                                         control = lmeControl(opt = "optim"),
+                                         data = diff_notpu_nol6_lf)
+# mod_notpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
+#                     data = diff_notpu_nol6_lf)
 
 
 ## Vcmax with TPU
-mod_tpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
-                  data = diff_tpu_nol6_lf) #This leads to a singularity
-summary(mod_tpu_nol6_v)
-### sig, estimated diff 0.5 +- 0.43
+mod_list[["mod_tpu_nol6_v"]] <- mod_tpu_nol6_v <- lme(vc_diff ~ 1,
+                        random = ~ 1 | treeid,
+                        weights = varIdent(form = ~ 1 | treeid),
+                        #control = lmeControl(opt = "optim"),
+                        data = diff_tpu_nol6_lf)
+# mod_tpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
+#                   data = diff_tpu_nol6_lf) #This leads to a singularity
 
 
 ## Jmax with TPU
-mod_tpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
-                  data = diff_tpu_nol6_lf)
-summary(mod_tpu_nol6_j)
-### sig, estimated diff 6.1 +- 1.2
-
+mod_list[["mod_tpu_nol6_j"]] <- mod_tpu_nol6_j <- lme(j_diff ~ 1,
+                        random = ~ 1 | treeid,
+                        weights = varIdent(form = ~ 1 | treeid),
+                        #control = lmeControl(opt = "optim"),
+                        data = diff_tpu_nol6_lf)
+# mod_tpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
+#                   data = diff_tpu_nol6_lf)
 
 
 
 # Models with no-overshoot data. Just a quick check
-mod_nd_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
-                    data = nd_diff_notpu_lf) #This leads to a singularity
-mod_nd_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
-                    data = nd_diff_notpu_lf)
-summary(mod_nd_notpu_v)
-summary(mod_nd_notpu_j)
+mod_list[["mod_nd_notpu_v"]] <- mod_nd_notpu_v <- lme(vc_diff ~ 1,
+                        random = ~ 1 | treeid,
+                        weights = varIdent(form = ~ 1 | treeid),
+                        #control = lmeControl(opt = "optim"),
+                        data = nd_diff_notpu_lf)
 
-
-mod_nd_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
-                  data = nd_diff_tpu_lf)
-mod_nd_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
-                  data = nd_diff_tpu_lf)
-summary(mod_nd_tpu_v)
-summary(mod_nd_tpu_j)
+mod_list[["mod_nd_notpu_j"]] <- mod_nd_notpu_j <- lme(j_diff ~ 1,
+                      random = ~ 1 | treeid,
+                      weights = varIdent(form = ~ 1 | treeid),
+                      #control = lmeControl(opt = "optim"),
+                      data = nd_diff_notpu_lf)
 
 
 
+# mod_nd_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
+#                     data = nd_diff_notpu_lf) #This leads to a singularity
+# mod_nd_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
+#                     data = nd_diff_notpu_lf)
 
-# Check the model residuals -----------------------------------------------
+
+mod_list[["mod_nd_tpu_v"]] <- mod_nd_tpu_v <- lme(vc_diff ~ 1,
+                      random = ~ 1 | treeid,
+                      weights = varIdent(form = ~ 1 | treeid),
+                      #control = lmeControl(opt = "optim"),
+                      data = nd_diff_tpu_lf)
+
+mod_list[["mod_nd_tpu_j"]] <- mod_nd_tpu_j <- lme(j_diff ~ 1,
+                      random = ~ 1 | treeid,
+                      weights = varIdent(form = ~ 1 | treeid),
+                      #control = lmeControl(opt = "optim"),
+                      data = nd_diff_tpu_lf)
+
+# 
+# mod_nd_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
+#                   data = nd_diff_tpu_lf)
+# mod_nd_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
+#                   data = nd_diff_tpu_lf)
+
+
+
+
+# Check the model assumptions -----------------------------------------------
 
 # Residuals for the full dataset
 
 ## Vcmax without TPU
-plot(mod_notpu_v) # ok
-plot(residuals(mod_notpu_v) ~ diff_notpu_lf$treeid)
+plot(residuals(mod_notpu_v, type = "normalized") ~ fitted(mod_notpu_v)) # ok
+plot(residuals(mod_notpu_v, type = "normalized") ~ factor(diff_notpu_lf$treeid))
 abline(h = 0, 
        lty = 2, 
        col = "red") ## ok
-hist(residuals(mod_notpu_v)) # ok
-
+hist(residuals(mod_notpu_v, type = "normalized")) # ok
 
 
 plot(mod_notpu_j)
-plot(residuals(mod_notpu_j) ~ diff_notpu_lf$treeid)
+plot(residuals(mod_notpu_j, type = "normalized") ~ diff_notpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
        col = "red") # ok
-hist(residuals(mod_notpu_j)) # ok
+hist(residuals(mod_notpu_j, type = "normalized")) # ok
 
 
-plot(mod_tpu_v) ### singular
-plot(residuals(mod_tpu_v) ~ diff_tpu_lf$treeid)
+plot(mod_tpu_v) ### ok
+plot(residuals(mod_tpu_v, type = "normalized") ~ diff_tpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
        col = "red")# ok
-hist(residuals(mod_tpu_v)) # ok
+hist(residuals(mod_tpu_v, type = "normalized")) # ok
 
 
-plot(mod_tpu_j) ## yeesh homoskedasticity and non-linear
-plot(residuals(mod_tpu_j) ~ diff_tpu_lf$treeid)
+plot(mod_tpu_j) ## not awesome
+plot(residuals(mod_tpu_j, type = "normalized") ~ diff_tpu_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # not awesome
+hist(residuals(mod_tpu_j, type = "normalized")) # skewed
+
+
+
+
+## Residuals for models without K6709L6
+
+plot(mod_notpu_nol6_v) # not great
+plot(residuals(mod_notpu_nol6_v, type = "normalized") ~ diff_notpu_nol6_lf$treeid) #K6707 is a bit weird
 abline(h = 0, 
        lty = 2, 
        col = "red") # ok
-hist(residuals(mod_tpu_j)) # not symmetric
+hist(residuals(mod_notpu_nol6_v, type = "normalized")) # ok
+
+
+plot(mod_notpu_nol6_j) # ok
+plot(residuals(mod_notpu_nol6_j, type = "normalized") ~ diff_notpu_nol6_lf$treeid) # K6707 is a bit weird
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # ok
+hist(residuals(mod_notpu_nol6_j, type = "normalized")) # okayish
+
+
+plot(mod_tpu_nol6_v) ### ok
+plot(residuals(mod_tpu_nol6_v, type = "normalized") ~ diff_tpu_nol6_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # ok
+hist(residuals(mod_tpu_nol6_v, type = "normalized")) # okayish
+
+
+plot(mod_tpu_nol6_j) ## not great
+plot(residuals(mod_tpu_nol6_j, type = "normalized") ~ diff_tpu_nol6_lf$treeid)
+abline(h = 0, 
+       lty = 2, 
+       col = "red") # not great
+hist(residuals(mod_tpu_nol6_j, type = "normalized")) # meh
 
 
 
 
 ## Residuals for no-overshoot subset
 
-plot(mod_nd_notpu_v) ### singular
-plot(residuals(mod_nd_notpu_v) ~ nd_diff_tpu_lf$treeid)
+plot(mod_nd_notpu_v) ### ok
+plot(residuals(mod_nd_notpu_v, type = "normalized") ~ nd_diff_tpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
        col = "red") # ok
-hist(residuals(mod_nd_notpu_v)) # okayish?
+hist(residuals(mod_nd_notpu_v, type = "normalized")) # okayish
 
 
-plot(mod_nd_notpu_j) ### non-linear, homoskedasticity
-plot(residuals(mod_nd_notpu_j) ~ nd_diff_tpu_lf$treeid)
+plot(mod_nd_notpu_j) ### okayish
+plot(residuals(mod_nd_notpu_j, type = "normalized") ~ nd_diff_tpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
        col = "red") # ok
 hist(residuals(mod_nd_notpu_j)) # okayish
 
-mod_nd_notpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_nd_stat)
 
-plot(mod_nd_tpu_v) ### singular
-plot(residuals(mod_nd_tpu_v) ~ nd_diff_tpu_lf$treeid)
+plot(mod_nd_tpu_v) ### ok
+plot(residuals(mod_nd_tpu_v, type = "normalized") ~ nd_diff_tpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
        col = "red") # ok
 hist(residuals(mod_nd_tpu_v)) # ok
 
 
-plot(mod_nd_tpu_j) ## non-linear, homoskedasticity
-plot(residuals(mod_nd_tpu_j) ~ nd_diff_tpu_lf$treeid)
+plot(mod_nd_tpu_j) ## non-linear
+plot(residuals(mod_nd_tpu_j, type = "normalized") ~ nd_diff_tpu_lf$treeid)
 abline(h = 0, 
        lty = 2, 
-       col = "red") # ok
-hist(residuals(mod_nd_tpu_j)) # ok
-
-mod_nd_tpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_nd_stat_tpu)
-
-## Residuals for models without K6709L6
-
-plot(mod_notpu_nol6_v)
-plot(residuals(mod_notpu_nol6_v) ~ diff_notpu_nol6_lf$treeid)
-abline(h = 0, 
-       lty = 2, 
-       col = "red") # ok
-hist(residuals(mod_notpu_nol6_v)) # ok
-
-
-plot(mod_notpu_nol6_j) # ok
-plot(residuals(mod_notpu_nol6_j) ~ diff_notpu_nol6_lf$treeid)
-abline(h = 0, 
-       lty = 2, 
-       col = "red") # ok
-hist(residuals(mod_notpu_nol6_j)) # ok
-
-
-plot(mod_tpu_nol6_v) ### singular
-plot(residuals(mod_tpu_nol6_v) ~ diff_tpu_nol6_lf$treeid)
-abline(h = 0, 
-       lty = 2, 
-       col = "red") # not great, but still fine
-hist(residuals(mod_tpu_nol6_v)) # skew
-
-
-plot(mod_tpu_nol6_j) ## non-linear, homoskedasticity
-plot(residuals(mod_tpu_nol6_j) ~ diff_tpu_nol6_lf$treeid)
-abline(h = 0, 
-       lty = 2, 
-       col = "red") # not great, but still fine?
-hist(residuals(mod_tpu_nol6_j)) # okayish
+       col = "red") # okayish
+hist(residuals(mod_nd_tpu_j, type = "normalized")) # ok
 
 
 
+## Residuals for TPU vs TPU comparisons (Note small sample sizes!)
 
-## Resdiuals for TPU vs TPU comparisons (Note small sample sizes!)
-
-plot(tpu_only_mod) ## non-linear
-plot(residuals(tpu_only_mod) ~ diff_tpu_comparison$treeid) ### doesn't work??
+plot(tpu_only_mod) ## ok
+plot(residuals(tpu_only_mod, type = "normalized") ~ diff_tpu_comparison$treeid) ### doesn't work??
 abline(h = 0, 
        lty = 2, 
        col = "red")
@@ -784,82 +866,7 @@ hist(residuals(tpu_only_mod)) # not great, but also tiny sample size
 
 
 
-
-### Messing with stuff
-library(nlme)
-
-mod_tpu_j_nlme <- lme(j_diff ~ 1,
-                      random = ~ 1 | treeid,
-                      weights = varIdent(form = ~ 1 | treeid),
-                      data = diff_tpu_lf)
-
-test.df <- mutate(diff_tpu_lf, resids_j_tpu = residuals(mod_tpu_j_nlme, type = "pearson"))
-
-plot(mod_tpu_j)
-plot(test.df$resids_j_tpu, fitted(mod_tpu_j_nlme))
-summary(mod_tpu_j)
-summary(mod_tpu_j_nlme)
-
-
-plot(test.df$treeid, test.df$resids_j_tpu)
-
-
-
-
-mod_notpu_j_nlme <- lme(j_diff ~ 1,
-                      random = ~ 1 | treeid,
-                      weights = varIdent(form = ~ 1 | treeid),
-                      data = diff_notpu_lf)
-
-test.df2 <- mutate(diff_notpu_lf, resids_j_notpu = residuals(mod_notpu_j_nlme, type = "pearson"))
-
-plot(mod_notpu_j)
-plot(test.df2$resids_j_notpu, fitted(mod_notpu_j_nlme))
-summary(mod_notpu_j)
-summary(mod_notpu_j_nlme)
-
-
-plot(test.df2$treeid, test.df2$resids_j_tpu)
-
-
-
-
-mod_tpu_v_nlme <- lme(vc_diff ~ 1,
-                      random = ~ 1 | treeid,
-                      weights = varIdent(form = ~ 1 | treeid),
-                      data = diff_tpu_lf)
-
-test.df <- mutate(diff_tpu_lf, resids_v_tpu = residuals(mod_tpu_v_nlme, type = "pearson"))
-
-plot(mod_tpu_v)
-plot(test.df$resids_v_tpu, fitted(mod_tpu_v_nlme))
-summary(mod_tpu_v)
-summary(mod_tpu_v_nlme)
-
-
-plot(test.df$treeid, test.df$resids_v_tpu)
-
-
-
-
-mod_notpu_v_nlme <- lme(vc_diff ~ 1,
-                      random = ~ 1 | treeid,
-                      weights = varIdent(form = ~ 1 | treeid),
-                      data = diff_notpu_lf)
-
-test.df2 <- mutate(diff_tpu_lf, resids_v_notpu = residuals(mod_notpu_v_nlme, type = "pearson"))
-
-plot(mod_notpu_v)
-plot(test.df2$resids_v_notpu, fitted(mod_notpu_v_nlme))
-summary(mod_notpu_v)
-summary(mod_notpu_v_nlme)
-
-
-plot(test.df2$treeid, test.df2$resids_v_notpu)
-
-
-
-
+###
 
 # Summary of the models ------------------
 
@@ -887,138 +894,281 @@ summary(mod_nd_tpu_j)
 # Only TPU comparison dataset summary
 summary(tpu_only_mod)
 
+# 
+# # Pulls out key coefficients of interest
+# set.seed(304)
+# mod_coefs <- names(mod_list) %>%
+#     map_dfr(~ {
+#         model_name <- .x
+#         model <- get(model_name)
+#        # coeff <- lmerTest:::get_coefmat(model) %>% 
+#         coeff <- coef(model) %>% 
+#             as.data.frame() %>% 
+#             rownames_to_column()
+#         confints <- intervals(model, method = 'boot', oldNames = FALSE, which = "fixed")$fixed %>% 
+#              as.data.frame() %>%
+#              rownames_to_column() %>% 
+#              #filter(rowname == '(Intercept)') %>% #These are the fixed effect CIs
+#              select(-rowname)
+#         icc_value <- icc(model) %>%
+#             as.data.frame() %>% 
+#             rownames_to_column()
+#         std.d.ranef <- as.data.frame(VarCorr(model)) %>% 
+#         #std.d.ranef <- VarCorr(model)["(Intercept)", "StdDev"] %>% 
+#             rename(Ranef.Var = vcov, Ranef.StdDev = sdcor) %>%
+#             rownames_to_column() %>%
+#             filter(rowname == 1) %>%
+#             select(-c(var1,var2, rowname))
+# 
+#         tibble(
+#             model = model_name,
+#             coeff = list(coeff),
+#             conf = confints,
+#             icc = icc_value[2],
+#             stdranef = std.d.ranef
+#         )
+#     }) %>%
+#     unnest_wider(coeff)
+# 
+# mod_coefs$Estimate <- round(mod_coefs$Estimate, 1)
+# mod_coefs$'Std. Error' <- round(mod_coefs$'Std. Error', 1)
+# mod_coefs$df <- round(mod_coefs$df, 1)
+# mod_coefs$'t value' <- round(mod_coefs$'t value', 2)
+# mod_coefs$'Pr(>|t|)' <- round(mod_coefs$'Pr(>|t|)', 2)
+# mod_coefs$conf$`2.5 %` <- round(mod_coefs$conf$`2.5 %`, 2)
+# mod_coefs$conf$`97.5 %` <- round(mod_coefs$conf$`97.5 %`, 2)
+# mod_coefs$icc$ICC_adjusted <- round(mod_coefs$icc$ICC_adjusted, 2)
+# mod_coefs$stdranef$Ranef.Var <- round(mod_coefs$stdranef$Ranef.Var, 1)
+# mod_coefs$stdranef$Ranef.StdDev <- round(mod_coefs$stdranef$Ranef.StdDev, 1)
+# 
+# print(mod_coefs)
+# 
+# 
+# #
+# write.csv(x = mod_coefs, 
+#           file = here("5_Results/model_output.csv"),
+#           row.names = FALSE)
+# 
+# 
+# # Compute bootstrapped confidence intervals
+# # This allows for additional confidence intervals to the ones pulled out in the code above.
+# 
+# # Complete dataset
+# #sd_(Intercept)|treeid: CI for random intercept
+# # sigma: CI for random residuals
+# #(Intercept): CI for the fixed effects
+# 
+# set.seed(304) ######## Don't we only need to set the seed once?
+# confint(mod_notpu_v, method = 'boot', oldNames = FALSE)
+# set.seed(304)
+# confint(mod_notpu_j, method = 'boot', oldNames = FALSE)
+# set.seed(304)
+# confint(mod_tpu_v, method = 'boot', oldNames = FALSE)
+# set.seed(304)
+# confint(mod_tpu_j, method = 'boot', oldNames = FALSE)
+# 
+# #TPU vs TPU
+# set.seed(304)
+# confint(tpu_only_mod, method = 'boot', oldNames = FALSE)
+# 
+# #No K6709L6 dataset
+# set.seed(304)
+# confint(mod_notpu_nol6_v, method = 'boot', oldNames = FALSE)
+# set.seed(304)
+# confint(mod_notpu_nol6_j, method = 'boot', oldNames = FALSE)
+# set.seed(304)
+# confint(mod_tpu_nol6_v, method = 'boot', oldNames = FALSE)
+# set.seed(304)
+# confint(mod_tpu_nol6_j, method = 'boot', oldNames = FALSE)
+# 
+# # No overshoot dataset
+# set.seed(304)
+# confint(mod_nd_notpu_v, method = 'boot', oldNames = FALSE)
+# set.seed(304)
+# confint(mod_nd_notpu_j, method = 'boot', oldNames = FALSE)
+# set.seed(304)
+# confint(mod_nd_tpu_v, method = 'boot', oldNames = FALSE)
+# set.seed(304)
+# confint(mod_nd_tpu_j, method = 'boot', oldNames = FALSE)
+# 
+# 
+# # Look at random effect coefficients
+# # Full dataset
+# ranef(mod_notpu_v)
+# ranef(mod_notpu_j)
+# 
+# ranef(mod_tpu_v) #This doesn't work because it's a singular model
+# ranef(mod_tpu_j)
+# 
+# # No K6709L6 dataset
+# ranef(mod_notpu_nol6_v)
+# ranef(mod_notpu_nol6_j)
+# 
+# ranef(mod_tpu_nol6_v) #This doesn't work because it's a singular model
+# ranef(mod_tpu_nol6_j)
+# 
+# # No overshoot dataset
+# ranef(mod_nd_notpu_v) #This doesn't work because it's a singular model
+# ranef(mod_nd_notpu_j)
+# 
+# ranef(mod_nd_tpu_v)
+# ranef(mod_nd_tpu_j)
+# 
+# ###
+# 
 
-# Pulls out key coefficients of interest
-set.seed(304)
-mod_coefs <- list(
-    "mod_tpu_v",
-    "mod_tpu_j",
-    "tpu_only_mod",
-    "mod_notpu_v",
-    "mod_notpu_j",
-    "mod_nd_tpu_v",
-    "mod_nd_tpu_j",
-    "mod_nd_notpu_v",
-    "mod_nd_notpu_j",
-    "mod_tpu_nol6_v",
-    "mod_tpu_nol6_j",
-    "mod_notpu_nol6_v",
-    "mod_notpu_nol6_j",
-    "tpu_only_mod"
-) %>%
+
+
+# Dusty's bootstrapping ---------------------------------------------------
+
+source(here("4_Fitting_stats_figs_scripts/bootstrapping_estimates.R"))
+
+## Create empty dataframes for the bootstrapped estimates and null estimates
+estims_boot2 <- matrix(nrow = 500, ncol = length(mod_list))
+null_boot2 <- matrix(nrow = 500, ncol = length(mod_list))
+colnames(estims_boot2) <- names(mod_list)
+colnames(null_boot2) <- names(mod_list)
+
+## Apply the bootstrapped estimates to all models in the list
+for(mod in 1:length(mod_list)){
+    if (stringr::str_detect(names(mod_list[mod]), "v")){
+        resp_var <- "vc_diff"
+    } else if (stringr::str_detect(names(mod_list[mod]), "j")) {
+        resp_var <- "j_diff"
+    } else {
+        resp_var <- "tpu_diff"
+    }
+    estims_boot2[,names(mod_list)[mod]] <- sapply(
+        1:500,
+        boot,
+        mfit = mod_list[[mod]],
+        resp_var = resp_var,
+        calc_null = FALSE
+    )
+    null_boot2[,names(mod_list)[mod]] <- sapply(
+        1:500,
+        boot,
+        mfit = mod_list[[mod]],
+        resp_var = resp_var,
+        calc_null = TRUE
+    )
+}
+
+estims_boot2 <- as.data.frame(estims_boot2)
+null_boot2 <- as.data.frame(null_boot2)
+
+
+# get_og_mod_stat <- function(model){
+#     model_summ <- summary(model)
+#     p_val <- model_summ$tTable[,'p-value']
+#     int <- model_summ$tTable[,'Value']
+#     res <- data.frame(
+#         Intercept = int,
+#         P_value = p_val
+#     )
+#     return(res)
+# }
+# 
+# 
+# p_val_boot <- sapply(
+#     seq_along(estims_boot2),
+#     function(col) (mean(abs(mean(estims_boot2[[col]])) <= null_boot2[[col]] ) * 2))
+# ci_boot <- t(sapply(seq_along(estims_boot2),
+#                   function(col) quantile(estims_boot2[[col]], probs = c(0.025, 0.975))))
+#       
+# # Extract original model statistics
+# original_stats <- do.call(rbind, lapply(mod_list, get_og_mod_stat))
+# 
+# # Combine all results into a single data frame
+# boot_res <- data.frame(
+#     Model = names(estims_boot2),
+#     'Original Intercept' = round(original_stats$Intercept, 3),
+#     'Original P-value' = round(original_stats$P_value, 3),
+#     'Boot Intercept' = round(sapply(estims_boot2, mean),3),
+#     'Boot P-value' = round(p_val_boot, 3),
+#     'Boot CI Lower' = round(ci_boot[, 1], 3),
+#     'Boot CI Upper' = round(ci_boot[, 2], 3),
+#     'ICC' = unlist(lapply(mod_list, icc))
+# )
+
+
+mod_coefs <- names(mod_list) %>%
     map_dfr(~ {
         model_name <- .x
         model <- get(model_name)
-        coeff <- lmerTest:::get_coefmat(model) %>% 
-            as.data.frame() %>% 
-            rownames_to_column()
-         confints <- confint(model, method = 'boot', oldNames = FALSE) %>%
-             as.data.frame() %>%
-             rownames_to_column() %>% 
-             filter(rowname == '(Intercept)') %>% #These are the fixed effect CIs
-             select(-rowname)
+        print(paste("Processing model:", model_name))
+        model_summ <- summary(model)
+        og_coeff <- model_summ$tTable %>% 
+            as.data.frame() 
+           # rownames_to_column()
+        int_boot <- mean(estims_boot2[,model_name])
+        p_val_boot <- mean(abs(mean(estims_boot2[,model_name])) <= null_boot2[,model_name] ) * 2
+        
+        confints_boot <- t(quantile(estims_boot2[,model_name], probs = c(0.025, 0.975))) %>% 
+            as.data.frame()
+            # rownames_to_column()
+            # filter(rowname == '(Intercept)') %>% #These are the fixed effect CIs
+            # select(-rowname)
         icc_value <- icc(model) %>%
             as.data.frame() %>% 
             rownames_to_column()
-        std.d.ranef <- as.data.frame(VarCorr(model)) %>%
-            rename(Ranef.Var = vcov, Ranef.StdDev = sdcor) %>% 
-            rownames_to_column() %>% 
-            filter(rowname == 1) %>% 
-            select(-c(var1,var2, rowname))
+        #std.d.ranef <- VarCorr(model) %>%
+        std.d.ranef <- VarCorr(model)["(Intercept)",] %>%
+            t() %>% 
+            as.data.frame() %>% 
+            rename(Ranef.Var = Variance, Ranef.StdDev = StdDev)
+            # rownames_to_column() %>%
+            # filter("rowname" == 1) %>%
+            # select(-c(var1,var2, rowname))
+
         
         tibble(
             model = model_name,
-            coeff = list(coeff),
-            conf = confints,
-            icc = icc_value[2],
-            stdranef = std.d.ranef
+            coeff = list(og_coeff),
+            int_boot = int_boot,
+            p_val_boot = p_val_boot,
+            'ConfInt.Boot.2.5%' = confints_boot[,1],
+            'ConfInt.Boot.97.5%' = confints_boot[,2],
+            icc = icc_value[,2],
+           # stdrandef = std.d.ranef
+           Ranef.Var = std.d.ranef[,1],
+           Ranef.StdDev = std.d.ranef[,2]
         )
-    }) %>%
+    }) %>% 
     unnest_wider(coeff)
+    
+mod_coefs$Ranef.Var <- as.numeric(mod_coefs$Ranef.Var)
+mod_coefs$Ranef.StdDev <- as.numeric(mod_coefs$Ranef.StdDev)
 
-mod_coefs$Estimate <- round(mod_coefs$Estimate, 1)
-mod_coefs$'Std. Error' <- round(mod_coefs$'Std. Error', 1)
-mod_coefs$df <- round(mod_coefs$df, 1)
-mod_coefs$'t value' <- round(mod_coefs$'t value', 2)
-mod_coefs$'Pr(>|t|)' <- round(mod_coefs$'Pr(>|t|)', 2)
-mod_coefs$conf$`2.5 %` <- round(mod_coefs$conf$`2.5 %`, 2)
-mod_coefs$conf$`97.5 %` <- round(mod_coefs$conf$`97.5 %`, 2)
-mod_coefs$icc$ICC_adjusted <- round(mod_coefs$icc$ICC_adjusted, 2)
-mod_coefs$stdranef$Ranef.Var <- round(mod_coefs$stdranef$Ranef.Var, 1)
-mod_coefs$stdranef$Ranef.StdDev <- round(mod_coefs$stdranef$Ranef.StdDev, 1)
-
-print(mod_coefs)
+mod_coefs <- mod_coefs %>%
+    mutate(across(where(is.numeric), ~ round(., 3)))
 
 
-#
-write.csv(x = mod_coefs, 
-          file = here("5_Results/model_output.csv"),
-          row.names = FALSE)
+
+write.csv(mod_coefs, here("5_Results/boot_res.csv")) #### change name of file later
 
 
-# Compute bootstrapped confidence intervals
-# This allows for additional confidence intervals to the ones pulled out in the code above.
 
-# Complete dataset
-#sd_(Intercept)|treeid: CI for random intercept
-# sigma: CI for random residuals
-#(Intercept): CI for the fixed effects
+# plot density of bootstrapped estimates against the 
+# theoretical sampling distribution
+hist(estims_boot, freq = F)
 
-set.seed(304) ######## Don't we only need to set the seed once?
-confint(mod_notpu_v, method = 'boot', oldNames = FALSE)
-set.seed(304)
-confint(mod_notpu_j, method = 'boot', oldNames = FALSE)
-set.seed(304)
-confint(mod_tpu_v, method = 'boot', oldNames = FALSE)
-set.seed(304)
-confint(mod_tpu_j, method = 'boot', oldNames = FALSE)
+# theoretical density
+m <- mod_tpu_v$coefficients$fixed
+se <- sqrt(mod_tpu_v$varFix[1,1])
 
-#TPU vs TPU
-set.seed(304)
-confint(tpu_only_mod, method = 'boot', oldNames = FALSE)
+lines(
+    x = seq(min(estims_boot) - 1, max(estims_boot) + 1, length.out = 100),
+    y = dnorm(seq(min(estims_boot) - 1, max(estims_boot) + 1, length.out = 100), 
+              mean = m, sd = se),
+    col = "blue"
+)
 
-#No K6709L6 dataset
-set.seed(304)
-confint(mod_notpu_nol6_v, method = 'boot', oldNames = FALSE)
-set.seed(304)
-confint(mod_notpu_nol6_j, method = 'boot', oldNames = FALSE)
-set.seed(304)
-confint(mod_tpu_nol6_v, method = 'boot', oldNames = FALSE)
-set.seed(304)
-confint(mod_tpu_nol6_j, method = 'boot', oldNames = FALSE)
+# bootstrapped estimate
+mean(estims_boot)
 
-# No overshoot dataset
-set.seed(304)
-confint(mod_nd_notpu_v, method = 'boot', oldNames = FALSE)
-set.seed(304)
-confint(mod_nd_notpu_j, method = 'boot', oldNames = FALSE)
-set.seed(304)
-confint(mod_nd_tpu_v, method = 'boot', oldNames = FALSE)
-set.seed(304)
-confint(mod_nd_tpu_j, method = 'boot', oldNames = FALSE)
-
-
-# Look at random effect coefficients
-# Full dataset
-ranef(mod_notpu_v)
-ranef(mod_notpu_j)
-
-ranef(mod_tpu_v) #This doesn't work because it's a singular model
-ranef(mod_tpu_j)
-
-# No K6709L6 dataset
-ranef(mod_notpu_nol6_v)
-ranef(mod_notpu_nol6_j)
-
-ranef(mod_tpu_nol6_v) #This doesn't work because it's a singular model
-ranef(mod_tpu_nol6_j)
-
-# No overshoot dataset
-ranef(mod_nd_notpu_v) #This doesn't work because it's a singular model
-ranef(mod_nd_notpu_j)
-
-ranef(mod_nd_tpu_v)
-ranef(mod_nd_tpu_j)
+# bootstrapped CI
+quantile(estims_boot, probs = c(0.025, 0.975))
 
 
 
