@@ -1021,11 +1021,15 @@ summary(tpu_only_mod)
 
 # Dusty's bootstrapping ---------------------------------------------------
 
+## Load the source code for bootstrapping
 source(here("4_Fitting_stats_figs_scripts/bootstrapping_estimates.R"))
 
+## Define the number of iterations
+iter <- 500
+
 ## Create empty dataframes for the bootstrapped estimates and null estimates
-estims_boot2 <- matrix(nrow = 500, ncol = length(mod_list))
-null_boot2 <- matrix(nrow = 500, ncol = length(mod_list))
+estims_boot2 <- matrix(nrow = iter, ncol = length(mod_list))
+null_boot2 <- matrix(nrow = iter, ncol = length(mod_list))
 colnames(estims_boot2) <- names(mod_list)
 colnames(null_boot2) <- names(mod_list)
 
@@ -1039,14 +1043,14 @@ for(mod in 1:length(mod_list)){
         resp_var <- "tpu_diff"
     }
     estims_boot2[,names(mod_list)[mod]] <- sapply(
-        1:500,
+        1:iter,
         boot,
         mfit = mod_list[[mod]],
         resp_var = resp_var,
         calc_null = FALSE
     )
     null_boot2[,names(mod_list)[mod]] <- sapply(
-        1:500,
+        1:iter,
         boot,
         mfit = mod_list[[mod]],
         resp_var = resp_var,
@@ -1104,7 +1108,8 @@ mod_coefs <- names(mod_list) %>%
         int_boot <- mean(estims_boot2[,model_name])
         p_val_boot <- mean(abs(mean(estims_boot2[,model_name])) <= null_boot2[,model_name] ) * 2
         
-        confints_boot <- t(quantile(estims_boot2[,model_name], probs = c(0.025, 0.975))) %>% 
+        confints_boot <- t(quantile(estims_boot2[,model_name], 
+                                    probs = c(0.025, 0.975))) %>% 
             as.data.frame()
             # rownames_to_column()
             # filter(rowname == '(Intercept)') %>% #These are the fixed effect CIs
@@ -1121,7 +1126,6 @@ mod_coefs <- names(mod_list) %>%
             # filter("rowname" == 1) %>%
             # select(-c(var1,var2, rowname))
 
-        
         tibble(
             model = model_name,
             coeff = list(og_coeff),
@@ -1149,26 +1153,26 @@ write.csv(mod_coefs, here("5_Results/boot_res.csv")) #### change name of file la
 
 
 
-# plot density of bootstrapped estimates against the 
-# theoretical sampling distribution
-hist(estims_boot, freq = F)
-
-# theoretical density
-m <- mod_tpu_v$coefficients$fixed
-se <- sqrt(mod_tpu_v$varFix[1,1])
-
-lines(
-    x = seq(min(estims_boot) - 1, max(estims_boot) + 1, length.out = 100),
-    y = dnorm(seq(min(estims_boot) - 1, max(estims_boot) + 1, length.out = 100), 
-              mean = m, sd = se),
-    col = "blue"
-)
-
-# bootstrapped estimate
-mean(estims_boot)
-
-# bootstrapped CI
-quantile(estims_boot, probs = c(0.025, 0.975))
+# # plot density of bootstrapped estimates against the 
+# # theoretical sampling distribution
+# hist(estims_boot, freq = F)
+# 
+# # theoretical density
+# m <- mod_tpu_v$coefficients$fixed
+# se <- sqrt(mod_tpu_v$varFix[1,1])
+# 
+# lines(
+#     x = seq(min(estims_boot) - 1, max(estims_boot) + 1, length.out = 100),
+#     y = dnorm(seq(min(estims_boot) - 1, max(estims_boot) + 1, length.out = 100), 
+#               mean = m, sd = se),
+#     col = "blue"
+# )
+# 
+# # bootstrapped estimate
+# mean(estims_boot)
+# 
+# # bootstrapped CI
+# quantile(estims_boot, probs = c(0.025, 0.975))
 
 
 
