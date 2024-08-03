@@ -149,7 +149,8 @@ write.csv(pho_nd_stat_tpu, file = here("5_Results/pho_nd_stat_tpu.csv"))
 tpu_results_grp <- pho_stat_tpu %>%
     group_by(curv_meth, leaf_unique) %>% 
     summarise(vcmax = mean(vcmax),
-            jmax = mean(jmax)) %>% 
+            jmax = mean(jmax),
+            tpu = mean(tpu, na.rm = TRUE)) %>% 
     mutate(fit_type = "tpu",
            treeid = substring(leaf_unique, 1, 5))
 
@@ -158,7 +159,8 @@ tpu_results_grp <- pho_stat_tpu %>%
 notpu_results_grp <- pho_stat %>%
     group_by(curv_meth, leaf_unique) %>% 
     summarise(vcmax = mean(vcmax),
-            jmax = mean(jmax)) %>%
+            jmax = mean(jmax),
+            tpu = mean(tpu)) %>%
     mutate(fit_type = "no_tpu",
            treeid = substring(leaf_unique, 1, 5))
 
@@ -266,7 +268,8 @@ write.csv(diff_notpu_lf, here("5_Results/lf_diffs_summ_noTPU.csv"))
 tpu_nd_results_grp <- pho_nd_stat_tpu %>%
     group_by(curv_meth, leaf_unique) %>% 
     reframe(vcmax = mean(vcmax),
-            jmax = mean(jmax)) %>% 
+            jmax = mean(jmax),
+            tpu = mean(tpu, na.rm = TRUE)) %>% 
     mutate(fit_type = "tpu",
            treeid = substring(leaf_unique, 1, 5))
 
@@ -275,7 +278,8 @@ tpu_nd_results_grp <- pho_nd_stat_tpu %>%
 notpu_nd_results_grp <- pho_nd_stat %>%
     group_by(curv_meth, leaf_unique) %>% 
     reframe(vcmax = mean(vcmax),
-            jmax = mean(jmax)) %>%
+            jmax = mean(jmax),
+            tpu = mean(tpu)) %>%
     mutate(fit_type = "no_tpu",
            treeid = substring(leaf_unique, 1, 5))
 
@@ -394,6 +398,7 @@ grp_pho_nd_SS <- pho_nd_stat %>%
            & leaf_unique != "K6714L2") %>%
     reframe(vcmax = mean(vcmax),
             jmax = mean(jmax), 
+            tpu = mean(tpu),
             curv_meth = curv_meth, 
             fit_type = fit_type,
             treeid = treeid) 
@@ -420,6 +425,7 @@ grp_pho_nd_SS_tpu <- pho_nd_stat_tpu %>%
            & leaf_unique != "K6714L2") %>%
     summarise(vcmax = mean(vcmax),
             jmax = mean(jmax),
+            tpu = mean(tpu, na.rm = TRUE),
             treeid = substring(leaf_unique, 1, 5)) %>% 
     mutate(curv_meth = "SS", 
            fit_type = "tpu")
@@ -479,13 +485,15 @@ tpu_just6_all$curv_meth <- factor(tpu_just6_all$curv_meth)
 ### All data
 all_avg_lf_res %>% 
     group_by(fit_type, curv_meth) %>%
-    get_summary_stats(vcmax, jmax, show = c("mean", "median", "sd", "min", "max")) %>% as.data.frame()
+    get_summary_stats(vcmax, jmax, tpu, show = c("mean", "median", "sd", "min", "max")) %>% 
+    as.data.frame()
 
 
 ### No-overshoot data
 nd_complete %>% 
     group_by(fit_type, curv_meth) %>% 
-    get_summary_stats(vcmax, jmax, show = c("mean", "median", "sd", "min", "max")) %>% as.data.frame()
+    get_summary_stats(vcmax, jmax, tpu, show = c("mean", "median", "sd", "min", "max")) %>%
+    as.data.frame()
 
 
 ### Just the TPU data
@@ -643,6 +651,8 @@ diff_tpu_comparison <- pivot_wider(tpu_just6_all,
                                    names_from = curv_meth, values_from = tpu) %>% 
     mutate(tpu_diff = SS - DAT, treeid = substring(.$leaf_unique, 1, 5))
 
+plot(factor(diff_tpu_comparison$treeid), diff_tpu_comparison$tpu_diff)
+
 
 ### Should we go with the unequal variance model for TPU??
 # 
@@ -653,7 +663,7 @@ diff_tpu_comparison <- pivot_wider(tpu_just6_all,
 
 mod_list[["tpu_only_mod"]] <- tpu_only_mod <- lme(tpu_diff ~ 1,
                  random = ~ 1 | treeid,
-                # weights = varIdent(form = ~ 1 | treeid), ## small sample size, so not doing unequal variances
+                 # weights = varIdent(form = ~ 1 | treeid), ## small sample size, so not doing unequal variances
                  data = diff_tpu_comparison)
 
 
@@ -1028,10 +1038,10 @@ source(here("4_Fitting_stats_figs_scripts/bootstrapping_estimates.R"))
 iter <- 500
 
 ## Create empty dataframes for the bootstrapped estimates and null estimates
-estims_boot2 <- matrix(nrow = iter, ncol = length(mod_list))
-null_boot2 <- matrix(nrow = iter, ncol = length(mod_list))
-colnames(estims_boot2) <- names(mod_list)
-colnames(null_boot2) <- names(mod_list)
+estims_boot <- matrix(nrow = iter, ncol = length(mod_list))
+null_boot <- matrix(nrow = iter, ncol = length(mod_list))
+colnames(estims_boot) <- names(mod_list)
+colnames(null_boot) <- names(mod_list)
 
 ## Apply the bootstrapped estimates to all models in the list
 for(mod in 1:length(mod_list)){
@@ -1042,14 +1052,14 @@ for(mod in 1:length(mod_list)){
     } else {
         resp_var <- "tpu_diff"
     }
-    estims_boot2[,names(mod_list)[mod]] <- sapply(
+    estims_boot[,names(mod_list)[mod]] <- sapply(
         1:iter,
         boot,
         mfit = mod_list[[mod]],
         resp_var = resp_var,
         calc_null = FALSE
     )
-    null_boot2[,names(mod_list)[mod]] <- sapply(
+    null_boot[,names(mod_list)[mod]] <- sapply(
         1:iter,
         boot,
         mfit = mod_list[[mod]],
@@ -1058,8 +1068,34 @@ for(mod in 1:length(mod_list)){
     )
 }
 
-estims_boot2 <- as.data.frame(estims_boot2)
-null_boot2 <- as.data.frame(null_boot2)
+estims_boot <- as.data.frame(estims_boot)
+null_boot <- as.data.frame(null_boot)
+
+
+write.csv(estims_boot, file = here("5_Results/estimates_boot.csv"))
+write.csv(null_boot, file = here("5_Results/null_boot.csv"))
+
+
+# plot density of bootstrapped estimates against the
+# theoretical sampling distribution
+
+for(col in 1:ncol(estims_boot)){
+    mod <- get(colnames(estims_boot)[col])
+    
+    hist(estims_boot[,col], freq = F, xlab = colnames(estims_boot)[col])
+    
+    # theoretical density
+    m <-mod$coefficients$fixed
+    se <- sqrt(mod$varFix[1,1])
+    
+    lines(
+        x = seq(min(estims_boot[,col]) - 1, max(estims_boot[,col]) + 1, length.out = 100),
+        y = dnorm(seq(min(estims_boot[,col]) - 1, max(estims_boot[,col]) + 1, length.out = 100),
+                  mean = m, sd = se),
+        col = "blue"
+    )
+    
+}
 
 
 # get_og_mod_stat <- function(model){
@@ -1153,21 +1189,9 @@ write.csv(mod_coefs, here("5_Results/boot_res.csv")) #### change name of file la
 
 
 
-# # plot density of bootstrapped estimates against the 
-# # theoretical sampling distribution
-# hist(estims_boot, freq = F)
-# 
-# # theoretical density
-# m <- mod_tpu_v$coefficients$fixed
-# se <- sqrt(mod_tpu_v$varFix[1,1])
-# 
-# lines(
-#     x = seq(min(estims_boot) - 1, max(estims_boot) + 1, length.out = 100),
-#     y = dnorm(seq(min(estims_boot) - 1, max(estims_boot) + 1, length.out = 100), 
-#               mean = m, sd = se),
-#     col = "blue"
-# )
-# 
+
+
+
 # # bootstrapped estimate
 # mean(estims_boot)
 # 
