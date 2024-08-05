@@ -508,23 +508,82 @@ tpu_just6_all %>%
 # library(lme4)
 # library(performance)
 
+## With TPU
 plot(factor(diff_tpu_lf$treeid), diff_tpu_lf$vc_diff)
-plot(factor(diff_tpu_lf$treeid), diff_tpu_lf$j_diff)
-
-plot(factor(diff_notpu_lf$treeid), diff_notpu_lf$vc_diff)
-plot(factor(diff_notpu_lf$treeid), diff_notpu_lf$j_diff)
-
-
-
-plot(factor(all_results$curv_meth), all_results$vcmax)
-plot(factor(all_results$curv_meth), all_results$jmax)
-
-
-plot(factor(pho_both$curv_meth), pho_both$V_cmax)
-plot(factor(pho_both$curv_meth), pho_both$J_max)
-
 plot(factor(pho_both_tpu$curv_meth), pho_both_tpu$V_cmax)
+hist(diff_tpu_lf$vc_diff)
+
+plot(factor(diff_tpu_lf$treeid), diff_tpu_lf$j_diff)
 plot(factor(pho_both_tpu$curv_meth), pho_both_tpu$J_max)
+hist(diff_tpu_lf$j_diff)
+
+
+## Without TPU
+plot(factor(diff_notpu_lf$treeid), diff_notpu_lf$vc_diff)
+plot(factor(pho_both$curv_meth), pho_both$V_cmax)
+hist(diff_notpu_lf$vc_diff)
+
+plot(factor(diff_notpu_lf$treeid), diff_notpu_lf$j_diff)
+plot(factor(pho_both$curv_meth), pho_both$J_max)
+hist(diff_notpu_lf$j_diff)
+
+
+
+
+# Low and high ICC examples -----------------------------------------------------------------
+# 
+# # Load necessary library
+# library(ggplot2)
+# 
+# # Set seed for reproducibility
+# set.seed(123)
+# 
+# # Number of groups and observations per group
+# n_groups <- 10
+# n_per_group <- 30
+# 
+# # Simulate data
+# high_icc_data <- data.frame(
+#     treeid = factor(rep(1:n_groups, each = n_per_group)),
+#     vc_diff = rep(NA, n_groups * n_per_group)
+# )
+# 
+# # High ICC: Between-group variance is high relative to within-group variance
+# group_means <- rnorm(n_groups, mean = 50, sd = 10)
+# group_sd <- 5
+# high_icc_data$vc_diff <- unlist(lapply(1:n_groups, function(i) {
+#     rnorm(n_per_group, mean = group_means[i], sd = group_sd)
+# }))
+# 
+# # Plot boxplot
+# ggplot(high_icc_data, aes(x = treeid, y = vc_diff)) +
+#     geom_boxplot() +
+#     labs(title = "High ICC Scenario", x = "Tree ID", y = "VC Diff") +
+#     theme_minimal()
+# 
+# 
+# 
+# # Simulate data
+# low_icc_data <- data.frame(
+#     treeid = factor(rep(1:n_groups, each = n_per_group)),
+#     vc_diff = rep(NA, n_groups * n_per_group)
+# )
+# 
+# # Low ICC: Between-group variance is low relative to within-group variance
+# group_means <- rep(50, n_groups) # Same mean for all groups
+# group_sd <- 20
+# low_icc_data$vc_diff <- unlist(lapply(1:n_groups, function(i) {
+#     rnorm(n_per_group, mean = group_means[i], sd = group_sd)
+# }))
+# 
+# # Plot boxplot
+# ggplot(low_icc_data, aes(x = treeid, y = vc_diff)) +
+#     geom_boxplot() +
+#     labs(title = "Low ICC Scenario", x = "Tree ID", y = "VC Diff") +
+#     theme_minimal()
+# 
+# 
+# 
 
 ###
 
@@ -754,6 +813,8 @@ mod_list[["mod_nd_tpu_j"]] <- mod_nd_tpu_j <- lme(j_diff ~ 1,
 
 
 
+###
+
 
 # Check the model assumptions -----------------------------------------------
 
@@ -904,132 +965,10 @@ summary(mod_nd_tpu_j)
 # Only TPU comparison dataset summary
 summary(tpu_only_mod)
 
-# 
-# # Pulls out key coefficients of interest
-# set.seed(304)
-# mod_coefs <- names(mod_list) %>%
-#     map_dfr(~ {
-#         model_name <- .x
-#         model <- get(model_name)
-#        # coeff <- lmerTest:::get_coefmat(model) %>% 
-#         coeff <- coef(model) %>% 
-#             as.data.frame() %>% 
-#             rownames_to_column()
-#         confints <- intervals(model, method = 'boot', oldNames = FALSE, which = "fixed")$fixed %>% 
-#              as.data.frame() %>%
-#              rownames_to_column() %>% 
-#              #filter(rowname == '(Intercept)') %>% #These are the fixed effect CIs
-#              select(-rowname)
-#         icc_value <- icc(model) %>%
-#             as.data.frame() %>% 
-#             rownames_to_column()
-#         std.d.ranef <- as.data.frame(VarCorr(model)) %>% 
-#         #std.d.ranef <- VarCorr(model)["(Intercept)", "StdDev"] %>% 
-#             rename(Ranef.Var = vcov, Ranef.StdDev = sdcor) %>%
-#             rownames_to_column() %>%
-#             filter(rowname == 1) %>%
-#             select(-c(var1,var2, rowname))
-# 
-#         tibble(
-#             model = model_name,
-#             coeff = list(coeff),
-#             conf = confints,
-#             icc = icc_value[2],
-#             stdranef = std.d.ranef
-#         )
-#     }) %>%
-#     unnest_wider(coeff)
-# 
-# mod_coefs$Estimate <- round(mod_coefs$Estimate, 1)
-# mod_coefs$'Std. Error' <- round(mod_coefs$'Std. Error', 1)
-# mod_coefs$df <- round(mod_coefs$df, 1)
-# mod_coefs$'t value' <- round(mod_coefs$'t value', 2)
-# mod_coefs$'Pr(>|t|)' <- round(mod_coefs$'Pr(>|t|)', 2)
-# mod_coefs$conf$`2.5 %` <- round(mod_coefs$conf$`2.5 %`, 2)
-# mod_coefs$conf$`97.5 %` <- round(mod_coefs$conf$`97.5 %`, 2)
-# mod_coefs$icc$ICC_adjusted <- round(mod_coefs$icc$ICC_adjusted, 2)
-# mod_coefs$stdranef$Ranef.Var <- round(mod_coefs$stdranef$Ranef.Var, 1)
-# mod_coefs$stdranef$Ranef.StdDev <- round(mod_coefs$stdranef$Ranef.StdDev, 1)
-# 
-# print(mod_coefs)
-# 
-# 
-# #
-# write.csv(x = mod_coefs, 
-#           file = here("5_Results/model_output.csv"),
-#           row.names = FALSE)
-# 
-# 
-# # Compute bootstrapped confidence intervals
-# # This allows for additional confidence intervals to the ones pulled out in the code above.
-# 
-# # Complete dataset
-# #sd_(Intercept)|treeid: CI for random intercept
-# # sigma: CI for random residuals
-# #(Intercept): CI for the fixed effects
-# 
-# set.seed(304) ######## Don't we only need to set the seed once?
-# confint(mod_notpu_v, method = 'boot', oldNames = FALSE)
-# set.seed(304)
-# confint(mod_notpu_j, method = 'boot', oldNames = FALSE)
-# set.seed(304)
-# confint(mod_tpu_v, method = 'boot', oldNames = FALSE)
-# set.seed(304)
-# confint(mod_tpu_j, method = 'boot', oldNames = FALSE)
-# 
-# #TPU vs TPU
-# set.seed(304)
-# confint(tpu_only_mod, method = 'boot', oldNames = FALSE)
-# 
-# #No K6709L6 dataset
-# set.seed(304)
-# confint(mod_notpu_nol6_v, method = 'boot', oldNames = FALSE)
-# set.seed(304)
-# confint(mod_notpu_nol6_j, method = 'boot', oldNames = FALSE)
-# set.seed(304)
-# confint(mod_tpu_nol6_v, method = 'boot', oldNames = FALSE)
-# set.seed(304)
-# confint(mod_tpu_nol6_j, method = 'boot', oldNames = FALSE)
-# 
-# # No overshoot dataset
-# set.seed(304)
-# confint(mod_nd_notpu_v, method = 'boot', oldNames = FALSE)
-# set.seed(304)
-# confint(mod_nd_notpu_j, method = 'boot', oldNames = FALSE)
-# set.seed(304)
-# confint(mod_nd_tpu_v, method = 'boot', oldNames = FALSE)
-# set.seed(304)
-# confint(mod_nd_tpu_j, method = 'boot', oldNames = FALSE)
-# 
-# 
-# # Look at random effect coefficients
-# # Full dataset
-# ranef(mod_notpu_v)
-# ranef(mod_notpu_j)
-# 
-# ranef(mod_tpu_v) #This doesn't work because it's a singular model
-# ranef(mod_tpu_j)
-# 
-# # No K6709L6 dataset
-# ranef(mod_notpu_nol6_v)
-# ranef(mod_notpu_nol6_j)
-# 
-# ranef(mod_tpu_nol6_v) #This doesn't work because it's a singular model
-# ranef(mod_tpu_nol6_j)
-# 
-# # No overshoot dataset
-# ranef(mod_nd_notpu_v) #This doesn't work because it's a singular model
-# ranef(mod_nd_notpu_j)
-# 
-# ranef(mod_nd_tpu_v)
-# ranef(mod_nd_tpu_j)
-# 
-# ###
-# 
+###
 
 
-
-# Dusty's bootstrapping ---------------------------------------------------
+# Bootstrap model results ---------------------------------------------------
 
 ## Load the source code for bootstrapping
 source(here("4_Fitting_stats_figs_scripts/bootstrapping_estimates.R"))
@@ -1072,8 +1011,11 @@ estims_boot <- as.data.frame(estims_boot)
 null_boot <- as.data.frame(null_boot)
 
 
-write.csv(estims_boot, file = here("5_Results/estimates_boot.csv"))
-write.csv(null_boot, file = here("5_Results/null_boot.csv"))
+write.csv(estims_boot, file = here("5_Results/estimates_boot.csv"), row.names = FALSE)
+write.csv(null_boot, file = here("5_Results/null_boot.csv"), row.names = FALSE)
+
+
+
 
 
 # plot density of bootstrapped estimates against the
@@ -1098,39 +1040,6 @@ for(col in 1:ncol(estims_boot)){
 }
 
 
-# get_og_mod_stat <- function(model){
-#     model_summ <- summary(model)
-#     p_val <- model_summ$tTable[,'p-value']
-#     int <- model_summ$tTable[,'Value']
-#     res <- data.frame(
-#         Intercept = int,
-#         P_value = p_val
-#     )
-#     return(res)
-# }
-# 
-# 
-# p_val_boot <- sapply(
-#     seq_along(estims_boot2),
-#     function(col) (mean(abs(mean(estims_boot2[[col]])) <= null_boot2[[col]] ) * 2))
-# ci_boot <- t(sapply(seq_along(estims_boot2),
-#                   function(col) quantile(estims_boot2[[col]], probs = c(0.025, 0.975))))
-#       
-# # Extract original model statistics
-# original_stats <- do.call(rbind, lapply(mod_list, get_og_mod_stat))
-# 
-# # Combine all results into a single data frame
-# boot_res <- data.frame(
-#     Model = names(estims_boot2),
-#     'Original Intercept' = round(original_stats$Intercept, 3),
-#     'Original P-value' = round(original_stats$P_value, 3),
-#     'Boot Intercept' = round(sapply(estims_boot2, mean),3),
-#     'Boot P-value' = round(p_val_boot, 3),
-#     'Boot CI Lower' = round(ci_boot[, 1], 3),
-#     'Boot CI Upper' = round(ci_boot[, 2], 3),
-#     'ICC' = unlist(lapply(mod_list, icc))
-# )
-
 
 mod_coefs <- names(mod_list) %>%
     map_dfr(~ {
@@ -1141,10 +1050,10 @@ mod_coefs <- names(mod_list) %>%
         og_coeff <- model_summ$tTable %>% 
             as.data.frame() 
            # rownames_to_column()
-        int_boot <- mean(estims_boot2[,model_name])
-        p_val_boot <- mean(abs(mean(estims_boot2[,model_name])) <= null_boot2[,model_name] ) * 2
+        int_boot <- mean(estims_boot[,model_name])
+        p_val_boot <- mean(abs(mean(estims_boot[,model_name])) <= null_boot[,model_name] ) * 2
         
-        confints_boot <- t(quantile(estims_boot2[,model_name], 
+        confints_boot <- t(quantile(estims_boot[,model_name], 
                                     probs = c(0.025, 0.975))) %>% 
             as.data.frame()
             # rownames_to_column()
@@ -1181,11 +1090,11 @@ mod_coefs$Ranef.Var <- as.numeric(mod_coefs$Ranef.Var)
 mod_coefs$Ranef.StdDev <- as.numeric(mod_coefs$Ranef.StdDev)
 
 mod_coefs <- mod_coefs %>%
-    mutate(across(where(is.numeric), ~ round(., 3)))
+    mutate(across(where(is.numeric), ~ signif(., 3)))
 
 
 
-write.csv(mod_coefs, here("5_Results/boot_res.csv")) #### change name of file later
+write.csv(mod_coefs, here("5_Results/boot_res.csv"))
 
 
 
