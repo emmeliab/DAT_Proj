@@ -10,9 +10,6 @@ This repository contains the data and code to process 32 DAT and 27 steady-state
   * Of note, MNG revisited MACA1 on 8/16 and measured new, different leaves than on the first day (8/6?). MNG recorded a Leaf_number of 2, which had already been recorded in the data. In a manual recording of data, CDS gave a unique identifier to each leaf, with the second leaf 2 recorded as leaf 8.
 
 ## File Structure
-### 0_Archive
-Contains results and scripts from our first pass-over with the data. Contains redundant data files and MNG scripts for processing curves. Files in here are likely not needed but are being kept in case.
-
 ### 1_Raw_data
 Contains raw .xlsx files from the LI-6800, with added Data_QC column, which was inputted manually
 
