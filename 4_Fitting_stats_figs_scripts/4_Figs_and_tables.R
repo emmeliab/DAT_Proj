@@ -870,7 +870,7 @@ all_and_nOS_noTPU <- rbind(pho_stat, pho_nd_stat)
 vcmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>% 
     mutate(subset = fct_reorder(subset, subset , .fun = "length", .desc = TRUE)) %>% 
     ggplot(aes(x = subset, y = vcmax, fill = curv_meth)) +
-    geom_boxplot(outlier.shape = 17, outlier.size = 2, linewidth = 0.3) +
+    geom_boxplot(outlier.shape = 17, outlier.size = 1.6, linewidth = 0.3) +
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "SS"), 
                       values = c("#31688EFF", "#FDE725FF")) +
     scale_x_discrete(labels = c("All", "No Overshoot")) +
@@ -882,6 +882,7 @@ vcmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>%
     annotate("text", label = "*", x = 2, y = 120, color = "red") +
     theme(axis.text.x = element_text(size = 9, color = "gray10"),
           axis.text.y = element_text(size = 8, color = "gray10"),
+          axis.title = element_text(size = rel(0.85)),
           plot.title = element_text(size = rel(0.93),face = "bold", hjust = 0.5),
           plot.tag = element_text(size = rel(0.9)),
           plot.tag.position = c(0, 0.95),
@@ -894,7 +895,7 @@ vcmax_AllvNoOS_noTPU
 jmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>% 
     mutate(subset = fct_reorder(subset, subset , .fun = "length", .desc = TRUE)) %>% 
     ggplot(aes(x = subset, y = jmax, fill = curv_meth)) +
-    geom_boxplot(outlier.shape = 17, outlier.size = 2, linewidth = 0.3) +
+    geom_boxplot(outlier.shape = 17, outlier.size = 1.6, linewidth = 0.3) +
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "SS"),
                       values = c("#31688EFF", "#FDE725FF")) +
     scale_x_discrete(labels = c("All", "No Overshoot")) +
@@ -905,7 +906,7 @@ jmax_AllvNoOS_noTPU <- all_and_nOS_noTPU %>%
     annotate("text", label = "***", x = 2, y = 120, color = "red") +
     theme(axis.text.x = element_text(size = 9, color = "gray10"),
           axis.text.y = element_text(size = 8, color = "gray10"),
-          axis.title = element_text(size = rel(0.93)),
+          axis.title = element_text(size = rel(0.85)),
           plot.tag = element_text(size = rel(0.9)),
           plot.tag.position = c(0, 1.05),
           legend.title = element_text(size = rel(0.9)),
@@ -927,7 +928,7 @@ all_and_nOS_TPU <- rbind(pho_stat_tpu, pho_nd_stat_tpu)
 vcmax_AllvNoOS_TPU <- all_and_nOS_TPU %>% 
     mutate(subset = fct_reorder(subset, subset , .fun = "length", .desc = TRUE)) %>% 
     ggplot(aes(x = subset, y = vcmax, fill = curv_meth)) +
-    geom_boxplot(outlier.shape = 17, outlier.size = 2, linewidth = 0.3) +
+    geom_boxplot(outlier.shape = 17, outlier.size = 1.6, linewidth = 0.3) +
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "SS"), 
                       values = c("#31688EFF", "#FDE725FF")) +
     scale_x_discrete(labels = c("All", "No Overshoot")) +
@@ -938,6 +939,7 @@ vcmax_AllvNoOS_TPU <- all_and_nOS_TPU %>%
     annotate("text", label = "*", x = 2, y = 120, color = "red") +
     theme(axis.text.x = element_text(size = 9, color = "gray10"),
           axis.text.y = element_text(size = 8, colour = "gray10"),
+          axis.title = element_text(size = rel(0.85)),
           plot.title = element_text(size = rel(0.93), face = "bold", hjust = 0.5),
           plot.tag = element_text(size = rel(0.9)),
           plot.tag.position = c(0.15, 0.95),
@@ -951,7 +953,7 @@ vcmax_AllvNoOS_TPU
 jmax_AllvNoOS_TPU <- all_and_nOS_TPU %>% 
     mutate(subset = fct_reorder(subset, subset , .fun = "length", .desc = TRUE)) %>% 
     ggplot(aes(x = subset, y = jmax, fill = curv_meth)) +
-    geom_boxplot(outlier.shape = 17, outlier.size = 2, linewidth = 0.3) +
+    geom_boxplot(outlier.shape = 17, outlier.size = 1.6, linewidth = 0.3) +
     scale_fill_manual(name = "Curve Method", labels = c("DAT", "SS"),
                       values = c("#31688EFF", "#FDE725FF")) +
     scale_x_discrete(labels = c("All", "No Overshoot")) +
@@ -962,7 +964,7 @@ jmax_AllvNoOS_TPU <- all_and_nOS_TPU %>%
     annotate("text", label = "***", x = 2, y = 120, color = "red") +
     theme(axis.text.x = element_text(size = 9, color = "gray10"),
           axis.text.y = element_text(size = 8, color = "gray10"),
-          axis.title = element_text(size = rel(0.93)),
+          axis.title = element_text(size = rel(0.85)),
           plot.tag = element_text(size = rel(0.9)),
           plot.tag.position = c(0.15, 1.05),
           legend.title = element_text(size = rel(0.9)),
@@ -993,7 +995,7 @@ figS3 <- grid.arrange(
 
 
 ggsave(plot = figS3, here("6_Figures/figureS4.tif"),
-       width = 12.5, height = 10, units = "cm", dpi = 600, scale = 0.92)
+       width = 12.5, height = 10, units = "cm", dpi = 600, scale = 0.9)
 
 
 
