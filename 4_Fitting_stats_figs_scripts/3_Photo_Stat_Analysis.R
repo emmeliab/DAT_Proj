@@ -10,6 +10,8 @@ library(here)
 library(nlme)
 library(performance)
 
+set.seed(304)
+
 ###
 
 # Load and Subset the datasets -------------------------------------------
@@ -557,8 +559,6 @@ nd_diff_tpu_lf <- nd_diff_tpu_lf %>% filter(!is.na(vc_diff))
 ### Our leaves are nested within trees. Trees will be the random effect.
 ### These models have the difference (SS - DAT) Vcmax or Jmax as the response variable.
 
-set.seed(304)
-
 mod_list <- list()
 
 
@@ -874,7 +874,7 @@ hist(residuals(mod_nd_tpu_j, type = "normalized")) # ok
 ## Residuals for TPU vs TPU comparisons (Note small sample sizes!)
 
 plot(tpu_only_mod) ## ok
-plot(residuals(tpu_only_mod, type = "normalized") ~ diff_tpu_comparison$treeid) ### doesn't work??
+# plot(residuals(tpu_only_mod, type = "normalized") ~ diff_tpu_comparison$treeid) ### doesn't work??
 abline(h = 0, 
        lty = 2, 
        col = "red")
