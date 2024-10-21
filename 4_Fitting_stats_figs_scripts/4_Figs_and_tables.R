@@ -55,6 +55,10 @@ all_diff_tpu_codes <- read.csv(here("5_Results/tree_diffs_summary_TPU.csv"))
 all_diff_notpu_codes <- read.csv(here("5_Results/tree_diffs_summary_noTPU.csv"))
 
 
+### Boostrapped results
+boot_res <- read.csv(here("5_Results/boot_res.csv"))
+
+
 ###
 
 
@@ -193,7 +197,9 @@ pho_1to1_vcmax_tpu <- ggplot(data = leaf_wide_vcmax_tpu,
     scale_y_continuous(limits = c(1, 100)) +
     scale_color_continuous(type = "viridis") +
     annotate(geom = "text", label = paste0("r = ", cor3),
-             x = 25, y = 75, size = rel(3.5))
+             x = 25, y = 75, size = rel(3.5)) +
+    annotate(geom = "text", label = paste0("AMDE = ", round(boot_res[3,8], 2)),
+             x = 25, y = 65, size = rel(3.5))
 pho_1to1_vcmax_tpu
 
 
@@ -237,7 +243,9 @@ pho_1to1_vcmax_NoTPU <- ggplot(data = leaf_wide_vcmax,
     scale_y_continuous(limits = c(1, 100)) +
     scale_color_continuous(type = "viridis") +
     annotate(geom = "text", label = paste0("r = ", cor1), 
-             x = 25, y = 75, size = rel(3.5))
+             x = 25, y = 75, size = rel(3.5)) +
+    annotate(geom = "text", label = paste0("AMDE = ", round(boot_res[1,8], 2)),
+             x = 25, y = 65, size = rel(3.5))
 pho_1to1_vcmax_NoTPU
 
 
@@ -360,7 +368,9 @@ pho_1to1_jmax_noTPU <- ggplot(data = leaf_wide_jmax,
     scale_y_continuous(limits = c(1, 130)) +
     scale_color_continuous(type = "viridis") +
     annotate(geom = "text", label = paste0("r = ", cor2), 
-             x = 35, y = 100, size = rel(3.5))
+             x = 35, y = 100, size = rel(3.5)) +
+    annotate(geom = "text", label = paste0("AMDE = ", round(boot_res[2,8], 2)),
+             x = 35, y = 90, size = rel(3.5))
 pho_1to1_jmax_noTPU
 
 
@@ -397,7 +407,9 @@ pho_1to1_jmax_tpu <- ggplot(data = leaf_wide_jmax_tpu,
     scale_y_continuous(limits = c(1, 130)) +
     scale_color_continuous(type = "viridis") +
     annotate(geom = "text", label = paste0("r = ", cor4), 
-             x = 35, y = 100, size = rel(3.5))
+             x = 35, y = 100, size = rel(3.5)) +
+    annotate(geom = "text", label = paste0("AMDE = ", round(boot_res[4,8], 2)),
+             x = 35, y = 90, size = rel(3.5))
 pho_1to1_jmax_tpu
 
 
@@ -848,7 +860,9 @@ pho_1to1_tpu_tpu <- ggplot(data = only_tpu_fit,
     scale_y_continuous(limits = c(0, 12), breaks = c(0,3,6,9,12)) +
     scale_color_continuous(type = "viridis") +
     #geom_text(aes(label = rel_can_pos), hjust = 2) +
-    annotate(geom = "text", label = paste0("r = ", cor5), x = 3, y = 9, size = rel(3.5))
+    annotate(geom = "text", label = paste0("r = ", cor5), x = 3, y = 9, size = rel(3.5)) +
+    annotate(geom = "text", label = paste0("AMDE = ", round(boot_res[5,8], 2)),
+             x = 3, y = 8, size = rel(3.5))
 pho_1to1_tpu_tpu
 
 ggsave(plot = pho_1to1_tpu_tpu, here("6_Figures/figureS3.tif"), dpi = 600,
