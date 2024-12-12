@@ -384,7 +384,7 @@ write.csv(nd_diff_notpu_tree_codes, here("5_Results/tree_nOS_diffs_summary_noTPU
 
 
 
-# Taking out the SS leaves which had OS DAT pairs and calculating the mean
+# Taking out the SS leaves which had DAT pairs with OS and calculating the mean
 
 ## WITHOUT TPU 
 grp_pho_nd_SS <- pho_nd_stat %>%
@@ -411,9 +411,8 @@ grp_pho_nd_all <- dat_nd_res_notpu_summ %>%
     rbind(., grp_pho_nd_SS)
 
 
-# Taking out the SS leaves which had OS DAT pairs and calculating the mean
 
-# WITH TPU
+## WITH TPU
 grp_pho_nd_SS_tpu <- pho_nd_stat_tpu %>%
     filter(curv_meth == "SS") %>% 
     group_by(leaf_unique) %>% 
@@ -450,7 +449,7 @@ nd_complete$fit_type <- factor(nd_complete$fit_type)
 
 # Subset curves for the SS TPU v DAT TPU analysis -------------------------
 
-### Pulling out the pairs of curves for which TPU was fit in both
+### Pulling out the pairs of curves for which TPU was fit in both methods
 ### This leaves 6 SS and 22 DAT
 
 grp_tpu_6SS <- pho_stat_tpu %>% 
@@ -506,9 +505,6 @@ tpu_just6_all %>%
 
 
 # Look at data structure ---------------------------------
-# library(lmerTest)
-# library(lme4)
-# library(performance)
 
 ## With TPU
 plot(factor(diff_tpu_lf$treeid), diff_tpu_lf$vc_diff)
@@ -530,9 +526,7 @@ plot(factor(pho_both$curv_meth), pho_both$J_max)
 hist(diff_notpu_lf$j_diff)
 
 
-
-
-
+###
 
 # Set up datasets for mixed models ------------------------
 
@@ -557,7 +551,7 @@ nd_diff_tpu_lf <- nd_diff_tpu_lf %>% filter(!is.na(vc_diff))
 
 ### Mixed model with random effect for intercept
 ### Our leaves are nested within trees. Trees will be the random effect.
-### These models have the difference (SS - DAT) Vcmax or Jmax as the response variable.
+### These models have the difference (SS - DAT) of Vcmax or Jmax as the response variable.
 
 mod_list <- list()
 
@@ -571,27 +565,11 @@ mod_list[["mod_notpu_v"]] <- mod_notpu_v <- lme(vc_diff ~ 1,
                    data = diff_notpu_lf)
 
 
-# mod_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
-#                     data = diff_notpu_lf)
-# 
-# summary(mod_notpu_v)
-# ### Slightly sig diff, estimated diff 2.08 +- 0.92
-
-
 ## Jmax without TPU
 mod_list[["mod_notpu_j"]] <- mod_notpu_j <- lme(j_diff ~ 1,
                    random = ~ 1 | treeid,
                    weights = varIdent(form = ~ 1 | treeid),
                    data = diff_notpu_lf)
-
-# mod_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
-#                     data = diff_notpu_lf)
-# 
-# mod_notpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_stat)
-# 
-# summary(mod_notpu_j)
-# ### Sig diff, estimated diff 10.88 +- 3.0 
-
 
 
 ## Vcmax with TPU
@@ -601,54 +579,14 @@ mod_list[["mod_tpu_v"]] <- mod_tpu_v <- lme(vc_diff ~ 1,
                  data = diff_tpu_lf)
 
 
-# mod_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
-#                     data = diff_tpu_lf)
-# ### This leads to a singularity
-# 
-# summary(mod_tpu_v)
-# ### Not sig, estimate diff 1.00 +- 0.67; gives singularity
-
-
-
 ## Jmax with TPU
 mod_list[["mod_tpu_j"]] <- mod_tpu_j <- lme(j_diff ~ 1,
                  random = ~ 1 | treeid,
                  weights = varIdent(form = ~ 1 | treeid),
                  data = diff_tpu_lf)
 
-# mod_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
-#                   data = diff_tpu_lf)
-# 
-# mod_tpu_j2 <- lmer(jmax ~ curv_meth + (1|treeid) + (1|treeid:leaf_unique), data = pho_stat_tpu)
-# 
-# 
-# summary(mod_tpu_j)
-# ### Sig, estimated differences 7.9 +- 2.46
-
-
-
 
 ## TPU SS - TPU DAT comparison
-# tpu_comparison <- pho_stat_tpu %>%
-#     group_by(curv_meth, leaf_unique) %>%
-#     summarise(tpu = mean(tpu)) %>%
-#     mutate(fit_type = "tpu",
-#            treeid = substring(leaf_unique, 1, 5))
-# 
-# ### Pull out the DAT results
-# dat_res_tpu_comparison <- filter(tpu_comparison, curv_meth == "DAT") %>%
-#     rename(dat_tpu = tpu)
-# 
-# ### Pull out the SS results
-# ss_res_tpu_comparison <- filter(tpu_comparison, curv_meth == "SS") %>%
-#     rename(ss_tpu = tpu)
-# 
-# ### Join datasets, calculate diff and SE
-# diff_tpu_comparison <- full_join(dat_res_tpu_comparison, ss_res_tpu_comparison,
-#                          by = c("leaf_unique", "treeid", "fit_type")) %>%
-#     mutate(tpu_diff = ss_tpu - dat_tpu) %>%
-#     filter(!is.na(tpu_diff))
-
 ### Pivot the dataframe wider for comparisons
 diff_tpu_comparison <- pivot_wider(tpu_just6_all, 
                                    id_cols = leaf_unique, 
@@ -656,13 +594,6 @@ diff_tpu_comparison <- pivot_wider(tpu_just6_all,
     mutate(tpu_diff = SS - DAT, treeid = substring(.$leaf_unique, 1, 5))
 
 plot(factor(diff_tpu_comparison$treeid), diff_tpu_comparison$tpu_diff)
-
-
-### Should we go with the unequal variance model for TPU??
-# 
-# tpu_only_mod <- lmer(tpu_diff ~ 1 + (1|treeid),
-#                          data = diff_tpu_comparison)
-
 
 
 mod_list[["tpu_only_mod"]] <- tpu_only_mod <- lme(tpu_diff ~ 1,
@@ -682,9 +613,6 @@ mod_list[["mod_notpu_nol6_v"]] <- mod_notpu_nol6_v <- lme(vc_diff ~ 1,
                  control = lmeControl(opt = "optim"),
                  data = diff_notpu_nol6_lf)
 
-# mod_notpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
-#                     data = diff_notpu_nol6_lf)
-
 
 ## Jmax no TPU
 mod_list[["mod_notpu_nol6_j"]] <- mod_notpu_nol6_j <- lme(j_diff ~ 1,
@@ -692,8 +620,6 @@ mod_list[["mod_notpu_nol6_j"]] <- mod_notpu_nol6_j <- lme(j_diff ~ 1,
                                          weights = varIdent(form = ~ 1 | treeid),
                                          control = lmeControl(opt = "optim"),
                                          data = diff_notpu_nol6_lf)
-# mod_notpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
-#                     data = diff_notpu_nol6_lf)
 
 
 ## Vcmax with TPU
@@ -702,8 +628,7 @@ mod_list[["mod_tpu_nol6_v"]] <- mod_tpu_nol6_v <- lme(vc_diff ~ 1,
                         weights = varIdent(form = ~ 1 | treeid),
                         #control = lmeControl(opt = "optim"),
                         data = diff_tpu_nol6_lf)
-# mod_tpu_nol6_v <- lmer(vc_diff ~ 1 + (1|treeid),
-#                   data = diff_tpu_nol6_lf) #This leads to a singularity
+
 
 
 ## Jmax with TPU
@@ -712,8 +637,7 @@ mod_list[["mod_tpu_nol6_j"]] <- mod_tpu_nol6_j <- lme(j_diff ~ 1,
                         weights = varIdent(form = ~ 1 | treeid),
                         #control = lmeControl(opt = "optim"),
                         data = diff_tpu_nol6_lf)
-# mod_tpu_nol6_j <- lmer(j_diff ~ 1 + (1|treeid),
-#                   data = diff_tpu_nol6_lf)
+
 
 
 
@@ -732,12 +656,6 @@ mod_list[["mod_nd_notpu_j"]] <- mod_nd_notpu_j <- lme(j_diff ~ 1,
 
 
 
-# mod_nd_notpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
-#                     data = nd_diff_notpu_lf) #This leads to a singularity
-# mod_nd_notpu_j <- lmer(j_diff ~ 1 + (1|treeid),
-#                     data = nd_diff_notpu_lf)
-
-
 mod_list[["mod_nd_tpu_v"]] <- mod_nd_tpu_v <- lme(vc_diff ~ 1,
                       random = ~ 1 | treeid,
                       weights = varIdent(form = ~ 1 | treeid),
@@ -749,12 +667,6 @@ mod_list[["mod_nd_tpu_j"]] <- mod_nd_tpu_j <- lme(j_diff ~ 1,
                       weights = varIdent(form = ~ 1 | treeid),
                       #control = lmeControl(opt = "optim"),
                       data = nd_diff_tpu_lf)
-
-# 
-# mod_nd_tpu_v <- lmer(vc_diff ~ 1 + (1|treeid),
-#                   data = nd_diff_tpu_lf)
-# mod_nd_tpu_j <- lmer(j_diff ~ 1 + (1|treeid),
-#                   data = nd_diff_tpu_lf)
 
 
 
@@ -1007,7 +919,6 @@ mod_coefs <- names(mod_list) %>%
         icc_value <- icc(model) %>%
             as.data.frame() %>% 
             rownames_to_column()
-        #std.d.ranef <- VarCorr(model) %>%
         std.d.ranef <- VarCorr(model)["(Intercept)",] %>%
             t() %>% 
             as.data.frame() %>% 
@@ -1024,7 +935,6 @@ mod_coefs <- names(mod_list) %>%
             'ConfInt.Boot.2.5%' = confints_boot[,1],
             'ConfInt.Boot.97.5%' = confints_boot[,2],
             icc = icc_value[,2],
-           # stdrandef = std.d.ranef
            Ranef.Var = std.d.ranef[,1],
            Ranef.StdDev = std.d.ranef[,2]
         )
@@ -1045,7 +955,7 @@ write.csv(mod_coefs, here("5_Results/boot_res.csv"))
 
 
 
-
+## Take a look
 # # bootstrapped estimate
 # mean(estims_boot)
 # 
@@ -1075,7 +985,7 @@ gghistogram(diff_tpu_lf, x = "vc_diff", bins = 10, add_density = TRUE) + geom_vl
 diff_tpu_lf %>%
     with(., shapiro.test(vc_diff))
 
-#Vcmax differences are approximately normally distributed.
+### Vcmax differences are approximately normally distributed.
 
 
 
@@ -1133,7 +1043,7 @@ nd_diff_tpu_lf %>%
 
 
 
-#Wilcoxon tests for the data grouped on a tree level. ---------------------------
+# Wilcoxon tests for the data grouped on a tree level. ---------------------------
 
 all_avg_tr_res <- all_avg_lf_res %>% 
     group_by(fit_type, curv_meth, treeid) %>% 
@@ -1218,7 +1128,7 @@ all_avg_tr_res %>%
     add_significance()
 
 
-#Wilcoxon tests for the data grouped on a tree level, without MAEL Leaf 6 (testing for influence). ---------------------------
+# Wilcoxon tests for the data grouped on a tree level, without MAEL Leaf 6 (testing for influence). ---------------------------
 
 all_nol6_tr_res <- all_avg_lf_res %>% 
     filter(leaf_unique != 'K6709L6') %>% 
@@ -1307,8 +1217,8 @@ all_nol6_tr_res %>%
 
 # Wilcoxon Tests, no Overshoot subset ------------------------
 
-### Note that all the SS curves for which TPU was fit also had overshoot, so the SS TPU and noTPU datasets are actually the same.
-# Therefore, no steady-state-specific TPU vs noTPU comparisons are conducted here.
+### Note that all the SS curves for which TPU was fit also had overshoot, so the SS TPU and noTPU datasets are actually the same. Therefore, no steady-state-specific TPU vs noTPU comparisons are conducted here.
+### nd refers to "no dip", which is shorthand for no-overshoot
 
 nd_tr_res <- nd_complete %>% 
     group_by(fit_type, curv_meth, treeid) %>% 
@@ -1427,6 +1337,8 @@ wil_nolf6_cm <- list(
     mutate(dataset = 'nolf6') %>% 
     arrange(desc(fit_type))
 
+
+## For curve method comparison
 wilcox_cm_tab <- rbind(wil_cm, wil_nd_cm, wil_nolf6_cm) %>% 
     select(dataset, fit_type, .y., n1, n2, group1, group2, estimate, statistic, p, p.signif, effsize, conf.low, conf.high, magnitude)
 wilcox_cm_tab
@@ -1435,13 +1347,15 @@ write.csv(x = wilcox_cm_tab,
           file = here("5_Results/wilcox_table.csv"),
           row.names = FALSE)
 
-wilcox_ft_tab <- list(
-    w_vc_ft_full,
-    w_j_ft_full,
-    w_nol6_vc_ft_full,
-    w_nol6_j_ft_full,
-    w_nd_vc_ft_full,
-    w_nd_j_ft_full
-) %>% do.call(rbind, .)
-wilcox_ft_tab
 
+## For fit-type comparison
+# wilcox_ft_tab <- list(
+#     w_vc_ft_full,
+#     w_j_ft_full,
+#     w_nol6_vc_ft_full,
+#     w_nol6_j_ft_full,
+#     w_nd_vc_ft_full,
+#     w_nd_j_ft_full
+# ) %>% do.call(rbind, .)
+# wilcox_ft_tab
+# 

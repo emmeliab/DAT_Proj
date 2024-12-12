@@ -319,7 +319,6 @@ TPU <- textGrob("With TPU", rot = 90,
 noTPU <- textGrob("Without TPU", rot = 90, 
                   gp = gpar(fontfamily = "serif", fontface = "bold", cex = 0.9))
 
-#fig2 <- grid.arrange(arrangeGrob(cbind(gQ, gR), arrangeGrob(cbind(gS, gT))))
 fig2 <- grid.arrange(arrangeGrob(gQ, left = TPU), gR, arrangeGrob(gS, left = noTPU), gT, nrow = 2) 
 
 
@@ -486,7 +485,6 @@ noTPU <- textGrob("Without TPU", rot = 90,
                   gp = gpar(fontfamily = "serif", fontface = "bold", cex = 0.9))
 
 
-#fig3 <- grid.arrange(arrangeGrob(cbind(gQ2, gR2), arrangeGrob(cbind(gS2, gT2))))
 fig3 <- grid.arrange(arrangeGrob(gQ2, left = TPU), 
                      gR2, arrangeGrob(gS2, left = noTPU), gT2, nrow = 2) 
 
@@ -991,15 +989,11 @@ gW <- ggplotGrob(vcmax_AllvNoOS_TPU + rremove("legend") + rremove("xlab"))
 gX <- ggplotGrob(vcmax_AllvNoOS_noTPU + rremove("ylab")  + rremove("legend") + rremove("xlab")) 
 gY <- ggplotGrob(jmax_AllvNoOS_TPU + rremove("legend"))
 gZ <- ggplotGrob(jmax_AllvNoOS_noTPU + rremove("ylab") + rremove("legend") )
-# fitType <- textGrob("Fit Type", 
-#                 gp = gpar(fontfamily = "serif", # fontface = "bold", 
-#                           cex = 0.95, hjust = 1))
 
 figS3_grid <- grid.arrange(arrangeGrob(cbind(gW, gX)), arrangeGrob(cbind(gY, gZ)),
                            heights = c(1.05, 0.95))
 
 legend <- cowplot::get_legend(vcmax_AllvNoOS_TPU)
-# figS3.1 <- grid.arrange(figS3_grid, fitType, heights = c(5,0.5))
 figS3 <- grid.arrange(
     figS3_grid,
     legend,
@@ -1149,7 +1143,7 @@ ggsave(plot = figS4, here("6_Figures/figureS5.tif"),
 
 # TPU v. No TPU Boxplots --------------------------------------------------------------
 
-### Not in manuscript
+### Not in manuscript - just visualization
 # 
 # # Full data
 # 

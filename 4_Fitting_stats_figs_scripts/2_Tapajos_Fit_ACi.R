@@ -1,4 +1,4 @@
-## This script is to graph, fit, and save the ACi data for our Tapajos 2022 campaign
+## This script is to graph, fit, and save the ACi data from Tapajos 2022
 
 ## Load Packages
 library(tidyverse)
@@ -29,12 +29,6 @@ exclude_backwardsCi <- function(data, givedf){
 
 # # Apply function to tibble. if .keep = TRUE this throws an error
 # # Additional info: https://stackoverflow.com/questions/63412850/managing-dplyr-group-by-function-to-keep-the-grouping-variable-when-used-in-comb
-# DAT_filt_ex <- DAT_filt %>%
-#   group_by(unique_id) %>%
-#   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
-# DAT_filt_ex <- as.data.frame(DAT_filt_ex)
-
-
 
 ### Now filter out the 'backwards' points in the DAT data
 
@@ -149,7 +143,7 @@ write.csv(x = par_join, file = here("5_Results/pars_ecophys_noTPU.csv"),
 
 library(photosynthesis)
 
-### Warning: fitting all DAT curves with photosynthesis takes several hours; including TPU fitting takes longer
+### Fitting all DAT curves with photosynthesis takes a while. Enjoy a coffee!
 
 # Convert leaf temperature to Kelvin
 cmplt_SS$Tleaf <- cmplt_SS$Tleaf + 273.15
@@ -194,7 +188,7 @@ dat_fits_photo_noTPU <- fit_many(data = DAT_filt,
                            group = "unique_id")
 
 ### Save the output in case we need to do some editing
-saveRDS(dat_fits_photo_noTPU, file = here("5_Results/DAT_photo_fits_noTPU.RData"))
+saveRDS(dat_fits_photo_noTPU, file = here("5_Results/DAT_photo_fits_noTPU.RData")) # LARGE data file, do not push to github unless using git lfs
 
 
 
@@ -214,7 +208,7 @@ dat_fits_photo_pars_noTPU <- compile_data(dat_fits_photo_noTPU,
 
 ### Add the species names back in
 ids <- read.csv(here("3_Clean_data/id_codebook.csv")) #%>% 
-    #rename(treeid = ï..treeid)
+    #rename(treeid = ï..treeid) # Seems to be an issue with how the variables are coded on Mac/PC
 
 dat_fits_photo_pars_noTPU <- dat_fits_photo_pars_noTPU %>% 
     mutate(treeid = substring(ID, 1, 5)) %>% 
@@ -290,7 +284,7 @@ dat_fits_photo_pars_TPU <- compile_data(dat_fits_photo_TPU,
 
 
 ### Save the output in case we need to do some editing
-saveRDS(dat_fits_photo_TPU, file = here("5_Results/DAT_photo_fits_TPU.RData"))
+saveRDS(dat_fits_photo_TPU, file = here("5_Results/DAT_photo_fits_TPU.RData")) # LARGE data file, do not push to github unless using git lfs
 
 
 
@@ -341,7 +335,8 @@ dev.off()
 
 # Photosynthesis Temperature Correction; Constants and Functions ----------
 
-### Photosynthesis does not perform it's own temperature correction, so we apply our own
+### Photosynthesis does not perform its own temperature correction, so we apply our own
+### Temperature correction code credited to Tomas Ferreira Domingues and Maquelle Neves Garcia
 
 ### Constants used in the Farquhar´s model ***NOT*** considering mesophyll conductance
 R             <- 0.008314   # Gas constant
@@ -357,7 +352,7 @@ delta_gstar 	<- 37830	# (J mol-1)
 curv          <- 0.85       # Curvature for calculating J from Evans (1989)
 Ambient.CO2   <- 400
 O2  	      	<- 21 	    # Estimated Oxygen concentration at chloroplast - (kPa)
-K0            <- 0.388      # for accounting for diffusion of CO2 through the gasket (Licor 6400 only) maybe we need to remove this part the new machine is alredy accounting for it
+K0            <- 0.388      # for accounting for diffusion of CO2 through the gasket (Licor 6400 only) maybe we need to remove this part the new machine is already accounting for it
 
 ### Peaked function Medlin et al. 2002PCE
 ### Ea = Activation Energy, DeltaS = entropy factor = 200, Hd = Deactivation Energy)
@@ -420,7 +415,7 @@ best_Jmax_25C_dat <- J_peaked_25C(curv_dat_temp_noTPU[[4]], Ea_J, Delta_J, Ed)
 dat_corrected_noTPU <- curv_dat_temp_noTPU %>% 
     mutate(Best_Vcmax_25C = best_Vcmax_25C_dat,
            Best_Jmax_25C = best_Jmax_25C_dat,
-           curv_meth = "DAT") ####### Check whether you use curv_meth or method in following scripts
+           curv_meth = "DAT") 
 
 
 ### Run the temperature correction on the SS data
@@ -500,7 +495,7 @@ best_Jmax_25C_dat <- J_peaked_25C(curv_dat_temp_TPU[[4]], Ea_J, Delta_J, Ed)
 dat_corrected_TPU <- curv_dat_temp_TPU %>% 
     mutate(Best_Vcmax_25C = best_Vcmax_25C_dat,
            Best_Jmax_25C = best_Jmax_25C_dat,
-           curv_meth = "DAT") ####### Check whether you use curv_meth or method in following scripts
+           curv_meth = "DAT") 
 
 
 
