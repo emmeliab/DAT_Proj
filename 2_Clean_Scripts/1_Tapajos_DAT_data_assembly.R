@@ -29,6 +29,7 @@ for (i in 1:length(aci_files_nm)) {
 
 # Assemble into one data file ---------------------------------------------
 
+# No run: just a check
 # ## Make sure all the data have the same columns (in this case, the 6th and 7th are missing
 # ## some columns)
 # Reduce(setdiff, list(colnames(`data_2022-08-06-1020_walkup_aci_clean.xlsx`), 
@@ -178,7 +179,7 @@ cmplt.rm_out <- read.csv(here("3_Clean_data/clean_aci_with_uniquecode.csv"),
                          fileEncoding="latin1") %>% 
     # Filter out excluded data
     filter(Data_QC == "OK") %>% 
-    # Filter out outliers (impossible values)
+    # Filter out clear outliers (impossible values)
     filter(Ci > -5 & A < 40 & A > -1) %>% 
     # Fix curve method values and column name
     mutate(Data_point = case_match(Data_point, 
