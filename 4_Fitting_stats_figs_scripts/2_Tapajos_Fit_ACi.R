@@ -1,4 +1,9 @@
-## This script is to graph, fit, and save the ACi data for our Tapajos 2022 campaign
+# This script fits A/Ci curves, both steady-state (SS) and dynamic assimilation technique (DAT) using the 'plantecophys' and 'photosynthesis' package
+# Temperature corrections were developed by Tomas Ferreira Domingues and Maquelle Neves Garica
+# Code is associated with the article at DOI: 10.1093/treephys/tpae153
+# Licence information:
+# Questions can be directed to Loren Albert (corresponding author) at loren.albert@oregonstate.edu, Emmelia Braun (first-author) at emmelia.braun@oregonstate.edu, or Charles Southwick (first author) at charles.southwick@oregonstate.edu
+
 
 ## Load Packages
 library(tidyverse)
@@ -29,11 +34,6 @@ exclude_backwardsCi <- function(data, givedf){
 
 # # Apply function to tibble. if .keep = TRUE this throws an error
 # # Additional info: https://stackoverflow.com/questions/63412850/managing-dplyr-group-by-function-to-keep-the-grouping-variable-when-used-in-comb
-# DAT_filt_ex <- DAT_filt %>%
-#   group_by(unique_id) %>%
-#   group_modify(~exclude_backwardsCi(data = .x, givedf = TRUE), .keep = FALSE)
-# DAT_filt_ex <- as.data.frame(DAT_filt_ex)
-
 
 
 ### Now filter out the 'backwards' points in the DAT data

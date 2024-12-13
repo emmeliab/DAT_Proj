@@ -1,3 +1,10 @@
+# This script reads in data from the LI-6800, cleans, and compiles them into one data file
+# Code is associated with the article at DOI: 10.1093/treephys/tpae153
+# Licence information:
+# Questions can be directed to Loren Albert (corresponding author) at loren.albert@oregonstate.edu, Emmelia Braun (first-author) at emmelia.braun@oregonstate.edu, or Charles Southwick (first author) at charles.southwick@oregonstate.edu
+
+
+
 # Load Packages
 library(tidyverse)
 library(readxl)

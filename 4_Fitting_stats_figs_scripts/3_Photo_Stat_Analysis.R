@@ -1,5 +1,8 @@
 # Computing statistical analysis on the A/Ci curve fits from 2_Tapajos_Fit_ACi.R
-# Using the 'photosynthesis' package
+# Code is associated with the article at DOI: 10.1093/treephys/tpae153
+# Licence information:
+# Questions can be directed to Loren Albert (corresponding author) at loren.albert@oregonstate.edu, Emmelia Braun (first-author) at emmelia.braun@oregonstate.edu, or Charles Southwick (first author) at charles.southwick@oregonstate.edu
+
 
 library(tidyverse) 
 library(ggpubr) 

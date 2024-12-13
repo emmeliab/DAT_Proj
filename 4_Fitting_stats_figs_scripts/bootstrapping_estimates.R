@@ -1,4 +1,9 @@
-# function to create a semi-parametric bootstrap courtesy of Dusty Gannon
+# This code creates a function to create a semi-parametric bootstrap courtesy of Dusty Gannon (dustin.gannon@oregonstate.edu)
+# Code is associated with the article at DOI: 10.1093/treephys/tpae153
+# Licence information:
+# Questions can be directed to Loren Albert (corresponding author) at loren.albert@oregonstate.edu, Emmelia Braun (first-author) at emmelia.braun@oregonstate.edu, or Charles Southwick (first author) at charles.southwick@oregonstate.edu
+
+
 boot <- function(mfit, max_tries = 10, resp_var, calc_null = FALSE){
     sd_re <- VarCorr(mfit)["(Intercept)", "StdDev"] |> as.numeric()
     # simulate new random effects

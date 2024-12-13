@@ -1,6 +1,7 @@
 # DAT_Proj
 
 This repository contains the data and code to process 32 DAT and 27 steady-state A/Ci curves from 13 trees at K67 in the Tapajos National Forest in Para, Brazil in August 2022.
+All code and data are associated with DOI: 10.1093/treephys/tpae153
 
 ## Data
 * A/Ci data were collected from 13 trees in the Tapajos National Forest accessible from the walkup tower at K67; 33 DAT curves and 28 SS curves (note that one pair of curves were not a matched set and were excluded from the analyses, totaling 32 DAT curves and 27 SS curves)
