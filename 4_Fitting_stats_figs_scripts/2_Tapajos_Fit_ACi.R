@@ -1,7 +1,7 @@
 # This script fits A/Ci curves, both steady-state (SS) and dynamic assimilation technique (DAT) using the 'plantecophys' and 'photosynthesis' package
-# Temperature corrections were developed by Tomas Ferreira Domingues and Maquelle Neves Garica
+# Temperature corrections were developed by Tomas Ferreira Domingues and Maquelle Neves Garcia
 # Code is associated with the article at DOI: 10.1093/treephys/tpae153
-# Licence information:
+# This work is licensed under CC by 4.0
 # Questions can be directed to Loren Albert (corresponding author) at loren.albert@oregonstate.edu, Emmelia Braun (first-author) at emmelia.braun@oregonstate.edu, or Charles Southwick (first author) at charles.southwick@oregonstate.edu
 
 ## Load Packages

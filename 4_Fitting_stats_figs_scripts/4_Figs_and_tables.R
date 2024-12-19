@@ -1,5 +1,5 @@
-# This script creates all figures and tables using the the article at DOI: 10.1093/treephys/tpae153
-# Licence information:
+# This script creates all figures and tables for the article at DOI: 10.1093/treephys/tpae153
+# This work is licensed under CC by 4.0
 # Questions can be directed to Loren Albert (corresponding author) at loren.albert@oregonstate.edu, Emmelia Braun (first-author) at emmelia.braun@oregonstate.edu, or Charles Southwick (first author) at charles.southwick@oregonstate.edu
 
 
