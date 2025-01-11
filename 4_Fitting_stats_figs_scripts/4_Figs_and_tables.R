@@ -24,7 +24,7 @@ ids <- read.csv(here("3_Clean_data/id_codebook.csv"))
 #rename(treeid = ï..treeid) # this line may not be needed, depending on computer encoding
 
 
-## For the raw data plots, Fig 1, and Fig S1
+## For the raw data plots, Fig 1, and Fig S2
 cmplt.rm_out <- read.csv(here("3_Clean_data/clean_aci_noOutliers.csv"),
                          header = TRUE,
                          fileEncoding = "latin1") %>% 
@@ -774,27 +774,7 @@ sorted_df <- ss_keyparams_tpu_codes[order(ss_keyparams_tpu_codes$rel_can_pos), ]
 
 ###
 
-# Figure S1: Backwards points ---------------------------------------------
-
-k6715l1.1 <- ggplot(data = filter(cmplt.grp, unique_id == "K6715L1-1"), 
-                  mapping = aes(x = Ci, y = A)) +
-    geom_point(size = 3) +
-    labs(y = expression("A"[net]*" "*(mu*mol~m^{-2}~s^{-1})), 
-         x = expression("C"[i]*" "*(mu*mol~m^{-2}~s^{-1}))) +
-    theme(legend.position = "none",
-          axis.text.x = element_text(size = 8, color = "gray10"),
-          axis.text.y = element_text(size = 8, color = "gray10"),
-          axis.title = element_text(size = rel(0.93))) +
-    geom_magnify(from = c(-5, 100, -1, 3), to = c(500, 1000, 0, 7), axes = "xy",
-                 shadow = TRUE)
-k6715l1.1
-
-ggsave(plot = k6715l1.1, file = here("6_figures/figureS1.tif"), dpi = 600,
-       height = 7, width = 8.23, units = "cm", scale = 1.3)
-
-###
-
-# Figure S2: DAT split curve ---------------------------------------------------------
+# Figure S1: DAT split curve ---------------------------------------------------------
 
 ## Note have to copy and paste excel values as values, not formulas, for them to be read into R
 
@@ -818,10 +798,31 @@ split_plot <- ggplot(data = dat_test,
     guides(color = "none")
 
 
-ggsave(split_plot, file = here("6_Figures/figureS2.tif"),
-                width = 8.23, height = 6, units = "cm", scale = 2, dpi = 600)
+ggsave(split_plot, file = here("6_Figures/figureS1.tif"),
+       width = 8.23, height = 6, units = "cm", scale = 2, dpi = 600)
 
 ###
+# Figure S2: Backwards points ---------------------------------------------
+
+k6715l1.1 <- ggplot(data = filter(cmplt.grp, unique_id == "K6715L1-1"), 
+                  mapping = aes(x = Ci, y = A)) +
+    geom_point(size = 3) +
+    labs(y = expression("A"[net]*" "*(mu*mol~m^{-2}~s^{-1})), 
+         x = expression("C"[i]*" "*(mu*mol~m^{-2}~s^{-1}))) +
+    theme(legend.position = "none",
+          axis.text.x = element_text(size = 8, color = "gray10"),
+          axis.text.y = element_text(size = 8, color = "gray10"),
+          axis.title = element_text(size = rel(0.93))) +
+    geom_magnify(from = c(-5, 100, -1, 3), to = c(500, 1000, 0, 7), axes = "xy",
+                 shadow = TRUE)
+k6715l1.1
+
+ggsave(plot = k6715l1.1, file = here("6_figures/figureS2.tif"), dpi = 600,
+       height = 7, width = 8.23, units = "cm", scale = 1.3)
+
+###
+
+
 
 # Figure S3: TPU 1:1 -------------------------------------------------------
 
